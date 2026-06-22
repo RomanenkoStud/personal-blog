@@ -1,5 +1,6 @@
 ---
 import Head from '../components/Head.astro';
+import ThemeInit from '../components/ThemeInit.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
 import { NAV_LINKS } from '../consts';
 import '../styles/global.css';
@@ -19,11 +20,7 @@ const currentPath = Astro.url.pathname;
 <html lang="en" data-theme="light">
 <head>
   <Head title={title} description={description} ogImage={ogImage} ogType={ogType} publishedAt={publishedAt} />
-  <script is:inline>
-    const s=localStorage.getItem('theme');
-    const p=window.matchMedia('(prefers-color-scheme:dark)').matches;
-    document.documentElement.setAtt 22ribute('data-theme',s||(p?'dark':'light'));
-  </script>
+  <ThemeInit />
 </head>
 <body style="font-family:'Space Grotesk',sans-serif;line-height:1.6;color:var(--color-ink,#1a1c2e);background:var(--color-surface,#fff);margin:0">
 

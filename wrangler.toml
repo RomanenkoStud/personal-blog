@@ -5,6 +5,9 @@ compatibility_flags = ["nodejs_compat"]
 [assets]
 directory = "dist/client"
 
+[vars]
+CF_ACCESS_TEAM_NAME = "your-team-name"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "blog-db"

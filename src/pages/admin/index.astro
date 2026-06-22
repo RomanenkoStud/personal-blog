@@ -1,0 +1,57 @@
+---
+import AdminLayout from '../../layouts/Admin.astro';
+import { getPosts } from '../../lib/api';
+import { getDashboardStats } from '../../lib/admin-api';
+import { env } from 'cloudflare:workers';
+
+const stats = await getDashboardStats(env.DB);
+const posts = await getPosts(env.DB);
+const recentPosts = posts.slice(0, 5);
+---
+
+<AdminLayout title="Dashboard" activeNav="dashboard">
+
+  <div style="font:400 26px 'Space Grotesk',sans-serif;color:var(--color-ink);margin-bottom:28px">Dashboard</div>
+
+  <!-- Stats -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px">
+    <div style="border:1px solid var(--color-border-light);border-radius:8px;padding:20px">
+      <div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:var(--color-placeholder);text-transform:uppercase;margin-bottom:8px">Posts</div>
+      <div style="font:600 28px 'Space Grotesk',sans-serif;color:var(--color-ink)">{stats.postCount}</div>
+    </div>
+    <div style="border:1px solid var(--color-border-light);border-radius:8px;padding:20px">
+      <div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:var(--color-placeholder);text-transform:uppercase;margin-bottom:8px">Pages</div>
+      <div style="font:600 28px 'Space Grotesk',sans-serif;color:var(--color-ink)">{stats.pageCount}</div>
+    </div>
+    <div style="border:1px solid var(--color-border-light);border-radius:8px;padding:20px">
+      <div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:var(--color-placeholder);text-transform:uppercase;margin-bottom:8px">Subscribers</div>
+      <div style="font:600 28px 'Space Grotesk',sans-serif;color:var(--color-ink)">{stats.subscriberCount}</div>
+    </div>
+  </div>
+
+  <!-- Quick actions -->
+  <div style="display:flex;gap:10px;margin-bottom:28px">
+    <a href="/admin/posts/new" style="display:inline-flex;align-items:center;height:34px;background:#4f56e8;border-radius:6px;padding:0 16px;font:500 12px 'IBM Plex Mono',monospace;color:#fff;text-decoration:none">+ New Post</a>
+    <a href="/" target="_blank" style="display:inline-flex;align-items:center;height:34px;border:1px solid var(--color-border);border-radius:6px;padding:0 16px;font:400 12px 'IBM Plex Mono',monospace;color:var(--color-meta);text-decoration:none">View Site &rarr;</a>
+  </div>
+
+  <!-- Recent posts -->
+  <div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:var(--color-placeholder);text-transform:uppercase;margin-bottom:10px">Recent Posts</div>
+  <div style="border:1px solid var(--color-border-light);border-radius:8px;overflow:hidden">
+    {recentPosts.map((post, i) => (
+      <a
+        href={`/admin/posts/${post.id}`}
+        style={`display:flex;align-items:center;justify-content:space-between;padding:12px 16px;text-decoration:none;color:inherit;${i < recentPosts.length - 1 ? 'border-bottom:1px solid var(--color-border-light);' : ''}`}
+      >
+        <div>
+          <div style="font:400 14px 'Space Grotesk',sans-serif;color:var(--color-ink)">{post.title}</div>
+          <div style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim);margin-top:3px">
+            {post.publishedAt.slice(0, 10)} · <span style="color:var(--color-indigo)">{post.area}</span>
+          </div>
+        </div>
+        <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-placeholder)">Edit &rarr;</span>
+      </a>
+    ))}
+  </div>
+
+</AdminLayout>

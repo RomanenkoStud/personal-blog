@@ -1,0 +1,147 @@
+---
+import type { Page } from '../../types/content';
+
+interface Props {
+  page: Page;
+  action: string;
+}
+
+const { page, action } = Astro.props;
+---
+
+<form id="page-form" style="display:flex;flex-direction:column;gap:20px">
+
+  <!-- Title -->
+  <div>
+    <label for="title" style="display:block;font:500 11px 'IBM Plex Mono',monospace;color:var(--color-meta);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Title</label>
+    <input
+      type="text"
+      id="title"
+      name="title"
+      value={page.title}
+      required
+      style="width:100%;height:36px;border:1px solid var(--color-border);background:var(--color-surface);border-radius:6px;padding:0 10px;font:400 14px 'Space Grotesk',sans-serif;color:var(--color-ink);outline:none;box-sizing:border-box"
+    />
+    <div class="field-error" data-field="title" style="font:400 11px 'IBM Plex Mono',monospace;color:#dc2626;margin-top:4px;display:none"></div>
+  </div>
+
+  <!-- Slug (read-only) -->
+  <div>
+    <label style="display:block;font:500 11px 'IBM Plex Mono',monospace;color:var(--color-meta);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Slug</label>
+    <input
+      type="text"
+      name="slug"
+      value={page.slug}
+      readonly
+      style="width:100%;height:36px;border:1px solid var(--color-border);background:var(--color-surface-alt);border-radius:6px;padding:0 10px;font:400 13px 'IBM Plex Mono',monospace;color:var(--color-dim);outline:none;box-sizing:border-box;cursor:not-allowed"
+    />
+  </div>
+
+  <!-- Body + Preview -->
+  <div>
+    <label for="body" style="display:block;font:500 11px 'IBM Plex Mono',monospace;color:var(--color-meta);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Body</label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;min-height:400px">
+      <textarea
+        id="body"
+        name="body"
+        required
+        style="width:100%;height:100%;min-height:400px;border:1px solid var(--color-border);background:var(--color-surface);border-radius:6px;padding:12px;font:400 13px 'IBM Plex Mono',monospace;color:var(--color-ink);outline:none;resize:vertical;box-sizing:border-box;line-height:1.6"
+      >{page.body}</textarea>
+      <div style="border:1px solid var(--color-border-light);border-radius:6px;background:var(--color-surface);overflow-y:auto;max-height:600px">
+        <markdown-preview content={page.body}></markdown-preview>
+      </div>
+    </div>
+    <div class="field-error" data-field="body" style="font:400 11px 'IBM Plex Mono',monospace;color:#dc2626;margin-top:4px;display:none"></div>
+  </div>
+
+  <!-- Submit -->
+  <div style="display:flex;align-items:center;gap:12px">
+    <button
+      type="submit"
+      id="submit-btn"
+      style="height:38px;background:#4f56e8;border:none;border-radius:6px;padding:0 24px;font:500 13px 'IBM Plex Mono',monospace;color:#fff;cursor:pointer"
+    >Update Page</button>
+    <span id="form-status" style="font:400 12px 'IBM Plex Mono',monospace;display:none"></span>
+  </div>
+</form>
+
+<script define:vars={{ action }}>
+  const form = document.getElementById('page-form');
+  const bodyTextarea = document.getElementById('body');
+  const preview = document.querySelector('markdown-preview');
+  const submitBtn = document.getElementById('submit-btn');
+  const formStatus = document.getElementById('form-status');
+
+  bodyTextarea.addEventListener('input', () => {
+    preview.content = bodyTextarea.value;
+  });
+
+  function clearErrors() {
+    document.querySelectorAll('.field-error').forEach(el => {
+      el.style.display = 'none';
+      el.textContent = '';
+    });
+  }
+
+  function showErrors(errors) {
+    for (const [field, message] of Object.entries(errors)) {
+      const el = document.querySelector(`.field-error[data-field="${field}"]`);
+      if (el) {
+        el.textContent = message;
+        el.style.display = 'block';
+      }
+    }
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearErrors();
+
+    const fd = new FormData(form);
+    const data = {
+      title: fd.get('title'),
+      slug: fd.get('slug'),
+      body: fd.get('body'),
+    };
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Saving…';
+    formStatus.style.display = 'none';
+
+    try {
+      const res = await fetch(action, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        if (result.errors) {
+          showErrors(result.errors);
+        } else {
+          formStatus.textContent = result.error || 'Something went wrong';
+          formStatus.style.color = '#dc2626';
+          formStatus.style.display = 'inline';
+        }
+        return;
+      }
+
+      formStatus.textContent = 'Saved!';
+      formStatus.style.color = 'var(--color-indigo)';
+      formStatus.style.display = 'inline';
+    } catch {
+      formStatus.textContent = 'Network error';
+      formStatus.style.color = '#dc2626';
+      formStatus.style.display = 'inline';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Update Page';
+    }
+  });
+</script>
+
+<script>
+  import './MarkdownPreview';
+</script>

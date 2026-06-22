@@ -1,0 +1,16 @@
+---
+import AdminLayout from '../../../layouts/Admin.astro';
+import PostForm from '../../../components/admin/PostForm.astro';
+---
+
+<AdminLayout title="New Post" activeNav="posts">
+
+  <div style="margin-bottom:24px">
+    <a href="/admin/posts" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim);text-decoration:none">&larr; Back to posts</a>
+  </div>
+
+  <div style="font:400 26px 'Space Grotesk',sans-serif;color:var(--color-ink);margin-bottom:24px">New Post</div>
+
+  <PostForm action="/api/admin/posts" method="POST" />
+
+</AdminLayout>

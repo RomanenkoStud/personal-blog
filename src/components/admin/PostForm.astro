@@ -1,0 +1,227 @@
+---
+import type { BlogPost } from '../../types/content';
+import { AREAS } from '../../consts';
+
+interface Props {
+  post?: BlogPost;
+  action: string;
+  method: 'POST' | 'PUT';
+}
+
+const { post, action, method } = Astro.props;
+const isEdit = !!post;
+
+const now = new Date();
+const defaultDate = now.toISOString().slice(0, 16);
+---
+
+<form id="post-form" style="display:flex;flex-direction:column;gap:20px">
+
+  <!-- Title -->
+  <div>
+    <label for="title" style="display:block;font:500 11px 'IBM Plex Mono',monospace;color:var(--color-meta);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Title</label>
+    <input
+      type="text"
+      id="title"
+      name="title"
+      value={post?.title ?? ''}
+      required
+      style="width:100%;height:36px;border:1px solid var(--color-border);background:var(--color-surface);border-radius:6px;padding:0 10px;font:400 14px 'Space Grotesk',sans-serif;color:var(--color-ink);outline:none;box-sizing:border-box"
+    />
+    <div class="field-error" data-field="title" style="font:400 11px 'IBM Plex Mono',monospace;color:#dc2626;margin-top:4px;display:none"></div>
+  </div>
+
+  <!-- Slug -->
+  <slug-field title={post?.title ?? ''} value={post?.slug ?? ''}></slug-field>
+  <div class="field-error" data-field="slug" style="font:400 11px 'IBM Plex Mono',monospace;color:#dc2626;margin-top:-14px;display:none"></div>
+
+  <!-- Area + Date + ReadTime row -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 120px;gap:16px">
+    <div>
+      <label for="area" style="display:block;font:500 11px 'IBM Plex Mono',monospace;color:var(--color-meta);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Area</label>
+      <select
+        id="area"
+        name="area"
+        required
+        style="width:100%;height:36px;border:1px solid var(--color-border);background:var(--color-surface);border-radius:6px;padding:0 8px;font:400 13px 'IBM Plex Mono',monospace;color:var(--color-ink);outline:none;box-sizing:border-box"
+      >
+        {AREAS.map(area => (
+          <option value={area} selected={post?.area === area}>{area}</option>
+        ))}
+      </select>
+      <div class="field-error" data-field="area" style="font:400 11px 'IBM Plex Mono',monospace;color:#dc2626;margin-top:4px;display:none"></div>
+    </div>
+
+    <div>
+      <label for="publishedAt" style="display:block;font:500 11px 'IBM Plex Mono',monospace;color:var(--color-meta);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Published At</label>
+      <input
+        type="datetime-local"
+        id="publishedAt"
+        name="publishedAt"
+        value={post ? post.publishedAt.slice(0, 16) : defaultDate}
+        required
+        style="width:100%;height:36px;border:1px solid var(--color-border);background:var(--color-surface);border-radius:6px;padding:0 8px;font:400 13px 'IBM Plex Mono',monospace;color:var(--color-ink);outline:none;box-sizing:border-box"
+      />
+      <div class="field-error" data-field="publishedAt" style="font:400 11px 'IBM Plex Mono',monospace;color:#dc2626;margin-top:4px;display:none"></div>
+    </div>
+
+    <div>
+      <label for="readTime" style="display:block;font:500 11px 'IBM Plex Mono',monospace;color:var(--color-meta);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Read min</label>
+      <input
+        type="number"
+        id="readTime"
+        name="readTime"
+        min="1"
+        value={post?.readTime ?? 5}
+        required
+        style="width:100%;height:36px;border:1px solid var(--color-border);background:var(--color-surface);border-radius:6px;padding:0 8px;font:400 13px 'IBM Plex Mono',monospace;color:var(--color-ink);outline:none;box-sizing:border-box"
+      />
+      <div class="field-error" data-field="readTime" style="font:400 11px 'IBM Plex Mono',monospace;color:#dc2626;margin-top:4px;display:none"></div>
+    </div>
+  </div>
+
+  <!-- Featured -->
+  <div>
+    <label style="display:inline-flex;align-items:center;gap:8px;font:400 13px 'Space Grotesk',sans-serif;color:var(--color-ink);cursor:pointer">
+      <input type="checkbox" id="featured" name="featured" checked={post?.featured} style="width:16px;height:16px;accent-color:#4f56e8" />
+      Featured post
+    </label>
+  </div>
+
+  <!-- Excerpt -->
+  <div>
+    <label for="excerpt" style="display:block;font:500 11px 'IBM Plex Mono',monospace;color:var(--color-meta);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Excerpt</label>
+    <textarea
+      id="excerpt"
+      name="excerpt"
+      rows="3"
+      required
+      style="width:100%;border:1px solid var(--color-border);background:var(--color-surface);border-radius:6px;padding:10px;font:400 13px 'Space Grotesk',sans-serif;color:var(--color-ink);outline:none;resize:vertical;box-sizing:border-box;line-height:1.5"
+    >{post?.excerpt ?? ''}</textarea>
+    <div class="field-error" data-field="excerpt" style="font:400 11px 'IBM Plex Mono',monospace;color:#dc2626;margin-top:4px;display:none"></div>
+  </div>
+
+  <!-- Body + Preview -->
+  <div>
+    <label for="body" style="display:block;font:500 11px 'IBM Plex Mono',monospace;color:var(--color-meta);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Body</label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;min-height:400px">
+      <textarea
+        id="body"
+        name="body"
+        required
+        style="width:100%;height:100%;min-height:400px;border:1px solid var(--color-border);background:var(--color-surface);border-radius:6px;padding:12px;font:400 13px 'IBM Plex Mono',monospace;color:var(--color-ink);outline:none;resize:vertical;box-sizing:border-box;line-height:1.6"
+      >{post?.body ?? ''}</textarea>
+      <div style="border:1px solid var(--color-border-light);border-radius:6px;background:var(--color-surface);overflow-y:auto;max-height:600px">
+        <markdown-preview content={post?.body ?? ''}></markdown-preview>
+      </div>
+    </div>
+    <div class="field-error" data-field="body" style="font:400 11px 'IBM Plex Mono',monospace;color:#dc2626;margin-top:4px;display:none"></div>
+  </div>
+
+  <!-- Submit -->
+  <div style="display:flex;align-items:center;gap:12px">
+    <button
+      type="submit"
+      id="submit-btn"
+      style="height:38px;background:#4f56e8;border:none;border-radius:6px;padding:0 24px;font:500 13px 'IBM Plex Mono',monospace;color:#fff;cursor:pointer"
+    >{isEdit ? 'Update Post' : 'Create Post'}</button>
+    <span id="form-status" style="font:400 12px 'IBM Plex Mono',monospace;display:none"></span>
+  </div>
+</form>
+
+<script define:vars={{ action, method }}>
+  const form = document.getElementById('post-form');
+  const titleInput = document.getElementById('title');
+  const bodyTextarea = document.getElementById('body');
+  const slugField = document.querySelector('slug-field');
+  const preview = document.querySelector('markdown-preview');
+  const submitBtn = document.getElementById('submit-btn');
+  const formStatus = document.getElementById('form-status');
+
+  titleInput.addEventListener('input', () => {
+    slugField.title = titleInput.value;
+  });
+
+  bodyTextarea.addEventListener('input', () => {
+    preview.content = bodyTextarea.value;
+  });
+
+  function clearErrors() {
+    document.querySelectorAll('.field-error').forEach(el => {
+      el.style.display = 'none';
+      el.textContent = '';
+    });
+  }
+
+  function showErrors(errors) {
+    for (const [field, message] of Object.entries(errors)) {
+      const el = document.querySelector(`.field-error[data-field="${field}"]`);
+      if (el) {
+        el.textContent = message;
+        el.style.display = 'block';
+      }
+    }
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearErrors();
+
+    const fd = new FormData(form);
+    const data = {
+      title: fd.get('title'),
+      slug: fd.get('slug'),
+      area: fd.get('area'),
+      publishedAt: new Date(fd.get('publishedAt')).toISOString(),
+      readTime: Number(fd.get('readTime')),
+      featured: fd.has('featured'),
+      excerpt: fd.get('excerpt'),
+      body: fd.get('body'),
+    };
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Saving…';
+    formStatus.style.display = 'none';
+
+    try {
+      const res = await fetch(action, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        if (result.errors) {
+          showErrors(result.errors);
+        } else {
+          formStatus.textContent = result.error || 'Something went wrong';
+          formStatus.style.color = '#dc2626';
+          formStatus.style.display = 'inline';
+        }
+        return;
+      }
+
+      formStatus.textContent = 'Saved!';
+      formStatus.style.color = 'var(--color-indigo)';
+      formStatus.style.display = 'inline';
+
+      if (method === 'POST') {
+        setTimeout(() => { window.location.href = '/admin/posts'; }, 600);
+      }
+    } catch {
+      formStatus.textContent = 'Network error';
+      formStatus.style.color = '#dc2626';
+      formStatus.style.display = 'inline';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = method === 'POST' ? 'Create Post' : 'Update Post';
+    }
+  });
+</script>
+
+<script>
+  import './SlugField';
+  import './MarkdownPreview';
+</script>

@@ -1,0 +1,38 @@
+---
+import AdminLayout from '../../../layouts/Admin.astro';
+import { getAllPages } from '../../../lib/admin-api';
+import { env } from 'cloudflare:workers';
+
+const pages = await getAllPages(env.DB);
+---
+
+<AdminLayout title="Pages" activeNav="pages">
+
+  <div style="font:400 26px 'Space Grotesk',sans-serif;color:var(--color-ink);margin-bottom:24px">Pages</div>
+
+  {pages.length === 0 ? (
+    <div style="text-align:center;padding:48px 0;font:400 14px 'Space Grotesk',sans-serif;color:var(--color-dim)">
+      No pages found.
+    </div>
+  ) : (
+    <div style="border:1px solid var(--color-border-light);border-radius:8px;overflow:hidden">
+      <!-- Header -->
+      <div style="display:grid;grid-template-columns:1fr 120px 140px 60px;gap:8px;padding:10px 16px;background:var(--color-surface-alt);font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:var(--color-placeholder);text-transform:uppercase">
+        <span>Title</span>
+        <span>Slug</span>
+        <span>Last Updated</span>
+        <span></span>
+      </div>
+      <!-- Rows -->
+      {pages.map(page => (
+        <div style="display:grid;grid-template-columns:1fr 120px 140px 60px;gap:8px;align-items:center;padding:12px 16px;border-top:1px solid var(--color-border-light)">
+          <span style="font:400 14px 'Space Grotesk',sans-serif;color:var(--color-ink)">{page.title}</span>
+          <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim)">/{page.slug}</span>
+          <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim)">{page.updatedAt.slice(0, 10)}</span>
+          <a href={`/admin/pages/${page.id}`} style="font:400 12px 'Space Grotesk',sans-serif;color:var(--color-indigo);text-decoration:none">Edit</a>
+        </div>
+      ))}
+    </div>
+  )}
+
+</AdminLayout>

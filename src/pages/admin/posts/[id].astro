@@ -1,0 +1,31 @@
+---
+import AdminLayout from '../../../layouts/Admin.astro';
+import PostForm from '../../../components/admin/PostForm.astro';
+import { getPostById } from '../../../lib/admin-api';
+import { env } from 'cloudflare:workers';
+
+const id = Number(Astro.params.id);
+if (isNaN(id)) {
+  return Astro.redirect('/admin/posts');
+}
+
+const post = await getPostById(env.DB, id);
+if (!post) {
+  return Astro.redirect('/admin/posts');
+}
+---
+
+<AdminLayout title={`Edit · ${post.title}`} activeNav="posts">
+
+  <div style="margin-bottom:24px">
+    <a href="/admin/posts" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim);text-decoration:none">&larr; Back to posts</a>
+  </div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+    <div style="font:400 26px 'Space Grotesk',sans-serif;color:var(--color-ink)">Edit Post</div>
+    <a href={`/writing/${post.slug}`} target="_blank" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-indigo);text-decoration:none">View on site &rarr;</a>
+  </div>
+
+  <PostForm post={post} action={`/api/admin/posts/${post.id}`} method="PUT" />
+
+</AdminLayout>

@@ -1,0 +1,31 @@
+---
+import AdminLayout from '../../../layouts/Admin.astro';
+import PageForm from '../../../components/admin/PageForm.astro';
+import { getPageById } from '../../../lib/admin-api';
+import { env } from 'cloudflare:workers';
+
+const id = Number(Astro.params.id);
+if (isNaN(id)) {
+  return Astro.redirect('/admin/pages');
+}
+
+const page = await getPageById(env.DB, id);
+if (!page) {
+  return Astro.redirect('/admin/pages');
+}
+---
+
+<AdminLayout title={`Edit · ${page.title}`} activeNav="pages">
+
+  <div style="margin-bottom:24px">
+    <a href="/admin/pages" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim);text-decoration:none">&larr; Back to pages</a>
+  </div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+    <div style="font:400 26px 'Space Grotesk',sans-serif;color:var(--color-ink)">Edit Page</div>
+    <a href={`/${page.slug}`} target="_blank" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-indigo);text-decoration:none">View on site &rarr;</a>
+  </div>
+
+  <PageForm page={page} action={`/api/admin/pages/${page.id}`} />
+
+</AdminLayout>
