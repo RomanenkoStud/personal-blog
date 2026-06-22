@@ -1,0 +1,43 @@
+---
+import BaseLayout from '../layouts/Base.astro';
+import { getPosts } from '../lib/api';
+import { env } from 'cloudflare:workers';
+
+const posts = await getPosts(env.DB);
+
+const byArea = posts.reduce<Record<string, typeof posts>>((acc, post) => {
+  if (!acc[post.area]) acc[post.area] = [];
+  acc[post.area].push(post);
+  return acc;
+}, {});
+
+const areas = Object.entries(byArea).sort((a, b) => b[1].length - a[1].length);
+const maxNotes = Math.max(...areas.map(([, p]) => p.length), 1);
+---
+
+<BaseLayout title="Topics" description="Everything I've written, sorted by what it's about.">
+  <div style="max-width:780px;margin:0 auto;padding:0">
+
+    <!-- Centered tagline -->
+    <div style="padding:40px 64px 26px;text-align:center">
+      <div style="font:400 23px/1.4 'Space Grotesk',serif;color:var(--color-ink);max-width:440px;margin:0 auto">Everything I've written, sorted by what it's about.</div>
+    </div>
+
+    <!-- Topic rows -->
+    <div style="padding:0 40px 14px;display:flex;flex-direction:column;gap:2px">
+      {areas.map(([area, areaPosts]) => (
+        <a href={`/writing?area=${area}`} class="topic-row" style="display:flex;align-items:center;gap:14px;padding:15px 6px;border-top:1px solid var(--color-border-light);text-decoration:none;color:inherit">
+          <span style="width:130px;font:400 15px 'Space Grotesk',serif;color:var(--color-ink);text-transform:capitalize" class="topic-label">{area}</span>
+          <div style={`flex:1;height:8px;background:var(--color-border-light);border-radius:3px;max-width:${Math.round((areaPosts.length / maxNotes) * 280)}px`}></div>
+          <span style="margin-left:auto;font:400 11px 'IBM Plex Mono',monospace;color:var(--color-placeholder)">{areaPosts.length} {areaPosts.length === 1 ? 'note' : 'notes'}</span>
+        </a>
+      ))}
+    </div>
+
+
+  </div>
+</BaseLayout>
+
+<style>
+  .topic-row:hover .topic-label { color: var(--color-indigo) !important; }
+</style>

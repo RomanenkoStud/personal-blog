@@ -123,28 +123,8 @@ Running your own infrastructure teaches you things no tutorial can. When the con
 
 INSERT INTO pages (title, slug, body, updated_at) VALUES
 ('About', 'about',
-'## About me
-
-I''m Pavlo Romanenko, a frontend engineer based in Munich. I build large-scale web applications with a focus on architecture, developer experience, and shipping things that last.
-
-## Principles
-
-**Architecture over frameworks.** Frameworks come and go. Good separation of concerns, clear data flow, and sensible module boundaries outlast any library. I pick tools that serve the architecture, not the other way around.
-
-**Minimalism.** Less code means fewer bugs, faster builds, and easier onboarding. I''d rather delete a feature than maintain one nobody uses. The same applies to design — clear typography and generous whitespace communicate better than decoration.
-
-**AI as a development partner.** I use AI coding assistants daily, not as a crutch but as a multiplier. Automated lint fixes, generated test stubs, and conversational debugging let me spend more time on design decisions and less on mechanical work.
-
-## Experience
-
-**Frontend Engineer at Verisk** — Working on a platform of 40+ Angular micro-frontends serving the insurance analytics industry. My focus areas include shared architecture, i18n infrastructure, CI/CD pipelines, and developer tooling.
-
-**B.Sc. Computer Engineering** — Kharkiv National University of Radio Electronics (KhNURE). Studied embedded systems, algorithms, and software architecture before pivoting fully to web development.
-
-## Elsewhere
-
-You can find me on [GitHub](https://github.com) and [LinkedIn](https://linkedin.com). For professional inquiries, reach me by email.',
-'2026-06-01T10:00:00.000Z'),
+'{"tagline":"Lean engineering: simple systems, made on purpose.","bio":"Frontend developer with a focus on architecture and internal tooling. I don''t just build features — I build the systems that help teams scale. Design systems, centralized localization, and micro-frontend structures in multi-repo environments.","photo":"/img3.jpg","location":"munich · remote","whatIDo":["Architecture — design systems, localization, micro-frontends","Dev efficiency — AI agents (Claude, Copilot) in coding & testing","Ownership — refactoring legacy, automating pipelines, clean code"],"experience":[{"title":"Frontend Developer · Pragmasoft","meta":"aug 2023 – present · hybrid"},{"title":"B.Sc. Computer Engineering · KhNURE","meta":"2020 – 2024"}],"tech":["TypeScript","Angular","React","Next.js","Astro","Web Components","Python","AWS","CI/CD","Keycloak"],"cta":"Open to senior roles — Munich & remote."}',
+'2026-06-23T10:00:00.000Z'),
 
 ('Now', 'now',
 '## What I''m doing now

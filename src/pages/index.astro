@@ -22,59 +22,58 @@ const nowSnippet = nowPage
 ---
 
 <BaseLayout>
-  <div style="max-width:780px;margin:0 auto;padding:0">
+  <div class="home">
 
-    <!-- Hero -->
-    <div style="display:flex;gap:30px;padding:42px 26px 34px;align-items:flex-start">
-      <div style="flex:1">
-        <div style="font:400 34px/1.22 'Space Grotesk',serif;color:var(--color-ink)">Hi, I'm Pavlo.</div>
-        <div style="margin-top:16px;font:400 16px/1.6 'Space Grotesk',serif;color:var(--color-body);max-width:400px">I'm a frontend engineer in Munich who cares more about systems than frameworks. This is where I write about the architecture, tools, and home-lab tinkering behind the work.</div>
-        <div style="margin-top:18px;font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim);letter-spacing:.04em">frontend engineer &middot; systems &amp; architecture &middot; munich</div>
+    <section class="hero">
+      <div class="hero-text">
+        <h1 class="hero-name">Hi, I'm Pavlo.</h1>
+        <p class="hero-bio">I'm a frontend engineer in Munich who cares more about systems than frameworks. This is where I write about the architecture, tools, and home-lab tinkering behind the work.</p>
+        <div class="hero-tagline">frontend engineer &middot; systems &amp; architecture &middot; munich</div>
       </div>
-      <div style="width:170px;height:200px;flex:none;border:1px dashed var(--color-border);background:var(--color-border-light);border-radius:6px;display:flex;align-items:center;justify-content:center;font:400 10px 'IBM Plex Mono',monospace;color:var(--color-placeholder)">[ portrait ]</div>
-    </div>
+      <div class="hero-terminal">
+        <div class="terminal-bar">
+          <span class="terminal-dots"><span></span><span></span><span></span></span>
+          <span class="terminal-title">~/photos/summit.jpg</span>
+        </div>
+        <div class="terminal-img-wrap">
+          <img src="/img5.jpg" alt="Pavlo Romanenko" class="hero-photo" />
+        </div>
+      </div>
+    </section>
 
-    <!-- Latest writing -->
-    <div style="padding:4px 26px 10px">
-      <div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.14em;color:var(--color-placeholder);text-transform:uppercase;margin-bottom:4px">latest writing</div>
+    <section class="writing">
+      <div class="section-header">
+        <span class="section-label">latest writing</span>
+        <a href="/writing" class="view-all">view all &rarr;</a>
+      </div>
       {latestPosts.map(post => (
-        <a href={`/writing/${post.slug}`} class="post-row" style={`display:block;padding:14px 0;border-bottom:1px solid var(--color-border-light);text-decoration:none;color:inherit`}>
-          <div class="post-title" style="font:400 17px 'Space Grotesk',serif;color:var(--color-ink)">{post.title}</div>
-          <div style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim);margin-top:5px">
-            {post.publishedAt.slice(0, 7)} &middot; <span style="color:var(--color-indigo)">{post.area}</span>
+        <a href={`/writing/${post.slug}`} class="post-row">
+          <div class="post-title">{post.title}</div>
+          <div class="post-meta">
+            {post.publishedAt.slice(0, 7)} &middot; <span class="post-area">{post.area}</span>
             {post.readTime ? <span> &middot; {post.readTime} min</span> : null}
           </div>
         </a>
       ))}
-    </div>
+    </section>
 
-    <!-- Bottom row: Now + Newsletter -->
-    <div style="display:flex;gap:16px;padding:18px 26px 24px">
-      <a href="/now" class="now-card" style="flex:1;position:relative;border:1px dashed var(--color-border);border-radius:6px;padding:24px 14px 14px;text-decoration:none;display:block">
-        <span style="position:absolute;top:8px;left:11px;font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:var(--color-placeholder);text-transform:uppercase">now</span>
+    <div class="bottom-row">
+      <a href="/now" class="now-card">
+        <span class="now-label"><span class="now-dot"></span>now</span>
         {nowSnippet ? (
-          <div style="font:400 13px/1.6 'Space Grotesk',serif;color:var(--color-body)">{nowSnippet}</div>
+          <div class="now-text">{nowSnippet}</div>
         ) : (
           <div>
-            <div style="height:8px;width:88%;background:var(--color-skeleton);border-radius:3px;margin-bottom:7px"></div>
-            <div style="height:8px;width:64%;background:var(--color-skeleton);border-radius:3px"></div>
+            <div class="skeleton" style="width:88%"></div>
+            <div class="skeleton" style="width:64%"></div>
           </div>
         )}
       </a>
-      <form action="/api/newsletter" method="post" style="flex:1;background:var(--color-newsletter-bg);border-radius:6px;padding:16px 16px;margin:0">
-        <div style="font:400 13px 'Space Grotesk',serif;color:var(--color-ink)">A slow newsletter, when I publish.</div>
-        <div style="display:flex;gap:7px;margin-top:11px">
-          <input
-            type="email"
-            name="email"
-            required
-            placeholder="you@email…"
-            style="flex:1;height:30px;border:1px solid var(--color-border);background:var(--color-surface);border-radius:5px;display:flex;align-items:center;padding:0 9px;font:400 10px 'IBM Plex Mono',monospace;color:var(--color-ink);outline:none;box-sizing:border-box"
-          />
-          <button
-            type="submit"
-            style="height:30px;background:#4f56e8;border:none;border-radius:5px;display:flex;align-items:center;padding:0 14px;font:500 10px 'IBM Plex Mono',monospace;color:#fff;cursor:pointer"
-          >join</button>
+      <form action="/api/newsletter" method="post" class="newsletter">
+        <div class="newsletter-heading">A slow newsletter, when I publish.</div>
+        <div class="newsletter-controls">
+          <input type="email" name="email" required placeholder="you@email…" class="newsletter-input" />
+          <button type="submit" class="newsletter-btn">join</button>
         </div>
       </form>
     </div>
@@ -83,7 +82,253 @@ const nowSnippet = nowPage
 </BaseLayout>
 
 <style>
-  .post-row:hover .post-title { color: var(--color-indigo) !important; }
-  .now-card:hover { border-color: var(--color-indigo) !important; }
-  input::placeholder { color: var(--color-placeholder); }
+  .home {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    display: flex;
+    gap: 32px;
+    padding: 48px 26px 40px;
+    align-items: flex-start;
+  }
+  .hero-text { flex: 1; }
+  .hero-name {
+    font: 400 36px/1.2 'Space Grotesk', sans-serif;
+    color: var(--color-ink);
+    margin: 0;
+  }
+  .hero-bio {
+    margin: 18px 0 0;
+    font: 400 16px/1.65 'Space Grotesk', sans-serif;
+    color: var(--color-body);
+    max-width: 420px;
+  }
+  .hero-tagline {
+    margin-top: 20px;
+    font: 400 11px 'IBM Plex Mono', monospace;
+    color: var(--color-dim);
+    letter-spacing: .04em;
+  }
+  .hero-terminal {
+    flex: none;
+    width: 280px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, .08);
+  }
+  .terminal-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    background: var(--color-surface-alt);
+    border-bottom: 1px solid var(--color-border-light);
+  }
+  .terminal-dots {
+    display: flex;
+    gap: 5px;
+  }
+  .terminal-dots span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+  }
+  .terminal-dots span:nth-child(1) { background: var(--color-border); }
+  .terminal-dots span:nth-child(2) { background: var(--color-border); }
+  .terminal-dots span:nth-child(3) { background: var(--color-border); }
+  .terminal-title {
+    font: 400 9px 'IBM Plex Mono', monospace;
+    color: var(--color-dim);
+    letter-spacing: .02em;
+  }
+  .terminal-img-wrap {
+    position: relative;
+    line-height: 0;
+  }
+  .hero-photo {
+    width: 100%;
+    height: 240px;
+    object-fit: cover;
+    object-position: center 40%;
+    display: block;
+  }
+
+  /* ── Writing ── */
+  .writing { padding: 8px 26px 10px; }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .section-label {
+    font: 500 10px 'IBM Plex Mono', monospace;
+    letter-spacing: .14em;
+    color: var(--color-placeholder);
+    text-transform: uppercase;
+  }
+  .view-all {
+    font: 400 11px 'IBM Plex Mono', monospace;
+    color: var(--color-dim);
+    text-decoration: none;
+    transition: color .15s;
+  }
+  .view-all:hover { color: var(--color-indigo); }
+
+  .post-row {
+    display: block;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--color-border-light);
+    text-decoration: none;
+    color: inherit;
+    transition: padding-left .2s;
+  }
+  .post-row:hover { padding-left: 6px; }
+  .post-row:hover .post-title { color: var(--color-indigo); }
+
+  .post-title {
+    font: 400 17px 'Space Grotesk', sans-serif;
+    color: var(--color-ink);
+    transition: color .15s;
+  }
+  .post-meta {
+    font: 400 11px 'IBM Plex Mono', monospace;
+    color: var(--color-dim);
+    margin-top: 5px;
+  }
+  .post-area { color: var(--color-indigo); }
+
+  /* ── Bottom row ── */
+  .bottom-row {
+    display: flex;
+    gap: 16px;
+    padding: 22px 26px 28px;
+  }
+
+  .now-card {
+    flex: 1;
+    position: relative;
+    border: 1px dashed var(--color-border);
+    border-radius: 8px;
+    padding: 28px 16px 16px;
+    text-decoration: none;
+    display: block;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .now-card:hover {
+    border-color: var(--color-indigo);
+    box-shadow: 0 2px 12px rgba(79, 86, 232, .08);
+  }
+  .now-label {
+    position: absolute;
+    top: 9px;
+    left: 12px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font: 500 9px 'IBM Plex Mono', monospace;
+    letter-spacing: .1em;
+    color: var(--color-placeholder);
+    text-transform: uppercase;
+  }
+  .now-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #34d399;
+    animation: pulse-dot 2.5s ease-in-out infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .35; }
+  }
+  .now-text {
+    font: 400 13px/1.6 'Space Grotesk', sans-serif;
+    color: var(--color-body);
+  }
+  .skeleton {
+    height: 8px;
+    background: var(--color-skeleton);
+    border-radius: 3px;
+    margin-bottom: 7px;
+  }
+  .skeleton:last-child { margin-bottom: 0; }
+
+  .newsletter {
+    flex: 1;
+    background: var(--color-newsletter-bg);
+    border-radius: 8px;
+    padding: 18px;
+    margin: 0;
+  }
+  .newsletter-heading {
+    font: 400 13px 'Space Grotesk', sans-serif;
+    color: var(--color-ink);
+  }
+  .newsletter-controls {
+    display: flex;
+    gap: 7px;
+    margin-top: 12px;
+  }
+  .newsletter-input {
+    flex: 1;
+    height: 32px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    border-radius: 6px;
+    padding: 0 10px;
+    font: 400 11px 'IBM Plex Mono', monospace;
+    color: var(--color-ink);
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color .15s;
+  }
+  .newsletter-input:focus { border-color: var(--color-indigo); }
+  .newsletter-input::placeholder { color: var(--color-placeholder); }
+  .newsletter-btn {
+    height: 32px;
+    background: var(--color-indigo);
+    border: none;
+    border-radius: 6px;
+    padding: 0 16px;
+    font: 500 11px 'IBM Plex Mono', monospace;
+    color: #fff;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .newsletter-btn:hover { background: var(--color-periwinkle); }
+
+  /* ── Mobile ── */
+  @media (max-width: 640px) {
+    .hero {
+      flex-direction: column;
+      gap: 18px;
+      padding: 28px 20px 24px;
+      align-items: flex-start;
+    }
+    .hero-terminal {
+      width: 100%;
+    }
+    .hero-photo {
+      height: 180px;
+    }
+    .hero-name { font-size: 28px; }
+    .hero-bio { max-width: none; }
+    .writing { padding: 8px 20px 10px; }
+    .bottom-row {
+      flex-direction: column;
+      padding: 18px 20px 24px;
+    }
+    .newsletter-controls {
+      flex-wrap: wrap;
+    }
+    .newsletter-btn {
+      width: 100%;
+    }
+  }
 </style>

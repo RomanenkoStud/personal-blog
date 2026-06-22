@@ -1,0 +1,354 @@
+---
+import AdminLayout from '../../layouts/Admin.astro';
+import { getPage } from '../../lib/api';
+import { env } from 'cloudflare:workers';
+
+const page = await getPage(env.DB, 'about');
+
+const defaults = {
+  tagline: '',
+  bio: '',
+  photo: '/img3.jpg',
+  location: '',
+  whatIDo: ['', '', ''],
+  experience: [{ title: '', meta: '' }],
+  tech: [] as string[],
+  cta: '',
+};
+
+let data = defaults;
+let pageId: number | null = null;
+if (page) {
+  pageId = page.id;
+  try {
+    data = { ...defaults, ...JSON.parse(page.body) };
+  } catch {}
+}
+---
+
+<AdminLayout title="Profile" activeNav="profile">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+    <div style="font:400 26px 'Space Grotesk',sans-serif;color:var(--color-ink)">Profile</div>
+    <a href="/about" target="_blank" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-indigo);text-decoration:none">View on site →</a>
+  </div>
+
+  <form id="profile-form" style="display:flex;flex-direction:column;gap:24px;max-width:720px">
+
+    <!-- Tagline -->
+    <div class="field">
+      <label for="tagline" class="field-label">Tagline</label>
+      <input type="text" id="tagline" name="tagline" value={data.tagline} class="field-input" placeholder="Your main heading..." />
+    </div>
+
+    <!-- Bio -->
+    <div class="field">
+      <label for="bio" class="field-label">Bio</label>
+      <textarea id="bio" name="bio" rows="3" class="field-textarea" placeholder="Short paragraph about yourself...">{data.bio}</textarea>
+    </div>
+
+    <!-- Photo + Location row -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="field">
+        <label for="photo" class="field-label">Photo path</label>
+        <input type="text" id="photo" name="photo" value={data.photo} class="field-input" placeholder="/img3.jpg" />
+      </div>
+      <div class="field">
+        <label for="location" class="field-label">Location</label>
+        <input type="text" id="location" name="location" value={data.location} class="field-input" placeholder="munich · remote" />
+      </div>
+    </div>
+
+    <!-- What I Do -->
+    <div class="field">
+      <label class="field-label">What I Do</label>
+      <div id="what-i-do-list" style="display:flex;flex-direction:column;gap:8px">
+        {data.whatIDo.map((item, i) => (
+          <div class="list-row" style="display:flex;gap:8px;align-items:center">
+            <span class="row-number">{String(i + 1).padStart(2, '0')}</span>
+            <input type="text" name="whatIDo" value={item} class="field-input" style="flex:1" placeholder="Architecture — design systems..." />
+            <button type="button" class="remove-btn" title="Remove">×</button>
+          </div>
+        ))}
+      </div>
+      <button type="button" id="add-what-i-do" class="add-btn">+ add item</button>
+    </div>
+
+    <!-- Experience -->
+    <div class="field">
+      <label class="field-label">Experience</label>
+      <div id="experience-list" style="display:flex;flex-direction:column;gap:10px">
+        {data.experience.map(exp => (
+          <div class="exp-row" style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center">
+            <input type="text" name="exp-title" value={exp.title} class="field-input" placeholder="Frontend Developer · Company" />
+            <input type="text" name="exp-meta" value={exp.meta} class="field-input" placeholder="aug 2023 – present · hybrid" />
+            <button type="button" class="remove-btn" title="Remove">×</button>
+          </div>
+        ))}
+      </div>
+      <button type="button" id="add-experience" class="add-btn">+ add entry</button>
+    </div>
+
+    <!-- Tech -->
+    <div class="field">
+      <label class="field-label">Tech</label>
+      <div id="tech-tags" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+        {data.tech.map(t => (
+          <span class="tag">{t}<button type="button" class="tag-remove" title="Remove">×</button></span>
+        ))}
+      </div>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="tech-input" class="field-input" style="flex:1" placeholder="Type a tech and press Enter..." />
+        <button type="button" id="add-tech" class="add-btn" style="margin-top:0">add</button>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="field">
+      <label for="cta" class="field-label">CTA text</label>
+      <input type="text" id="cta" name="cta" value={data.cta} class="field-input" placeholder="Open to senior roles — Munich & remote." />
+    </div>
+
+    <!-- Submit -->
+    <div style="display:flex;align-items:center;gap:12px;padding-top:4px">
+      <button type="submit" id="submit-btn" class="submit-btn">Save Profile</button>
+      <span id="form-status" style="font:400 12px 'IBM Plex Mono',monospace;display:none"></span>
+    </div>
+
+  </form>
+
+</AdminLayout>
+
+<script define:vars={{ pageId }}>
+  const form = document.getElementById('profile-form');
+  const submitBtn = document.getElementById('submit-btn');
+  const formStatus = document.getElementById('form-status');
+
+  // --- What I Do: add/remove ---
+  const whatList = document.getElementById('what-i-do-list');
+  document.getElementById('add-what-i-do').addEventListener('click', () => {
+    const count = whatList.querySelectorAll('.list-row').length;
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    row.style.cssText = 'display:flex;gap:8px;align-items:center';
+    row.innerHTML = `
+      <span class="row-number">${String(count + 1).padStart(2, '0')}</span>
+      <input type="text" name="whatIDo" class="field-input" style="flex:1" placeholder="Architecture — design systems..." />
+      <button type="button" class="remove-btn" title="Remove">×</button>
+    `;
+    whatList.appendChild(row);
+    renumberRows(whatList);
+  });
+  whatList.addEventListener('click', (e) => {
+    if (e.target.classList.contains('remove-btn')) {
+      e.target.closest('.list-row').remove();
+      renumberRows(whatList);
+    }
+  });
+
+  function renumberRows(container) {
+    container.querySelectorAll('.row-number').forEach((el, i) => {
+      el.textContent = String(i + 1).padStart(2, '0');
+    });
+  }
+
+  // --- Experience: add/remove ---
+  const expList = document.getElementById('experience-list');
+  document.getElementById('add-experience').addEventListener('click', () => {
+    const row = document.createElement('div');
+    row.className = 'exp-row';
+    row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center';
+    row.innerHTML = `
+      <input type="text" name="exp-title" class="field-input" placeholder="Frontend Developer · Company" />
+      <input type="text" name="exp-meta" class="field-input" placeholder="aug 2023 – present · hybrid" />
+      <button type="button" class="remove-btn" title="Remove">×</button>
+    `;
+    expList.appendChild(row);
+  });
+  expList.addEventListener('click', (e) => {
+    if (e.target.classList.contains('remove-btn')) {
+      e.target.closest('.exp-row').remove();
+    }
+  });
+
+  // --- Tech tags ---
+  const techTags = document.getElementById('tech-tags');
+  const techInput = document.getElementById('tech-input');
+
+  function addTag(text) {
+    text = text.trim();
+    if (!text) return;
+    const span = document.createElement('span');
+    span.className = 'tag';
+    span.innerHTML = `${text}<button type="button" class="tag-remove" title="Remove">×</button>`;
+    techTags.appendChild(span);
+    techInput.value = '';
+  }
+
+  document.getElementById('add-tech').addEventListener('click', () => addTag(techInput.value));
+  techInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); addTag(techInput.value); }
+  });
+  techTags.addEventListener('click', (e) => {
+    if (e.target.classList.contains('tag-remove')) {
+      e.target.closest('.tag').remove();
+    }
+  });
+
+  // --- Submit ---
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const body = JSON.stringify({
+      tagline: form.querySelector('#tagline').value,
+      bio: form.querySelector('#bio').value,
+      photo: form.querySelector('#photo').value,
+      location: form.querySelector('#location').value,
+      whatIDo: [...form.querySelectorAll('input[name="whatIDo"]')].map(el => el.value).filter(Boolean),
+      experience: [...form.querySelectorAll('.exp-row')].map(row => ({
+        title: row.querySelector('input[name="exp-title"]').value,
+        meta: row.querySelector('input[name="exp-meta"]').value,
+      })).filter(r => r.title),
+      tech: [...techTags.querySelectorAll('.tag')].map(el => el.firstChild.textContent.trim()),
+      cta: form.querySelector('#cta').value,
+    });
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Saving…';
+    formStatus.style.display = 'none';
+
+    try {
+      const res = await fetch('/api/admin/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body }),
+      });
+      const result = await res.json();
+
+      if (!res.ok) {
+        formStatus.textContent = result.error || 'Something went wrong';
+        formStatus.style.color = '#dc2626';
+        formStatus.style.display = 'inline';
+        return;
+      }
+
+      formStatus.textContent = 'Saved!';
+      formStatus.style.color = 'var(--color-indigo)';
+      formStatus.style.display = 'inline';
+    } catch {
+      formStatus.textContent = 'Network error';
+      formStatus.style.color = '#dc2626';
+      formStatus.style.display = 'inline';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Save Profile';
+    }
+  });
+</script>
+
+<style>
+  .field-label {
+    display: block;
+    font: 500 11px 'IBM Plex Mono', monospace;
+    color: var(--color-meta);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .field-input {
+    width: 100%;
+    height: 36px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    border-radius: 6px;
+    padding: 0 10px;
+    font: 400 14px 'Space Grotesk', sans-serif;
+    color: var(--color-ink);
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color .15s;
+  }
+  .field-input:focus { border-color: var(--color-indigo); }
+  .field-textarea {
+    width: 100%;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    border-radius: 6px;
+    padding: 10px;
+    font: 400 14px 'Space Grotesk', sans-serif;
+    color: var(--color-ink);
+    outline: none;
+    box-sizing: border-box;
+    resize: vertical;
+    line-height: 1.6;
+    transition: border-color .15s;
+  }
+  .field-textarea:focus { border-color: var(--color-indigo); }
+  .row-number {
+    font: 500 12px 'IBM Plex Mono', monospace;
+    color: var(--color-indigo);
+    width: 22px;
+    flex: none;
+  }
+  .remove-btn {
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--color-border-light);
+    background: transparent;
+    border-radius: 4px;
+    font: 400 16px sans-serif;
+    color: var(--color-dim);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    transition: color .15s, border-color .15s;
+  }
+  .remove-btn:hover { color: #dc2626; border-color: #dc2626; }
+  .add-btn {
+    margin-top: 8px;
+    border: 1px dashed var(--color-border);
+    background: transparent;
+    border-radius: 6px;
+    padding: 7px 14px;
+    font: 400 12px 'IBM Plex Mono', monospace;
+    color: var(--color-dim);
+    cursor: pointer;
+    transition: border-color .15s, color .15s;
+  }
+  .add-btn:hover { border-color: var(--color-indigo); color: var(--color-indigo); }
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font: 400 12px 'IBM Plex Mono', monospace;
+    color: var(--color-ink);
+    background: var(--color-surface-alt);
+    border: 1px solid var(--color-border-light);
+    border-radius: 4px;
+    padding: 4px 8px;
+  }
+  .tag-remove {
+    border: none;
+    background: transparent;
+    font: 400 14px sans-serif;
+    color: var(--color-dim);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+  }
+  .tag-remove:hover { color: #dc2626; }
+  .submit-btn {
+    height: 38px;
+    background: #4f56e8;
+    border: none;
+    border-radius: 6px;
+    padding: 0 24px;
+    font: 500 13px 'IBM Plex Mono', monospace;
+    color: #fff;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .submit-btn:hover { background: #7c81f2; }
+</style>

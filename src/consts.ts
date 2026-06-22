@@ -4,14 +4,14 @@ export const SITE_DESCRIPTION = 'Frontend engineer in Munich. Writing about arch
 export const SITE_URL = 'https://pavloromanenko.com';
 
 export const SOCIAL = {
-  github: 'https://github.com/pavloromanenko',
-  linkedin: 'https://linkedin.com/in/pavloromanenko',
+  github: 'https://github.com/romanenkostud',
+  linkedin: 'https://www.linkedin.com/in/pavlo-romanenko-aa3b4522a',
   email: 'vlm.9v.romanenko.pavlo@gmail.com',
 };
 
 export const NAV_LINKS = [
   { href: '/writing', label: 'writing' },
-  { href: '/garden', label: 'garden' },
+  { href: '/topics', label: 'topics' },
   { href: '/about', label: 'about' },
 ];
 
