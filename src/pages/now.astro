@@ -14,33 +14,33 @@ const updatedLabel = new Date(page.updatedAt)
 ---
 
 <BaseLayout title="Now" description="What I'm currently working on, learning, and reading.">
-  <article style="max-width:780px;margin:0 auto">
+  <article class="page-container">
 
-    <div style="padding:44px 92px 32px;text-align:center">
-      <div style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim);margin-bottom:18px">UPDATED {updatedLabel.toUpperCase()}</div>
-      <div style="font:400 30px/1.25 'Space Grotesk',serif;color:var(--color-ink)">{page.title}</div>
+    <div class="px-[92px] pt-11 pb-8 text-center max-sm:px-4 max-sm:pt-7 max-sm:pb-5">
+      <div class="font-mono text-[11px] text-dim mb-[18px]">UPDATED {updatedLabel.toUpperCase()}</div>
+      <div class="font-heading text-[30px] leading-[1.25] text-ink max-sm:text-2xl">{page.title}</div>
     </div>
 
-    <div style="padding:0 92px 8px">
+    <div class="px-[92px] pb-2 max-sm:px-4">
       {page.body.split('\n\n').map(paragraph => {
         if (paragraph.startsWith('### ')) {
-          return <h3 style="font:600 17px 'Space Grotesk',serif;color:var(--color-ink);margin-top:28px;margin-bottom:12px">{paragraph.replace('### ', '')}</h3>;
+          return <h3 class="font-heading font-semibold text-[17px] text-ink mt-7 mb-3">{paragraph.replace('### ', '')}</h3>;
         }
         if (paragraph.startsWith('## ')) {
-          return <h2 style="font:600 20px 'Space Grotesk',serif;color:var(--color-ink);margin-top:32px;margin-bottom:16px">{paragraph.replace('## ', '')}</h2>;
+          return <h2 class="font-heading font-semibold text-[20px] text-ink mt-8 mb-4">{paragraph.replace('## ', '')}</h2>;
         }
         if (paragraph.startsWith('- ') || paragraph.startsWith('* ')) {
           const items = paragraph.split('\n').filter(l => l.trim());
           return (
-            <ul style="margin:0 0 16px;padding-left:20px;list-style:disc">
+            <ul class="mb-4 pl-5 list-disc">
               {items.map(item => {
                 const text = item.replace(/^[-*]\s+/, '');
                 const parts = text.split(/(\*\*[^*]+\*\*)/g);
                 return (
-                  <li style="font:400 16px/1.7 'Space Grotesk',serif;color:var(--color-body);margin-bottom:4px">
+                  <li class="font-heading text-base leading-[1.7] text-body mb-1">
                     {parts.map(part =>
                       part.startsWith('**') && part.endsWith('**')
-                        ? <strong style="font-weight:600">{part.slice(2, -2)}</strong>
+                        ? <strong class="font-semibold">{part.slice(2, -2)}</strong>
                         : part
                     )}
                   </li>
@@ -50,9 +50,9 @@ const updatedLabel = new Date(page.updatedAt)
           );
         }
         if (paragraph.startsWith('*') && paragraph.endsWith('*') && !paragraph.startsWith('**')) {
-          return <p style="font:400 14px/1.7 'Space Grotesk',serif;font-style:italic;color:var(--color-dim);margin:0 0 16px">{paragraph.slice(1, -1)}</p>;
+          return <p class="font-heading text-sm leading-[1.7] italic text-dim mb-4">{paragraph.slice(1, -1)}</p>;
         }
-        return <p style="font:400 16px/1.7 'Space Grotesk',serif;color:var(--color-body);margin:0 0 16px">{paragraph}</p>;
+        return <p class="font-heading text-base leading-[1.7] text-body mb-4">{paragraph}</p>;
       })}
     </div>
 

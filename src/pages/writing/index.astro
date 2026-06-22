@@ -28,12 +28,12 @@ const href = (overrides?: Parameters<typeof buildListHref>[2]) =>
 ---
 
 <BaseLayout title="Writing" description="Articles on architecture, tools, and home-lab tinkering.">
-  <div style="max-width:780px;margin:0 auto;padding:0 26px">
+  <div class="page-container px-[26px] max-sm:px-4">
 
     <!-- Title + filter chips -->
-    <div style="padding:30px 0 18px">
-      <div style="font:400 26px 'Space Grotesk',serif;color:var(--color-ink)">Everything I've written</div>
-      <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+    <div class="pt-[30px] pb-[18px]">
+      <div class="font-heading text-[26px] text-ink">Everything I've written</div>
+      <div class="flex gap-2 mt-4 flex-wrap">
         <a href={href({ page: 1, filters: {} })} class:list={['chip', { active: !activeArea }]}>all</a>
         {areas.map(({ area, count }) => (
           <a href={href({ page: 1, filters: { area } })} class:list={['chip', { active: activeArea === area }]}>
@@ -46,15 +46,15 @@ const href = (overrides?: Parameters<typeof buildListHref>[2]) =>
     <!-- Posts grouped by year -->
     {years.map(year => (
       <div>
-        <div style="padding:16px 0 8px">
-          <span style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.14em;color:var(--color-indigo)">{year}</span>
+        <div class="pt-4 pb-2">
+          <span class="font-mono font-medium text-[10px] tracking-[.14em] text-indigo">{year}</span>
         </div>
         <div>
           {postsByYear[year].map(post => (
-            <a href={`/writing/${post.slug}`} class="post-row" style="display:flex;align-items:baseline;gap:18px;padding:13px 0;border-top:1px solid var(--color-border-light);text-decoration:none;color:inherit">
-              <span style="width:58px;font:400 11px 'IBM Plex Mono',monospace;color:var(--color-placeholder);flex-shrink:0">{post.publishedAt.slice(0, 7)}</span>
-              <span class="post-title" style="flex:1;font:400 15px 'Space Grotesk',serif;color:var(--color-ink)">{post.title}</span>
-              <span style="font:400 10px 'IBM Plex Mono',monospace;color:var(--color-indigo);flex-shrink:0">{post.area}</span>
+            <a href={`/writing/${post.slug}`} class="group flex items-baseline gap-[18px] py-[13px] border-t border-border-light no-underline text-inherit hover:text-inherit max-sm:flex-col max-sm:gap-1">
+              <span class="w-[58px] font-mono text-[11px] text-placeholder shrink-0">{post.publishedAt.slice(0, 7)}</span>
+              <span class="flex-1 font-heading text-[15px] text-ink group-hover:text-indigo">{post.title}</span>
+              <span class="font-mono text-[10px] text-indigo shrink-0">{post.area}</span>
             </a>
           ))}
         </div>
@@ -62,14 +62,14 @@ const href = (overrides?: Parameters<typeof buildListHref>[2]) =>
     ))}
 
     {posts.length === 0 && (
-      <div style="padding:40px 0;text-align:center;font:400 14px 'IBM Plex Mono',monospace;color:var(--color-placeholder)">
+      <div class="py-10 text-center font-mono text-sm text-placeholder">
         No posts found.
       </div>
     )}
 
     <!-- Pagination -->
     {totalPages > 1 && (
-      <nav class="pagination">
+      <nav class="flex items-center justify-center gap-1 pt-7">
         {currentPage > 1 ? (
           <a href={href({ page: currentPage - 1 })} class="page-link">&larr; prev</a>
         ) : (
@@ -86,77 +86,6 @@ const href = (overrides?: Parameters<typeof buildListHref>[2]) =>
       </nav>
     )}
 
-    <div style="height:24px"></div>
+    <div class="h-6"></div>
   </div>
 </BaseLayout>
-
-<style>
-  a:hover .post-title { color: var(--color-indigo); }
-
-  .chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    border: 1px solid var(--color-border);
-    border-radius: 20px;
-    padding: 6px 13px;
-    font: 400 11px 'IBM Plex Mono', monospace;
-    color: var(--color-meta);
-    background: transparent;
-    text-decoration: none;
-    cursor: pointer;
-    transition: background .2s, color .2s, border-color .2s, transform .15s;
-  }
-  .chip:hover {
-    border-color: var(--color-indigo);
-    color: var(--color-indigo);
-    transform: translateY(-1px);
-  }
-  .chip.active {
-    background: var(--color-ink);
-    color: var(--color-surface);
-    border-color: var(--color-ink);
-  }
-  .chip.active:hover {
-    color: var(--color-surface);
-  }
-  .chip-count {
-    font-size: 9px;
-    opacity: .55;
-  }
-
-  .pagination {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    padding: 28px 0 0;
-  }
-  .page-link {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 32px;
-    height: 32px;
-    padding: 0 10px;
-    border: 1px solid var(--color-border);
-    border-radius: 6px;
-    font: 400 11px 'IBM Plex Mono', monospace;
-    color: var(--color-meta);
-    text-decoration: none;
-    transition: border-color .15s, color .15s, background .15s;
-  }
-  .page-link:hover:not(.disabled):not(.current) {
-    border-color: var(--color-indigo);
-    color: var(--color-indigo);
-  }
-  .page-link.current {
-    background: var(--color-ink);
-    color: var(--color-surface);
-    border-color: var(--color-ink);
-  }
-  .page-link.disabled {
-    opacity: .3;
-    cursor: default;
-  }
-</style>
