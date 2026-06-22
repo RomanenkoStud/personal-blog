@@ -10,8 +10,8 @@
     "build": "astro build",
     "preview": "wrangler pages dev",
     "deploy": "astro build && wrangler pages deploy dist",
-    "db:migrate:local": "node scripts/migrate.cjs local",
-    "db:migrate:remote": "node scripts/migrate.cjs remote",
+    "db:migrate:local": "wrangler d1 migrations apply blog-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply blog-db --remote",
     "db:seed:local": "wrangler d1 execute blog-db --local --file=seed.sql",
     "db:seed:remote": "wrangler d1 execute blog-db --remote --file=seed.sql",
     "astro": "astro"
