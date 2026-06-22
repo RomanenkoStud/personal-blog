@@ -6,7 +6,7 @@ compatibility_flags = ["nodejs_compat"]
 directory = "dist/client"
 
 [vars]
-CF_ACCESS_TEAM_NAME = "your-team-name"
+CF_ACCESS_TEAM_NAME = "holy-night-66db"
 
 [[d1_databases]]
 binding = "DB"
