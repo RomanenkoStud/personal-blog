@@ -11,7 +11,7 @@ CF_ACCESS_TEAM_NAME = "your-team-name"
 [[d1_databases]]
 binding = "DB"
 database_name = "blog-db"
-database_id = "placeholder"
+database_id = "0899d432-b5ff-4c0e-b89f-f69a927bb150"
 
 [[r2_buckets]]
 binding = "MEDIA"
