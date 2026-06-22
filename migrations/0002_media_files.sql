@@ -1,0 +1,14 @@
+DROP TABLE IF EXISTS media_items;
+DROP TABLE IF EXISTS media_collections;
+
+CREATE TABLE IF NOT EXISTS media_files (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  key TEXT NOT NULL UNIQUE,
+  filename TEXT NOT NULL,
+  content_type TEXT NOT NULL,
+  size INTEGER NOT NULL,
+  width INTEGER,
+  height INTEGER,
+  alt TEXT NOT NULL DEFAULT '',
+  uploaded_at TEXT NOT NULL
+);

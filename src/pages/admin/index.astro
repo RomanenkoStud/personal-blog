@@ -28,6 +28,12 @@ const recentPosts = posts.slice(0, 5);
       <div style="font:600 28px 'Space Grotesk',sans-serif;color:var(--color-ink)">{stats.subscriberCount}</div>
     </div>
   </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px">
+    <div style="border:1px solid var(--color-border-light);border-radius:8px;padding:20px">
+      <div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:var(--color-placeholder);text-transform:uppercase;margin-bottom:8px">Media Files</div>
+      <div style="font:600 28px 'Space Grotesk',sans-serif;color:var(--color-ink)">{stats.mediaCount}</div>
+    </div>
+  </div>
 
   <!-- Quick actions -->
   <div style="display:flex;gap:10px;margin-bottom:28px">

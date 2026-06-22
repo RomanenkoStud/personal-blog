@@ -12,3 +12,7 @@ CF_ACCESS_TEAM_NAME = "your-team-name"
 binding = "DB"
 database_name = "blog-db"
 database_id = "placeholder"
+
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "blog-media"

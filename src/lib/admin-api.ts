@@ -1,7 +1,7 @@
 import { desc, eq, sql } from 'drizzle-orm';
 import { getDb } from './db';
 import * as schema from '../db/schema';
-import type { BlogPost, Page } from '../types/content';
+import type { BlogPost, Page, MediaFile } from '../types/content';
 
 export async function getPostById(d1: D1Database, id: number): Promise<BlogPost | null> {
   const db = getDb(d1);
@@ -63,16 +63,57 @@ export async function updatePage(
   return result[0] ?? null;
 }
 
+// --- Media Files ---
+
+export async function getAllMedia(d1: D1Database): Promise<MediaFile[]> {
+  const db = getDb(d1);
+  return db.select().from(schema.mediaFiles).orderBy(desc(schema.mediaFiles.uploadedAt));
+}
+
+export async function getMediaById(d1: D1Database, id: number): Promise<MediaFile | null> {
+  const db = getDb(d1);
+  const results = await db.select().from(schema.mediaFiles).where(eq(schema.mediaFiles.id, id));
+  return results[0] ?? null;
+}
+
+export async function getMediaByKey(d1: D1Database, key: string): Promise<MediaFile | null> {
+  const db = getDb(d1);
+  const results = await db.select().from(schema.mediaFiles).where(eq(schema.mediaFiles.key, key));
+  return results[0] ?? null;
+}
+
+export async function createMediaRecord(d1: D1Database, data: Omit<MediaFile, 'id'>): Promise<MediaFile> {
+  const db = getDb(d1);
+  const result = await db.insert(schema.mediaFiles).values(data).returning();
+  return result[0];
+}
+
+export async function updateMediaAlt(d1: D1Database, id: number, alt: string): Promise<MediaFile | null> {
+  const db = getDb(d1);
+  const result = await db.update(schema.mediaFiles).set({ alt }).where(eq(schema.mediaFiles.id, id)).returning();
+  return result[0] ?? null;
+}
+
+export async function deleteMediaRecord(d1: D1Database, id: number): Promise<MediaFile | null> {
+  const db = getDb(d1);
+  const results = await db.select().from(schema.mediaFiles).where(eq(schema.mediaFiles.id, id));
+  if (!results[0]) return null;
+  await db.delete(schema.mediaFiles).where(eq(schema.mediaFiles.id, id));
+  return results[0];
+}
+
 export async function getDashboardStats(d1: D1Database) {
   const db = getDb(d1);
-  const [posts, pages, subscribers] = await Promise.all([
+  const [posts, pages, subscribers, media] = await Promise.all([
     db.select({ count: sql<number>`count(*)` }).from(schema.posts),
     db.select({ count: sql<number>`count(*)` }).from(schema.pages),
     db.select({ count: sql<number>`count(*)` }).from(schema.newsletterSubscribers),
+    db.select({ count: sql<number>`count(*)` }).from(schema.mediaFiles),
   ]);
   return {
     postCount: Number(posts[0].count),
     pageCount: Number(pages[0].count),
     subscriberCount: Number(subscribers[0].count),
+    mediaCount: Number(media[0].count),
   };
 }

@@ -44,6 +44,33 @@ export function validatePage(data: Record<string, unknown>): ValidationResult {
   return { valid: Object.keys(errors).length === 0, errors };
 }
 
+const ALLOWED_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/svg+xml',
+  'image/avif',
+]);
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
+export function validateUpload(file: File): ValidationResult {
+  const errors: Record<string, string> = {};
+
+  if (!ALLOWED_TYPES.has(file.type)) {
+    errors.file = 'Only JPEG, PNG, GIF, WebP, AVIF, and SVG files are allowed';
+  }
+  if (file.size > MAX_FILE_SIZE) {
+    errors.file = 'File must be under 10 MB';
+  }
+  if (file.size === 0) {
+    errors.file = 'File is empty';
+  }
+
+  return { valid: Object.keys(errors).length === 0, errors };
+}
+
 export function slugify(text: string): string {
   return text
     .toLowerCase()

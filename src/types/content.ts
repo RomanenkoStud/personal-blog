@@ -17,3 +17,15 @@ export interface Page {
   body: string;
   updatedAt: string;
 }
+
+export interface MediaFile {
+  id: number;
+  key: string;
+  filename: string;
+  contentType: string;
+  size: number;
+  width: number | null;
+  height: number | null;
+  alt: string;
+  uploadedAt: string;
+}

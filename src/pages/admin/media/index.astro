@@ -1,0 +1,47 @@
+---
+import AdminLayout from '../../../layouts/Admin.astro';
+import { getAllMedia } from '../../../lib/admin-api';
+import { env } from 'cloudflare:workers';
+
+const files = await getAllMedia(env.DB);
+---
+
+<AdminLayout title="Media" activeNav="media">
+
+  <div style="font:400 26px 'Space Grotesk',sans-serif;color:var(--color-ink);margin-bottom:24px">Media</div>
+
+  <!-- Upload area -->
+  <div style="margin-bottom:28px">
+    <media-uploader></media-uploader>
+  </div>
+
+  <!-- File count -->
+  <div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:var(--color-placeholder);text-transform:uppercase;margin-bottom:12px">
+    {files.length} file{files.length !== 1 ? 's' : ''}
+  </div>
+
+  {files.length === 0 ? (
+    <div style="text-align:center;padding:48px 0;font:400 14px 'Space Grotesk',sans-serif;color:var(--color-dim)">
+      No images uploaded yet. Drag & drop or browse to upload.
+    </div>
+  ) : (
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px">
+      {files.map(file => (
+        <media-card
+          fileId={file.id}
+          fileKey={file.key}
+          filename={file.filename}
+          contentType={file.contentType}
+          size={file.size}
+          alt={file.alt}
+        ></media-card>
+      ))}
+    </div>
+  )}
+
+</AdminLayout>
+
+<script>
+  import '../../../components/admin/MediaUploader';
+  import '../../../components/admin/MediaCard';
+</script>
