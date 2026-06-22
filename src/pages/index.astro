@@ -1,10 +1,24 @@
 ---
 import BaseLayout from '../layouts/Base.astro';
-import { getPosts } from '../lib/api';
+import { getPosts, getPage } from '../lib/api';
 import { env } from 'cloudflare:workers';
 
 const posts = await getPosts(env.DB);
 const latestPosts = posts.slice(0, 5);
+const nowPage = await getPage(env.DB, 'now');
+
+const nowSnippet = nowPage
+  ? nowPage.body
+      .replace(/^#{1,3}\s+.+$/gm, '')
+      .replace(/\*{1,2}([^*]+)\*{1,2}/g, '$1')
+      .replace(/^[-*]\s+/gm, '')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/\n{2,}/g, ' ')
+      .replace(/\n/g, ' ')
+      .trim()
+      .slice(0, 120)
+      .replace(/\s\S*$/, '…')
+  : null;
 ---
 
 <BaseLayout>
@@ -36,11 +50,17 @@ const latestPosts = posts.slice(0, 5);
 
     <!-- Bottom row: Now + Newsletter -->
     <div style="display:flex;gap:16px;padding:18px 26px 24px">
-      <div style="flex:1;position:relative;border:1px dashed var(--color-border);border-radius:6px;padding:24px 14px 14px">
+      <a href="/now" class="now-card" style="flex:1;position:relative;border:1px dashed var(--color-border);border-radius:6px;padding:24px 14px 14px;text-decoration:none;display:block">
         <span style="position:absolute;top:8px;left:11px;font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:var(--color-placeholder);text-transform:uppercase">now</span>
-        <div style="height:8px;width:88%;background:var(--color-skeleton);border-radius:3px;margin-bottom:7px"></div>
-        <div style="height:8px;width:64%;background:var(--color-skeleton);border-radius:3px"></div>
-      </div>
+        {nowSnippet ? (
+          <div style="font:400 13px/1.6 'Space Grotesk',serif;color:var(--color-body)">{nowSnippet}</div>
+        ) : (
+          <div>
+            <div style="height:8px;width:88%;background:var(--color-skeleton);border-radius:3px;margin-bottom:7px"></div>
+            <div style="height:8px;width:64%;background:var(--color-skeleton);border-radius:3px"></div>
+          </div>
+        )}
+      </a>
       <form action="/api/newsletter" method="post" style="flex:1;background:var(--color-newsletter-bg);border-radius:6px;padding:16px 16px;margin:0">
         <div style="font:400 13px 'Space Grotesk',serif;color:var(--color-ink)">A slow newsletter, when I publish.</div>
         <div style="display:flex;gap:7px;margin-top:11px">
@@ -64,5 +84,6 @@ const latestPosts = posts.slice(0, 5);
 
 <style>
   .post-row:hover .post-title { color: var(--color-indigo) !important; }
+  .now-card:hover { border-color: var(--color-indigo) !important; }
   input::placeholder { color: var(--color-placeholder); }
 </style>

@@ -1,0 +1,60 @@
+---
+import BaseLayout from '../layouts/Base.astro';
+import { getPage } from '../lib/api';
+import { env } from 'cloudflare:workers';
+
+const page = await getPage(env.DB, 'now');
+
+if (!page) {
+  return Astro.redirect('/404');
+}
+
+const updatedLabel = new Date(page.updatedAt)
+  .toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+---
+
+<BaseLayout title="Now" description="What I'm currently working on, learning, and reading.">
+  <article style="max-width:780px;margin:0 auto">
+
+    <div style="padding:44px 92px 32px;text-align:center">
+      <div style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim);margin-bottom:18px">UPDATED {updatedLabel.toUpperCase()}</div>
+      <div style="font:400 30px/1.25 'Space Grotesk',serif;color:var(--color-ink)">{page.title}</div>
+    </div>
+
+    <div style="padding:0 92px 8px">
+      {page.body.split('\n\n').map(paragraph => {
+        if (paragraph.startsWith('### ')) {
+          return <h3 style="font:600 17px 'Space Grotesk',serif;color:var(--color-ink);margin-top:28px;margin-bottom:12px">{paragraph.replace('### ', '')}</h3>;
+        }
+        if (paragraph.startsWith('## ')) {
+          return <h2 style="font:600 20px 'Space Grotesk',serif;color:var(--color-ink);margin-top:32px;margin-bottom:16px">{paragraph.replace('## ', '')}</h2>;
+        }
+        if (paragraph.startsWith('- ') || paragraph.startsWith('* ')) {
+          const items = paragraph.split('\n').filter(l => l.trim());
+          return (
+            <ul style="margin:0 0 16px;padding-left:20px;list-style:disc">
+              {items.map(item => {
+                const text = item.replace(/^[-*]\s+/, '');
+                const parts = text.split(/(\*\*[^*]+\*\*)/g);
+                return (
+                  <li style="font:400 16px/1.7 'Space Grotesk',serif;color:var(--color-body);margin-bottom:4px">
+                    {parts.map(part =>
+                      part.startsWith('**') && part.endsWith('**')
+                        ? <strong style="font-weight:600">{part.slice(2, -2)}</strong>
+                        : part
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          );
+        }
+        if (paragraph.startsWith('*') && paragraph.endsWith('*') && !paragraph.startsWith('**')) {
+          return <p style="font:400 14px/1.7 'Space Grotesk',serif;font-style:italic;color:var(--color-dim);margin:0 0 16px">{paragraph.slice(1, -1)}</p>;
+        }
+        return <p style="font:400 16px/1.7 'Space Grotesk',serif;color:var(--color-body);margin:0 0 16px">{paragraph}</p>;
+      })}
+    </div>
+
+  </article>
+</BaseLayout>
