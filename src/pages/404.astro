@@ -1,0 +1,21 @@
+---
+import BaseLayout from '../layouts/Base.astro';
+
+export const prerender = true;
+---
+
+<BaseLayout title="Page Not Found">
+  <div class="mx-auto max-w-[780px] px-6 py-20 text-center">
+    <p class="font-mono text-[11px] text-dim tracking-wide uppercase mb-4">404 · page not found</p>
+    <h1 class="font-heading font-normal text-[28px] text-ink mb-4">This page doesn't exist.</h1>
+    <p class="font-heading text-base text-body mb-8">
+      The page you're looking for may have been moved or removed.
+    </p>
+    <a
+      href="/"
+      class="inline-block bg-indigo rounded-md px-5 py-2.5 font-mono text-[11px] font-medium text-white no-underline hover:bg-periwinkle transition-colors"
+    >
+      ← back home
+    </a>
+  </div>
+</BaseLayout>

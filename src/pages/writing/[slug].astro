@@ -1,0 +1,84 @@
+---
+import BaseLayout from '../../layouts/Base.astro';
+import { getPostBySlug, getPosts } from '../../lib/api';
+
+const { slug } = Astro.params;
+
+if (!slug) {
+  return Astro.redirect('/writing');
+}
+
+const post = await getPostBySlug(slug);
+
+if (!post) {
+  return Astro.redirect('/404');
+}
+
+const allPosts = await getPosts();
+const relatedPosts = allPosts
+  .filter(p => p.area === post.area && p.slug !== post.slug)
+  .slice(0, 3);
+
+const dateLabel = new Date(post.publishedAt)
+  .toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  .toUpperCase();
+---
+
+<BaseLayout
+  title={post.title}
+  description={post.excerpt}
+  ogType="article"
+  publishedAt={post.publishedAt}
+>
+  <article style="max-width:780px;margin:0 auto">
+
+    <!-- Header -->
+    <div style="padding:44px 92px 32px;text-align:center">
+      <div style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim);margin-bottom:18px">{post.area.toUpperCase()} &middot; {post.readTime} MIN &middot; {dateLabel}</div>
+      <div style="font:400 30px/1.25 'Space Grotesk',serif;color:var(--color-ink)">{post.title}</div>
+      {post.excerpt && (
+        <div style="margin-top:16px;font:400 13px 'Space Grotesk',serif;font-style:italic;color:var(--color-meta)">{post.excerpt}</div>
+      )}
+    </div>
+
+    <!-- Body -->
+    <div style="padding:0 92px 8px">
+      {post.body.split('\n\n').map(paragraph => {
+        if (paragraph.startsWith('## ')) {
+          return <h2 style="font:600 20px 'Space Grotesk',serif;color:var(--color-ink);margin-top:32px;margin-bottom:16px">{paragraph.replace('## ', '')}</h2>;
+        }
+        if (paragraph.startsWith('# ')) {
+          return <h1 style="font:700 24px 'Space Grotesk',serif;color:var(--color-ink);margin-top:32px;margin-bottom:16px">{paragraph.replace('# ', '')}</h1>;
+        }
+        if (paragraph.startsWith('> ')) {
+          return (
+            <div style="padding:20px 0;text-align:center">
+              <div style="font:400 21px/1.4 'Space Grotesk',serif;font-style:italic;color:var(--color-ink);max-width:540px;margin:0 auto">
+                &ldquo;{paragraph.replace(/^>\s*"?/, '').replace(/"$/, '')}&rdquo;
+              </div>
+            </div>
+          );
+        }
+        return <p style="font:400 16px/1.7 'Space Grotesk',serif;color:var(--color-body);margin:0 0 16px">{paragraph}</p>;
+      })}
+    </div>
+
+    <!-- Related notes -->
+    {relatedPosts.length > 0 && (
+      <div style="margin:12px 92px 30px;border-top:1px solid var(--color-border-light);padding-top:18px">
+        <span style="font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:var(--color-placeholder);text-transform:uppercase">related notes</span>
+        <div style="display:flex;gap:9px;margin-top:11px;flex-wrap:wrap">
+          {relatedPosts.map(related => (
+            <a
+              href={`/writing/${related.slug}`}
+              style="border:1px solid var(--color-newsletter-border);background:var(--color-newsletter-bg);border-radius:20px;padding:5px 12px;font:400 11px 'IBM Plex Mono',monospace;color:var(--color-indigo);text-decoration:none"
+            >
+              {related.title.length > 40 ? related.title.slice(0, 40) + '…' : related.title}
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
+
+  </article>
+</BaseLayout>

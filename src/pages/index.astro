@@ -1,0 +1,67 @@
+---
+import BaseLayout from '../layouts/Base.astro';
+import { getPosts } from '../lib/api';
+
+const posts = await getPosts();
+const latestPosts = posts.slice(0, 5);
+---
+
+<BaseLayout>
+  <div style="max-width:780px;margin:0 auto;padding:0">
+
+    <!-- Hero -->
+    <div style="display:flex;gap:30px;padding:42px 26px 34px;align-items:flex-start">
+      <div style="flex:1">
+        <div style="font:400 34px/1.22 'Space Grotesk',serif;color:var(--color-ink)">Hi, I'm Pavlo.</div>
+        <div style="margin-top:16px;font:400 16px/1.6 'Space Grotesk',serif;color:var(--color-body);max-width:400px">I'm a frontend engineer in Munich who cares more about systems than frameworks. This is where I write about the architecture, tools, and home-lab tinkering behind the work.</div>
+        <div style="margin-top:18px;font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim);letter-spacing:.04em">frontend engineer &middot; systems &amp; architecture &middot; munich</div>
+      </div>
+      <div style="width:170px;height:200px;flex:none;border:1px dashed var(--color-border);background:var(--color-border-light);border-radius:6px;display:flex;align-items:center;justify-content:center;font:400 10px 'IBM Plex Mono',monospace;color:var(--color-placeholder)">[ portrait ]</div>
+    </div>
+
+    <!-- Latest writing -->
+    <div style="padding:4px 26px 10px">
+      <div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.14em;color:var(--color-placeholder);text-transform:uppercase;margin-bottom:4px">latest writing</div>
+      {latestPosts.map(post => (
+        <a href={`/writing/${post.slug}`} class="post-row" style={`display:block;padding:14px 0;border-bottom:1px solid var(--color-border-light);text-decoration:none;color:inherit`}>
+          <div class="post-title" style="font:400 17px 'Space Grotesk',serif;color:var(--color-ink)">{post.title}</div>
+          <div style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim);margin-top:5px">
+            {post.publishedAt.slice(0, 7)} &middot; <span style="color:var(--color-indigo)">{post.area}</span>
+            {post.readTime ? <span> &middot; {post.readTime} min</span> : null}
+          </div>
+        </a>
+      ))}
+    </div>
+
+    <!-- Bottom row: Now + Newsletter -->
+    <div style="display:flex;gap:16px;padding:18px 26px 24px">
+      <div style="flex:1;position:relative;border:1px dashed var(--color-border);border-radius:6px;padding:24px 14px 14px">
+        <span style="position:absolute;top:8px;left:11px;font:500 9px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:var(--color-placeholder);text-transform:uppercase">now</span>
+        <div style="height:8px;width:88%;background:var(--color-skeleton);border-radius:3px;margin-bottom:7px"></div>
+        <div style="height:8px;width:64%;background:var(--color-skeleton);border-radius:3px"></div>
+      </div>
+      <form action="/api/newsletter" method="post" style="flex:1;background:var(--color-newsletter-bg);border-radius:6px;padding:16px 16px;margin:0">
+        <div style="font:400 13px 'Space Grotesk',serif;color:var(--color-ink)">A slow newsletter, when I publish.</div>
+        <div style="display:flex;gap:7px;margin-top:11px">
+          <input
+            type="email"
+            name="email"
+            required
+            placeholder="you@email…"
+            style="flex:1;height:30px;border:1px solid var(--color-border);background:var(--color-surface);border-radius:5px;display:flex;align-items:center;padding:0 9px;font:400 10px 'IBM Plex Mono',monospace;color:var(--color-ink);outline:none;box-sizing:border-box"
+          />
+          <button
+            type="submit"
+            style="height:30px;background:#4f56e8;border:none;border-radius:5px;display:flex;align-items:center;padding:0 14px;font:500 10px 'IBM Plex Mono',monospace;color:#fff;cursor:pointer"
+          >join</button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</BaseLayout>
+
+<style>
+  .post-row:hover .post-title { color: var(--color-indigo) !important; }
+  input::placeholder { color: var(--color-placeholder); }
+</style>

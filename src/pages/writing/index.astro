@@ -1,0 +1,56 @@
+---
+import BaseLayout from '../../layouts/Base.astro';
+import { getPosts } from '../../lib/api';
+import { AREAS } from '../../consts';
+
+const posts = await getPosts();
+
+const postsByYear = posts.reduce<Record<string, typeof posts>>((acc, post) => {
+  const year = new Date(post.publishedAt).getFullYear().toString();
+  if (!acc[year]) acc[year] = [];
+  acc[year].push(post);
+  return acc;
+}, {});
+
+const years = Object.keys(postsByYear).sort((a, b) => Number(b) - Number(a));
+---
+
+<BaseLayout title="Writing" description="Articles on architecture, tools, and home-lab tinkering.">
+  <div style="max-width:780px;margin:0 auto;padding:0 26px">
+
+    <!-- Title + filter chips -->
+    <div style="padding:30px 0 18px">
+      <div style="font:400 26px 'Space Grotesk',serif;color:var(--color-ink)">Everything I've written</div>
+      <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+        <span style="background:var(--color-ink);border-radius:20px;padding:6px 13px;font:400 11px 'IBM Plex Mono',monospace;color:var(--color-surface)">all</span>
+        {AREAS.map(area => (
+          <span style="border:1px solid var(--color-border);border-radius:20px;padding:6px 13px;font:400 11px 'IBM Plex Mono',monospace;color:var(--color-meta);cursor:pointer">{area}</span>
+        ))}
+      </div>
+    </div>
+
+    <!-- Posts grouped by year -->
+    {years.map(year => (
+      <div>
+        <div style="padding:16px 0 8px">
+          <span style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.14em;color:var(--color-indigo)">{year}</span>
+        </div>
+        <div>
+          {postsByYear[year].map(post => (
+            <a href={`/writing/${post.slug}`} style="display:flex;align-items:baseline;gap:18px;padding:13px 0;border-top:1px solid var(--color-border-light);text-decoration:none;color:inherit">
+              <span style="width:58px;font:400 11px 'IBM Plex Mono',monospace;color:var(--color-placeholder);flex-shrink:0">{post.publishedAt.slice(0, 7)}</span>
+              <span class="post-title" style="flex:1;font:400 15px 'Space Grotesk',serif;color:var(--color-ink)">{post.title}</span>
+              <span style="font:400 10px 'IBM Plex Mono',monospace;color:var(--color-indigo);flex-shrink:0">{post.area}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    ))}
+
+    <div style="height:24px"></div>
+  </div>
+</BaseLayout>
+
+<style>
+  a:hover .post-title { color: var(--color-indigo); }
+</style>
