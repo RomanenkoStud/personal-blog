@@ -13,6 +13,10 @@ binding = "DB"
 database_name = "blog-db"
 database_id = "0899d432-b5ff-4c0e-b89f-f69a927bb150"
 
+[[kv_namespaces]]
+binding = "SESSION"
+id = "0d1e4fa8c8d240039f87a4c295261aec"
+
 [[r2_buckets]]
 binding = "MEDIA"
 bucket_name = "blog-media"
