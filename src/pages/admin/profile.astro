@@ -6,12 +6,17 @@ import { env } from 'cloudflare:workers';
 const page = await getPage(env.DB, 'about');
 
 const defaults = {
+  heroName: '',
+  heroBio: '',
+  heroTagline: '',
+  heroPhoto: '/img5.jpg',
   tagline: '',
   bio: '',
   photo: '/img3.jpg',
   location: '',
   whatIDo: ['', '', ''],
-  experience: [{ title: '', meta: '' }],
+  experience: [{ title: '', startDate: '', endDate: '', location: '' }],
+  education: [{ title: '', startDate: '', endDate: '', location: '' }],
   tech: [] as string[],
   cta: '',
 };
@@ -34,6 +39,33 @@ if (page) {
   </div>
 
   <form id="profile-form" style="display:flex;flex-direction:column;gap:24px;max-width:720px">
+
+    <!-- Homepage hero -->
+    <div class="section-divider">Homepage</div>
+
+    <div class="field">
+      <label for="heroName" class="field-label">Hero heading</label>
+      <input type="text" id="heroName" name="heroName" value={data.heroName} class="field-input" placeholder="Hi, I'm Pavlo." />
+    </div>
+
+    <div class="field">
+      <label for="heroBio" class="field-label">Hero bio</label>
+      <textarea id="heroBio" name="heroBio" rows="2" class="field-textarea" placeholder="I'm a frontend engineer in Munich who...">{data.heroBio}</textarea>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="field">
+        <label for="heroTagline" class="field-label">Hero tagline</label>
+        <input type="text" id="heroTagline" name="heroTagline" value={data.heroTagline} class="field-input" placeholder="frontend engineer · systems · munich" />
+      </div>
+      <div class="field">
+        <label for="heroPhoto" class="field-label">Hero photo path</label>
+        <input type="text" id="heroPhoto" name="heroPhoto" value={data.heroPhoto} class="field-input" placeholder="/img5.jpg" />
+      </div>
+    </div>
+
+    <!-- About page -->
+    <div class="section-divider">About page</div>
 
     <!-- Tagline -->
     <div class="field">
@@ -77,16 +109,67 @@ if (page) {
     <!-- Experience -->
     <div class="field">
       <label class="field-label">Experience</label>
-      <div id="experience-list" style="display:flex;flex-direction:column;gap:10px">
+      <div id="experience-list" style="display:flex;flex-direction:column;gap:14px">
         {data.experience.map(exp => (
-          <div class="exp-row" style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center">
-            <input type="text" name="exp-title" value={exp.title} class="field-input" placeholder="Frontend Developer · Company" />
-            <input type="text" name="exp-meta" value={exp.meta} class="field-input" placeholder="aug 2023 – present · hybrid" />
-            <button type="button" class="remove-btn" title="Remove">×</button>
+          <div class="exp-row" style="border:1px solid var(--color-border-light);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="text" name="exp-title" value={exp.title} class="field-input" style="flex:1" placeholder="Frontend Developer · Company" />
+              <button type="button" class="remove-btn" title="Remove">×</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:center">
+              <div>
+                <label class="field-label-sm">Start</label>
+                <input type="month" name="exp-start" value={exp.startDate} class="field-input" />
+              </div>
+              <div>
+                <label class="field-label-sm">End</label>
+                <div style="display:flex;flex-direction:column;gap:4px">
+                  <input type="month" name="exp-end" value={exp.endDate} class="field-input" disabled={!exp.endDate} />
+                  <label class="present-label"><input type="checkbox" name="exp-present" checked={!exp.endDate} class="present-check" /> Present</label>
+                </div>
+              </div>
+              <div>
+                <label class="field-label-sm">Location</label>
+                <input type="text" name="exp-location" value={exp.location} class="field-input" placeholder="hybrid" />
+              </div>
+            </div>
           </div>
         ))}
       </div>
       <button type="button" id="add-experience" class="add-btn">+ add entry</button>
+    </div>
+
+    <!-- Education -->
+    <div class="field">
+      <label class="field-label">Education</label>
+      <div id="education-list" style="display:flex;flex-direction:column;gap:14px">
+        {data.education.map(edu => (
+          <div class="edu-row" style="border:1px solid var(--color-border-light);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="text" name="edu-title" value={edu.title} class="field-input" style="flex:1" placeholder="B.Sc. Computer Engineering · University" />
+              <button type="button" class="remove-btn" title="Remove">×</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:center">
+              <div>
+                <label class="field-label-sm">Start</label>
+                <input type="month" name="edu-start" value={edu.startDate} class="field-input" />
+              </div>
+              <div>
+                <label class="field-label-sm">End</label>
+                <div style="display:flex;flex-direction:column;gap:4px">
+                  <input type="month" name="edu-end" value={edu.endDate} class="field-input" disabled={!edu.endDate} />
+                  <label class="present-label"><input type="checkbox" name="edu-present" checked={!edu.endDate} class="present-check" /> Present</label>
+                </div>
+              </div>
+              <div>
+                <label class="field-label-sm">Location</label>
+                <input type="text" name="edu-location" value={edu.location} class="field-input" placeholder="Kharkiv" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <button type="button" id="add-education" class="add-btn">+ add entry</button>
     </div>
 
     <!-- Tech -->
@@ -152,22 +235,91 @@ if (page) {
     });
   }
 
-  // --- Experience: add/remove ---
+  // --- Experience: add/remove + present toggle ---
   const expList = document.getElementById('experience-list');
   document.getElementById('add-experience').addEventListener('click', () => {
     const row = document.createElement('div');
     row.className = 'exp-row';
-    row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center';
+    row.style.cssText = 'border:1px solid var(--color-border-light);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:8px';
     row.innerHTML = `
-      <input type="text" name="exp-title" class="field-input" placeholder="Frontend Developer · Company" />
-      <input type="text" name="exp-meta" class="field-input" placeholder="aug 2023 – present · hybrid" />
-      <button type="button" class="remove-btn" title="Remove">×</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="text" name="exp-title" class="field-input" style="flex:1" placeholder="Frontend Developer · Company" />
+        <button type="button" class="remove-btn" title="Remove">×</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:center">
+        <div>
+          <label class="field-label-sm">Start</label>
+          <input type="month" name="exp-start" class="field-input" />
+        </div>
+        <div>
+          <label class="field-label-sm">End</label>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <input type="month" name="exp-end" class="field-input" disabled />
+            <label class="present-label"><input type="checkbox" name="exp-present" class="present-check" checked /> Present</label>
+          </div>
+        </div>
+        <div>
+          <label class="field-label-sm">Location</label>
+          <input type="text" name="exp-location" class="field-input" placeholder="hybrid" />
+        </div>
+      </div>
     `;
     expList.appendChild(row);
   });
   expList.addEventListener('click', (e) => {
     if (e.target.classList.contains('remove-btn')) {
       e.target.closest('.exp-row').remove();
+    }
+  });
+  expList.addEventListener('change', (e) => {
+    if (e.target.classList.contains('present-check')) {
+      const endInput = e.target.closest('.exp-row').querySelector('input[name="exp-end"]');
+      endInput.disabled = e.target.checked;
+      if (e.target.checked) endInput.value = '';
+    }
+  });
+
+  // --- Education: add/remove + present toggle ---
+  const eduList = document.getElementById('education-list');
+  document.getElementById('add-education').addEventListener('click', () => {
+    const row = document.createElement('div');
+    row.className = 'edu-row';
+    row.style.cssText = 'border:1px solid var(--color-border-light);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:8px';
+    row.innerHTML = `
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="text" name="edu-title" class="field-input" style="flex:1" placeholder="B.Sc. Computer Engineering · University" />
+        <button type="button" class="remove-btn" title="Remove">×</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:center">
+        <div>
+          <label class="field-label-sm">Start</label>
+          <input type="month" name="edu-start" class="field-input" />
+        </div>
+        <div>
+          <label class="field-label-sm">End</label>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <input type="month" name="edu-end" class="field-input" disabled />
+            <label class="present-label"><input type="checkbox" name="edu-present" class="present-check" checked /> Present</label>
+          </div>
+        </div>
+        <div>
+          <label class="field-label-sm">Location</label>
+          <input type="text" name="edu-location" class="field-input" placeholder="Kharkiv" />
+        </div>
+      </div>
+    `;
+    eduList.appendChild(row);
+  });
+  eduList.addEventListener('click', (e) => {
+    if (e.target.classList.contains('remove-btn')) {
+      e.target.closest('.edu-row').remove();
+    }
+  });
+  eduList.addEventListener('change', (e) => {
+    if (e.target.classList.contains('present-check')) {
+      const endInput = e.target.closest('.edu-row').querySelector('input[name="edu-end"]');
+      endInput.disabled = e.target.checked;
+      if (e.target.checked) endInput.value = '';
     }
   });
 
@@ -200,6 +352,10 @@ if (page) {
     e.preventDefault();
 
     const body = JSON.stringify({
+      heroName: form.querySelector('#heroName').value,
+      heroBio: form.querySelector('#heroBio').value,
+      heroTagline: form.querySelector('#heroTagline').value,
+      heroPhoto: form.querySelector('#heroPhoto').value,
       tagline: form.querySelector('#tagline').value,
       bio: form.querySelector('#bio').value,
       photo: form.querySelector('#photo').value,
@@ -207,7 +363,15 @@ if (page) {
       whatIDo: [...form.querySelectorAll('input[name="whatIDo"]')].map(el => el.value).filter(Boolean),
       experience: [...form.querySelectorAll('.exp-row')].map(row => ({
         title: row.querySelector('input[name="exp-title"]').value,
-        meta: row.querySelector('input[name="exp-meta"]').value,
+        startDate: row.querySelector('input[name="exp-start"]').value,
+        endDate: row.querySelector('input[name="exp-present"]').checked ? '' : row.querySelector('input[name="exp-end"]').value,
+        location: row.querySelector('input[name="exp-location"]').value,
+      })).filter(r => r.title),
+      education: [...form.querySelectorAll('.edu-row')].map(row => ({
+        title: row.querySelector('input[name="edu-title"]').value,
+        startDate: row.querySelector('input[name="edu-start"]').value,
+        endDate: row.querySelector('input[name="edu-present"]').checked ? '' : row.querySelector('input[name="edu-end"]').value,
+        location: row.querySelector('input[name="edu-location"]').value,
       })).filter(r => r.title),
       tech: [...techTags.querySelectorAll('.tag')].map(el => el.firstChild.textContent.trim()),
       cta: form.querySelector('#cta').value,
@@ -339,6 +503,33 @@ if (page) {
     line-height: 1;
   }
   .tag-remove:hover { color: #dc2626; }
+  .field-label-sm {
+    display: block;
+    font: 500 9px 'IBM Plex Mono', monospace;
+    color: var(--color-placeholder);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .present-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font: 400 11px 'IBM Plex Mono', monospace;
+    color: var(--color-dim);
+    cursor: pointer;
+  }
+  .present-check {
+    accent-color: var(--color-indigo);
+  }
+  .section-divider {
+    font: 500 11px 'IBM Plex Mono', monospace;
+    color: var(--color-indigo);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--color-border-light);
+  }
   .submit-btn {
     height: 38px;
     background: #4f56e8;

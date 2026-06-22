@@ -12,7 +12,8 @@ const defaults = {
   photo: '/img3.jpg',
   location: 'munich · remote',
   whatIDo: [] as string[],
-  experience: [] as { title: string; meta: string }[],
+  experience: [] as { title: string; startDate: string; endDate: string; location: string }[],
+  education: [] as { title: string; startDate: string; endDate: string; location: string }[],
   tech: [] as string[],
   cta: '',
 };
@@ -22,6 +23,31 @@ if (page) {
   try {
     data = { ...defaults, ...JSON.parse(page.body) };
   } catch {}
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function formatDateRange(startDate: string, endDate: string) {
+  if (!startDate) return '';
+  const [sy, sm] = startDate.split('-').map(Number);
+  const startLabel = `${MONTHS[sm - 1]} ${sy}`;
+
+  const now = new Date();
+  const ey = endDate ? Number(endDate.split('-')[0]) : now.getFullYear();
+  const em = endDate ? Number(endDate.split('-')[1]) : now.getMonth() + 1;
+  const endLabel = endDate ? `${MONTHS[em - 1]} ${ey}` : 'Present';
+
+  let totalMonths = (ey - sy) * 12 + (em - sm) + 1;
+  if (totalMonths < 1) totalMonths = 1;
+  const years = Math.floor(totalMonths / 12);
+  const months = totalMonths % 12;
+
+  const parts: string[] = [];
+  if (years > 0) parts.push(`${years} yr${years > 1 ? 's' : ''}`);
+  if (months > 0) parts.push(`${months} mo${months > 1 ? 's' : ''}`);
+  const duration = parts.join(' ');
+
+  return `${startLabel} – ${endLabel} · ${duration}`;
 }
 ---
 
@@ -69,7 +95,27 @@ if (page) {
               {data.experience.map(exp => (
                 <div>
                   <div style="font:400 13px 'Space Grotesk',serif;color:var(--color-ink)">{exp.title}</div>
-                  <div style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim)">{exp.meta}</div>
+                  <div style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim)">
+                    {formatDateRange(exp.startDate, exp.endDate)}
+                    {exp.location && <span> · {exp.location}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {data.education.length > 0 && (
+          <>
+            <div style="margin-top:24px;font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.12em;color:var(--color-placeholder);text-transform:uppercase">education</div>
+            <div style="margin-top:12px;border-left:2px solid var(--color-border-light);padding-left:14px;display:flex;flex-direction:column;gap:12px">
+              {data.education.map(edu => (
+                <div>
+                  <div style="font:400 13px 'Space Grotesk',serif;color:var(--color-ink)">{edu.title}</div>
+                  <div style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim)">
+                    {formatDateRange(edu.startDate, edu.endDate)}
+                    {edu.location && <span> · {edu.location}</span>}
+                  </div>
                 </div>
               ))}
             </div>

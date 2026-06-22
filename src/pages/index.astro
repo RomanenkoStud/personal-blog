@@ -6,6 +6,18 @@ import { env } from 'cloudflare:workers';
 const posts = await getPosts(env.DB);
 const latestPosts = posts.slice(0, 5);
 const nowPage = await getPage(env.DB, 'now');
+const aboutPage = await getPage(env.DB, 'about');
+
+const profile = (() => {
+  const defaults = {
+    heroName: "Hi, I'm Pavlo.",
+    heroBio: "I'm a frontend engineer in Munich who cares more about systems than frameworks. This is where I write about the architecture, tools, and home-lab tinkering behind the work.",
+    heroTagline: 'frontend engineer · systems & architecture · munich',
+    heroPhoto: '/img5.jpg',
+  };
+  if (!aboutPage) return defaults;
+  try { return { ...defaults, ...JSON.parse(aboutPage.body) }; } catch { return defaults; }
+})();
 
 const nowSnippet = nowPage
   ? nowPage.body
@@ -26,9 +38,9 @@ const nowSnippet = nowPage
 
     <section class="hero">
       <div class="hero-text">
-        <h1 class="hero-name">Hi, I'm Pavlo.</h1>
-        <p class="hero-bio">I'm a frontend engineer in Munich who cares more about systems than frameworks. This is where I write about the architecture, tools, and home-lab tinkering behind the work.</p>
-        <div class="hero-tagline">frontend engineer &middot; systems &amp; architecture &middot; munich</div>
+        <h1 class="hero-name">{profile.heroName}</h1>
+        <p class="hero-bio">{profile.heroBio}</p>
+        <div class="hero-tagline">{profile.heroTagline}</div>
       </div>
       <div class="hero-terminal">
         <div class="terminal-bar">
@@ -36,7 +48,7 @@ const nowSnippet = nowPage
           <span class="terminal-title">~/photos/summit.jpg</span>
         </div>
         <div class="terminal-img-wrap">
-          <img src="/img5.jpg" alt="Pavlo Romanenko" class="hero-photo" />
+          <img src={profile.heroPhoto} alt="Pavlo Romanenko" class="hero-photo" />
         </div>
       </div>
     </section>

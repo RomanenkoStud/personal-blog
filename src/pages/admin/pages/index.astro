@@ -3,7 +3,7 @@ import AdminLayout from '../../../layouts/Admin.astro';
 import { getAllPages } from '../../../lib/admin-api';
 import { env } from 'cloudflare:workers';
 
-const pages = await getAllPages(env.DB);
+const pages = (await getAllPages(env.DB)).filter(p => p.slug !== 'about');
 ---
 
 <AdminLayout title="Pages" activeNav="pages">
