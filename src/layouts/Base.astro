@@ -1,7 +1,6 @@
 ---
 import Head from '../components/Head.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
-import { SearchModal } from '../components/SearchModal';
 import { NAV_LINKS } from '../consts';
 import '../styles/global.css';
 
@@ -64,7 +63,7 @@ const currentPath = Astro.url.pathname;
           <span class="search-label">search…</span>
           <kbd>⌘K</kbd>
         </button>
-        <SearchModal client:only="lit" />
+        <search-modal></search-modal>
         <ThemeToggle />
       </div>
     </div>
@@ -88,6 +87,9 @@ const currentPath = Astro.url.pathname;
     </div>
   </footer>
 
+<script>
+  import '../components/SearchModal';
+</script>
 </body>
 </html>
 

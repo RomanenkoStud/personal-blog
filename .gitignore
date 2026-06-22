@@ -28,6 +28,9 @@ pnpm-debug.log*
 # temporary files
 tmp/
 
+# wrangler local state
+.wrangler/
+
 # agents
 CLAUDE.md
 AGENTS.md

@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/Base.astro';
 import { getPostBySlug, getPosts } from '../../lib/api';
+import { env } from 'cloudflare:workers';
 
 const { slug } = Astro.params;
 
@@ -8,13 +9,13 @@ if (!slug) {
   return Astro.redirect('/writing');
 }
 
-const post = await getPostBySlug(slug);
+const post = await getPostBySlug(env.DB, slug);
 
 if (!post) {
   return Astro.redirect('/404');
 }
 
-const allPosts = await getPosts();
+const allPosts = await getPosts(env.DB);
 const relatedPosts = allPosts
   .filter(p => p.area === post.area && p.slug !== post.slug)
   .slice(0, 3);

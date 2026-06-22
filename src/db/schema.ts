@@ -1,0 +1,27 @@
+import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+
+export const posts = sqliteTable('posts', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  title: text('title').notNull(),
+  slug: text('slug').notNull().unique(),
+  body: text('body').notNull(),
+  area: text('area').notNull(),
+  publishedAt: text('published_at').notNull(),
+  featured: integer('featured', { mode: 'boolean' }).notNull().default(false),
+  readTime: integer('read_time').notNull(),
+  excerpt: text('excerpt').notNull(),
+});
+
+export const pages = sqliteTable('pages', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  title: text('title').notNull(),
+  slug: text('slug').notNull().unique(),
+  body: text('body').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});
+
+export const newsletterSubscribers = sqliteTable('newsletter_subscribers', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  email: text('email').notNull().unique(),
+  subscribedAt: text('subscribed_at').notNull(),
+});

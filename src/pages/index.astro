@@ -1,8 +1,9 @@
 ---
 import BaseLayout from '../layouts/Base.astro';
 import { getPosts } from '../lib/api';
+import { env } from 'cloudflare:workers';
 
-const posts = await getPosts();
+const posts = await getPosts(env.DB);
 const latestPosts = posts.slice(0, 5);
 ---
 

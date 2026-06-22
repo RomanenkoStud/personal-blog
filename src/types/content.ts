@@ -8,12 +8,6 @@ export interface BlogPost {
   featured: boolean;
   readTime: number;
   excerpt: string;
-  coverImage?: {
-    url: string;
-    alt: string;
-    width: number;
-    height: number;
-  };
 }
 
 export interface Page {
@@ -22,16 +16,4 @@ export interface Page {
   slug: string;
   body: string;
   updatedAt: string;
-}
-
-export interface StrapiResponse<T> {
-  data: T;
-  meta: {
-    pagination?: {
-      page: number;
-      pageSize: number;
-      pageCount: number;
-      total: number;
-    };
-  };
 }
