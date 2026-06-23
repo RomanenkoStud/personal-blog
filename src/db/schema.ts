@@ -10,6 +10,7 @@ export const posts = sqliteTable('posts', {
   featured: integer('featured', { mode: 'boolean' }).notNull().default(false),
   readTime: integer('read_time').notNull(),
   excerpt: text('excerpt').notNull(),
+  status: text('status').notNull().default('published'),
 });
 
 export const pages = sqliteTable('pages', {

@@ -18,6 +18,8 @@ export const NAV_LINKS = [
 export const AREAS = ['architecture', 'devex', 'ai', 'cases', 'homelab'] as const;
 export type Area = typeof AREAS[number];
 
+export const POST_STATUSES = ['published', 'draft', 'archived'] as const;
+
 // --- Page slugs ---
 export const PAGE_SLUG = {
   NOW: 'now',

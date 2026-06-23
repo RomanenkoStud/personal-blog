@@ -30,6 +30,7 @@ export const PUT: APIRoute = async ({ params, request }) => {
       featured: data.featured,
       readTime: data.readTime,
       excerpt: data.excerpt,
+      status: data.status,
     });
 
     if (!post) {

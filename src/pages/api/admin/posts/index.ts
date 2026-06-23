@@ -26,6 +26,7 @@ export const POST: APIRoute = async ({ request }) => {
       featured: data.featured,
       readTime: data.readTime,
       excerpt: data.excerpt,
+      status: data.status,
     });
     return jsonResponse({ ok: true, post }, HTTP_STATUS.CREATED);
   } catch (e: unknown) {

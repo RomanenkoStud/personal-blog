@@ -5,9 +5,11 @@ import type { BlogPost, Page, ProfileData } from '../types/content';
 import { type ListParams, type PaginatedResult, paginate } from './query';
 import { PAGE_SLUG } from '../consts';
 
+const isPublished = eq(schema.posts.status, 'published');
+
 export async function getPosts(d1: D1Database): Promise<BlogPost[]> {
   const db = getDb(d1);
-  return db.select().from(schema.posts).orderBy(desc(schema.posts.publishedAt));
+  return db.select().from(schema.posts).where(isPublished).orderBy(desc(schema.posts.publishedAt));
 }
 
 const POST_FILTER_MAP: Record<string, (v: string) => SQL> = {
@@ -15,12 +17,12 @@ const POST_FILTER_MAP: Record<string, (v: string) => SQL> = {
   featured: (v) => eq(schema.posts.featured, v === 'true'),
 };
 
-function buildPostWhere(filters: Record<string, string>): SQL | undefined {
-  const clauses = Object.entries(filters)
-    .filter(([key]) => key in POST_FILTER_MAP)
-    .map(([key, value]) => POST_FILTER_MAP[key](value));
-  if (clauses.length === 0) return undefined;
-  return clauses.length === 1 ? clauses[0] : and(...clauses);
+function buildPostWhere(filters: Record<string, string>): SQL {
+  const clauses: SQL[] = [isPublished];
+  for (const [key, value] of Object.entries(filters)) {
+    if (key in POST_FILTER_MAP) clauses.push(POST_FILTER_MAP[key](value));
+  }
+  return clauses.length === 1 ? clauses[0] : and(...clauses)!;
 }
 
 export async function getPostsList(
@@ -47,6 +49,7 @@ export async function getAreas(d1: D1Database): Promise<{ area: string; count: n
   const results = await db
     .select({ area: schema.posts.area, count: count() })
     .from(schema.posts)
+    .where(isPublished)
     .groupBy(schema.posts.area)
     .orderBy(desc(count()));
   return results;
@@ -57,7 +60,7 @@ export async function getPostBySlug(d1: D1Database, slug: string): Promise<BlogP
   const results = await db
     .select()
     .from(schema.posts)
-    .where(eq(schema.posts.slug, slug));
+    .where(and(eq(schema.posts.slug, slug), isPublished));
   return results[0] ?? null;
 }
 
@@ -66,7 +69,7 @@ export async function getFeaturedPosts(d1: D1Database): Promise<BlogPost[]> {
   return db
     .select()
     .from(schema.posts)
-    .where(eq(schema.posts.featured, true))
+    .where(and(eq(schema.posts.featured, true), isPublished))
     .orderBy(desc(schema.posts.publishedAt));
 }
 
@@ -101,5 +104,6 @@ export async function getSearchIndex(
       excerpt: schema.posts.excerpt,
     })
     .from(schema.posts)
+    .where(isPublished)
     .orderBy(desc(schema.posts.publishedAt));
 }

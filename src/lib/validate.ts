@@ -1,3 +1,5 @@
+import { POST_STATUSES } from '../consts';
+
 export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export interface ValidationResult {
@@ -28,6 +30,9 @@ export function validatePost(data: Record<string, unknown>): ValidationResult {
   }
   if (!data.excerpt || typeof data.excerpt !== 'string' || data.excerpt.trim().length === 0) {
     errors.excerpt = 'Excerpt is required';
+  }
+  if (!data.status || typeof data.status !== 'string' || !POST_STATUSES.includes(data.status as any)) {
+    errors.status = 'Status must be published, draft, or archived';
   }
 
   return { valid: Object.keys(errors).length === 0, errors };

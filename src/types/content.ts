@@ -1,3 +1,5 @@
+export type PostStatus = 'published' | 'draft' | 'archived';
+
 export interface BlogPost {
   id: number;
   title: string;
@@ -8,6 +10,7 @@ export interface BlogPost {
   featured: boolean;
   readTime: number;
   excerpt: string;
+  status: PostStatus;
 }
 
 export interface Page {

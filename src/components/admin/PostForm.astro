@@ -1,6 +1,6 @@
 ---
 import type { BlogPost } from '../../types/content';
-import { AREAS } from '../../consts';
+import { AREAS, POST_STATUSES } from '../../consts';
 
 interface Props {
   post?: BlogPost;
@@ -80,9 +80,23 @@ const defaultDate = now.toISOString().slice(0, 16);
     </div>
   </div>
 
-  <!-- Featured -->
-  <div>
-    <label style="display:inline-flex;align-items:center;gap:8px;font:400 13px 'Space Grotesk',sans-serif;color:var(--color-ink);cursor:pointer">
+  <!-- Status + Featured -->
+  <div style="display:flex;align-items:center;gap:24px">
+    <div>
+      <label for="status" style="display:block;font:500 11px 'IBM Plex Mono',monospace;color:var(--color-meta);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Status</label>
+      <select
+        id="status"
+        name="status"
+        required
+        style="width:160px;height:36px;border:1px solid var(--color-border);background:var(--color-surface);border-radius:6px;padding:0 8px;font:400 13px 'IBM Plex Mono',monospace;color:var(--color-ink);outline:none;box-sizing:border-box"
+      >
+        {POST_STATUSES.map(s => (
+          <option value={s} selected={(post?.status ?? 'draft') === s}>{s}</option>
+        ))}
+      </select>
+      <div class="field-error" data-field="status" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-error);margin-top:4px;display:none"></div>
+    </div>
+    <label style="display:inline-flex;align-items:center;gap:8px;font:400 13px 'Space Grotesk',sans-serif;color:var(--color-ink);cursor:pointer;margin-top:20px">
       <input type="checkbox" id="featured" name="featured" checked={post?.featured} style="width:16px;height:16px;accent-color:#4f56e8" />
       Featured post
     </label>
@@ -177,6 +191,7 @@ const defaultDate = now.toISOString().slice(0, 16);
       featured: fd.has('featured'),
       excerpt: fd.get('excerpt'),
       body: fd.get('body'),
+      status: fd.get('status'),
     };
 
     submitBtn.disabled = true;

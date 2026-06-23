@@ -3,6 +3,11 @@ import { getDb } from './db';
 import * as schema from '../db/schema';
 import type { BlogPost, Page, MediaFile, NewsletterSubscriber } from '../types/content';
 
+export async function getAllPosts(d1: D1Database): Promise<BlogPost[]> {
+  const db = getDb(d1);
+  return db.select().from(schema.posts).orderBy(desc(schema.posts.publishedAt));
+}
+
 export async function getPostById(d1: D1Database, id: number): Promise<BlogPost | null> {
   const db = getDb(d1);
   const results = await db.select().from(schema.posts).where(eq(schema.posts.id, id));
