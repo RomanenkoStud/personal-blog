@@ -6,7 +6,7 @@ import '../styles/global.css';
 
 interface Props {
   title: string;
-  activeNav?: 'dashboard' | 'posts' | 'pages' | 'media' | 'profile';
+  activeNav?: 'dashboard' | 'posts' | 'pages' | 'media' | 'subscribers' | 'profile';
 }
 
 const { title, activeNav } = Astro.props;
@@ -17,6 +17,7 @@ const navItems = [
   { href: '/admin/posts', label: 'Posts', key: 'posts' as const },
   { href: '/admin/pages', label: 'Pages', key: 'pages' as const },
   { href: '/admin/media', label: 'Media', key: 'media' as const },
+  { href: '/admin/subscribers', label: 'Subscribers', key: 'subscribers' as const },
   { href: '/admin/profile', label: 'Profile', key: 'profile' as const },
 ];
 ---

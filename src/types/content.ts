@@ -29,3 +29,9 @@ export interface MediaFile {
   alt: string;
   uploadedAt: string;
 }
+
+export interface NewsletterSubscriber {
+  id: number;
+  email: string;
+  subscribedAt: string;
+}

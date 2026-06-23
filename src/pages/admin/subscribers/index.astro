@@ -1,0 +1,43 @@
+---
+import AdminLayout from '../../../layouts/Admin.astro';
+import { getAllSubscribers } from '../../../lib/admin-api';
+import { env } from 'cloudflare:workers';
+
+const subscribers = await getAllSubscribers(env.DB);
+---
+
+<AdminLayout title="Subscribers" activeNav="subscribers">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+    <div style="font:400 26px 'Space Grotesk',sans-serif;color:var(--color-ink)">Subscribers</div>
+    <span style="font:400 12px 'IBM Plex Mono',monospace;color:var(--color-dim)">{subscribers.length} total</span>
+  </div>
+
+  {subscribers.length === 0 ? (
+    <div style="text-align:center;padding:48px 0;font:400 14px 'Space Grotesk',sans-serif;color:var(--color-dim)">
+      No subscribers yet.
+    </div>
+  ) : (
+    <div style="border:1px solid var(--color-border-light);border-radius:8px;overflow:hidden">
+      <!-- Header -->
+      <div style="display:grid;grid-template-columns:1fr 160px 80px;gap:8px;padding:10px 16px;background:var(--color-surface-alt);font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:var(--color-placeholder);text-transform:uppercase">
+        <span>Email</span>
+        <span>Subscribed</span>
+        <span></span>
+      </div>
+      <!-- Rows -->
+      {subscribers.map(sub => (
+        <div style="display:grid;grid-template-columns:1fr 160px 80px;gap:8px;align-items:center;padding:12px 16px;border-top:1px solid var(--color-border-light)">
+          <span style="font:400 14px 'Space Grotesk',sans-serif;color:var(--color-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{sub.email}</span>
+          <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim)">{sub.subscribedAt.slice(0, 10)}</span>
+          <delete-button endpoint={`/api/admin/subscribers/${sub.id}`} redirect-to="/admin/subscribers"></delete-button>
+        </div>
+      ))}
+    </div>
+  )}
+
+</AdminLayout>
+
+<script>
+  import '../../../components/admin/DeleteButton';
+</script>

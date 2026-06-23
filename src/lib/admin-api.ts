@@ -1,7 +1,7 @@
 import { desc, eq, sql } from 'drizzle-orm';
 import { getDb } from './db';
 import * as schema from '../db/schema';
-import type { BlogPost, Page, MediaFile } from '../types/content';
+import type { BlogPost, Page, MediaFile, NewsletterSubscriber } from '../types/content';
 
 export async function getPostById(d1: D1Database, id: number): Promise<BlogPost | null> {
   const db = getDb(d1);
@@ -100,6 +100,19 @@ export async function deleteMediaRecord(d1: D1Database, id: number): Promise<Med
   if (!results[0]) return null;
   await db.delete(schema.mediaFiles).where(eq(schema.mediaFiles.id, id));
   return results[0];
+}
+
+// --- Newsletter Subscribers ---
+
+export async function getAllSubscribers(d1: D1Database): Promise<NewsletterSubscriber[]> {
+  const db = getDb(d1);
+  return db.select().from(schema.newsletterSubscribers).orderBy(desc(schema.newsletterSubscribers.subscribedAt));
+}
+
+export async function deleteSubscriber(d1: D1Database, id: number): Promise<boolean> {
+  const db = getDb(d1);
+  const result = await db.delete(schema.newsletterSubscribers).where(eq(schema.newsletterSubscribers.id, id));
+  return result.rowsAffected > 0;
 }
 
 export async function getDashboardStats(d1: D1Database) {

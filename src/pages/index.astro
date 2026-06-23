@@ -88,13 +88,9 @@ const nowSnippet = nowPage
           </div>
         )}
       </a>
-      <form action="/api/newsletter" method="post" class="flex-1 bg-newsletter-bg rounded-lg p-[18px] m-0">
-        <div class="font-heading text-[13px] text-ink">A slow newsletter, when I publish.</div>
-        <div class="flex gap-[7px] mt-3 max-sm:flex-wrap">
-          <input type="email" name="email" required placeholder="you@email…" class="flex-1 h-8 border border-border bg-surface rounded-md px-2.5 font-mono text-[11px] text-ink outline-none box-border transition-[border-color] duration-150 focus:border-indigo placeholder:text-placeholder" />
-          <button type="submit" class="h-8 bg-indigo border-none rounded-md px-4 font-mono font-medium text-[11px] text-white cursor-pointer transition-[background] duration-150 hover:bg-periwinkle max-sm:w-full">join</button>
-        </div>
-      </form>
+      <div class="flex-1 bg-newsletter-bg rounded-lg p-[18px]">
+        <newsletter-form></newsletter-form>
+      </div>
     </div>
 
   </div>
