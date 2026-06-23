@@ -7,6 +7,7 @@ directory = "dist/client"
 
 [vars]
 CF_ACCESS_TEAM_NAME = "holy-night-66db"
+GITHUB_REPO = "romanenkostud/romanenkostud"
 
 [[d1_databases]]
 binding = "DB"

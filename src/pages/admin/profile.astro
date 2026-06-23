@@ -196,6 +196,7 @@ const pageId = page?.id ?? null;
     <!-- Submit -->
     <div style="display:flex;align-items:center;gap:12px;padding-top:4px">
       <button type="submit" id="submit-btn" class="submit-btn">Save Profile</button>
+      <button type="button" id="sync-gh-btn" class="submit-btn" style="background:var(--color-ink)">Sync to GitHub</button>
       <span id="form-status" style="font:400 12px 'IBM Plex Mono',monospace;display:none"></span>
     </div>
 
@@ -430,6 +431,37 @@ const pageId = page?.id ?? null;
     } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = 'Save Profile';
+    }
+  });
+
+  // --- Sync to GitHub ---
+  const syncBtn = document.getElementById('sync-gh-btn');
+  syncBtn.addEventListener('click', async () => {
+    syncBtn.disabled = true;
+    syncBtn.textContent = 'Syncing…';
+    formStatus.style.display = 'none';
+
+    try {
+      const res = await fetch('/api/admin/profile/sync-github', { method: 'POST' });
+      const result = await res.json();
+
+      if (!res.ok) {
+        formStatus.textContent = result.error || 'GitHub sync failed';
+        formStatus.style.color = 'var(--color-error)';
+        formStatus.style.display = 'inline';
+        return;
+      }
+
+      formStatus.textContent = 'Synced to GitHub!';
+      formStatus.style.color = 'var(--color-indigo)';
+      formStatus.style.display = 'inline';
+    } catch {
+      formStatus.textContent = 'Network error';
+      formStatus.style.color = 'var(--color-error)';
+      formStatus.style.display = 'inline';
+    } finally {
+      syncBtn.disabled = false;
+      syncBtn.textContent = 'Sync to GitHub';
     }
   });
 </script>
