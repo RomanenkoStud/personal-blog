@@ -2,24 +2,20 @@ import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 import { updatePage } from '../../../../lib/admin-api';
 import { validatePage } from '../../../../lib/validate';
+import { jsonResponse } from '../../../../lib/response';
+import { HTTP_STATUS } from '../../../../consts';
 
 export const PUT: APIRoute = async ({ params, request }) => {
   const id = Number(params.id);
   if (isNaN(id)) {
-    return new Response(JSON.stringify({ error: 'Invalid ID' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return jsonResponse({ error: 'Invalid ID' }, HTTP_STATUS.BAD_REQUEST);
   }
 
   const data = await request.json();
 
   const validation = validatePage(data);
   if (!validation.valid) {
-    return new Response(JSON.stringify({ errors: validation.errors }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return jsonResponse({ errors: validation.errors }, HTTP_STATUS.BAD_REQUEST);
   }
 
   const page = await updatePage(env.DB, id, {
@@ -29,13 +25,8 @@ export const PUT: APIRoute = async ({ params, request }) => {
   });
 
   if (!page) {
-    return new Response(JSON.stringify({ error: 'Page not found' }), {
-      status: 404,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return jsonResponse({ error: 'Page not found' }, HTTP_STATUS.NOT_FOUND);
   }
 
-  return new Response(JSON.stringify({ ok: true, page }), {
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return jsonResponse({ ok: true, page });
 };

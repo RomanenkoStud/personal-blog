@@ -1,65 +1,29 @@
 ---
 import BaseLayout from '../layouts/Base.astro';
-import { SOCIAL } from '../consts';
-import { getPage } from '../lib/api';
+import { SOCIAL, SITE_TITLE } from '../consts';
+import { getProfile } from '../lib/api';
+import { formatDateRange } from '../lib/format';
 import { env } from 'cloudflare:workers';
 
-const page = await getPage(env.DB, 'about');
+const data = await getProfile(env.DB);
 
-const defaults = {
-  tagline: 'Lean engineering: simple systems, made on purpose.',
-  bio: '',
-  photo: '/img3.jpg',
-  location: 'munich · remote',
-  whatIDo: [] as string[],
-  experience: [] as { title: string; startDate: string; endDate: string; location: string }[],
-  education: [] as { title: string; startDate: string; endDate: string; location: string }[],
-  tech: [] as string[],
-  cta: '',
-};
-
-let data = defaults;
-if (page) {
-  try {
-    data = { ...defaults, ...JSON.parse(page.body) };
-  } catch {}
-}
-
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-function formatDateRange(startDate: string, endDate: string) {
-  if (!startDate) return '';
-  const [sy, sm] = startDate.split('-').map(Number);
-  const startLabel = `${MONTHS[sm - 1]} ${sy}`;
-
-  const now = new Date();
-  const ey = endDate ? Number(endDate.split('-')[0]) : now.getFullYear();
-  const em = endDate ? Number(endDate.split('-')[1]) : now.getMonth() + 1;
-  const endLabel = endDate ? `${MONTHS[em - 1]} ${ey}` : 'Present';
-
-  let totalMonths = (ey - sy) * 12 + (em - sm) + 1;
-  if (totalMonths < 1) totalMonths = 1;
-  const years = Math.floor(totalMonths / 12);
-  const months = totalMonths % 12;
-
-  const parts: string[] = [];
-  if (years > 0) parts.push(`${years} yr${years > 1 ? 's' : ''}`);
-  if (months > 0) parts.push(`${months} mo${months > 1 ? 's' : ''}`);
-  const duration = parts.join(' ');
-
-  return `${startLabel} – ${endLabel} · ${duration}`;
-}
 ---
 
-<BaseLayout title="About" description={`Pavlo Romanenko — ${data.tagline}`}>
+<BaseLayout title="About" description={data?.tagline ? `${SITE_TITLE} — ${data.tagline}` : undefined}>
   <div class="page-container">
+    {!data ? (
+      <div class="px-16 pt-10 pb-[26px] text-center max-sm:px-4 max-sm:pt-7 max-sm:pb-5">
+        <div class="font-heading text-[23px] text-ink">About page not configured yet.</div>
+        <p class="mt-3 font-heading text-sm text-dim">Set up your profile in the admin panel.</p>
+      </div>
+    ) : (
     <div class="flex gap-[26px] p-[34px_30px] max-sm:flex-col max-sm:gap-0 max-sm:p-[24px_16px]">
 
       <!-- Left sidebar -->
       <div class="w-[150px] shrink-0 max-sm:w-full max-sm:flex max-sm:flex-col max-sm:items-center max-sm:text-center max-sm:pb-5 max-sm:border-b max-sm:border-border-light max-sm:mb-5">
-        <img src={data.photo} alt="Pavlo Romanenko" class="w-[150px] h-[170px] rounded-md object-cover object-[center_top] max-sm:size-[100px] max-sm:rounded-full" />
+        {data.photo && <img src={data.photo} alt={SITE_TITLE} class="w-[150px] h-[170px] rounded-md object-cover object-[center_top] max-sm:size-[100px] max-sm:rounded-full" />}
         <div class="mt-3.5 font-mono text-[11px] leading-[1.9] text-meta max-sm:mt-3">
-          <span class="block">{data.location}</span>
+          {data.location && <span class="block">{data.location}</span>}
           <div class="flex flex-col max-sm:flex-row max-sm:gap-3 max-sm:mt-1">
             <a href={`mailto:${SOCIAL.email}`} class="text-meta no-underline hover:text-indigo"><span class="max-sm:hidden" aria-hidden="true">→ </span>email</a>
             <a href={SOCIAL.github} target="_blank" rel="noopener" class="text-meta no-underline hover:text-indigo"><span class="max-sm:hidden" aria-hidden="true">→ </span>github</a>
@@ -144,5 +108,6 @@ function formatDateRange(startDate: string, endDate: string) {
       </div>
 
     </div>
+    )}
   </div>
 </BaseLayout>

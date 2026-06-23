@@ -2,14 +2,13 @@ import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 import { updatePost, deletePost } from '../../../../lib/admin-api';
 import { validatePost } from '../../../../lib/validate';
+import { jsonResponse } from '../../../../lib/response';
+import { HTTP_STATUS, DB_ERROR_UNIQUE_CONSTRAINT } from '../../../../consts';
 
 export const PUT: APIRoute = async ({ params, request }) => {
   const id = Number(params.id);
   if (isNaN(id)) {
-    return new Response(JSON.stringify({ error: 'Invalid ID' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return jsonResponse({ error: 'Invalid ID' }, HTTP_STATUS.BAD_REQUEST);
   }
 
   const data = await request.json();
@@ -18,10 +17,7 @@ export const PUT: APIRoute = async ({ params, request }) => {
 
   const validation = validatePost(data);
   if (!validation.valid) {
-    return new Response(JSON.stringify({ errors: validation.errors }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return jsonResponse({ errors: validation.errors }, HTTP_STATUS.BAD_REQUEST);
   }
 
   try {
@@ -37,22 +33,14 @@ export const PUT: APIRoute = async ({ params, request }) => {
     });
 
     if (!post) {
-      return new Response(JSON.stringify({ error: 'Post not found' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return jsonResponse({ error: 'Post not found' }, HTTP_STATUS.NOT_FOUND);
     }
 
-    return new Response(JSON.stringify({ ok: true, post }), {
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return jsonResponse({ ok: true, post });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : '';
-    if (message.includes('UNIQUE constraint')) {
-      return new Response(JSON.stringify({ errors: { slug: 'This slug already exists' } }), {
-        status: 409,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (message.includes(DB_ERROR_UNIQUE_CONSTRAINT)) {
+      return jsonResponse({ errors: { slug: 'This slug already exists' } }, HTTP_STATUS.CONFLICT);
     }
     throw e;
   }
@@ -61,21 +49,13 @@ export const PUT: APIRoute = async ({ params, request }) => {
 export const DELETE: APIRoute = async ({ params }) => {
   const id = Number(params.id);
   if (isNaN(id)) {
-    return new Response(JSON.stringify({ error: 'Invalid ID' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return jsonResponse({ error: 'Invalid ID' }, HTTP_STATUS.BAD_REQUEST);
   }
 
   const deleted = await deletePost(env.DB, id);
   if (!deleted) {
-    return new Response(JSON.stringify({ error: 'Post not found' }), {
-      status: 404,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return jsonResponse({ error: 'Post not found' }, HTTP_STATUS.NOT_FOUND);
   }
 
-  return new Response(JSON.stringify({ ok: true }), {
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return jsonResponse({ ok: true });
 };

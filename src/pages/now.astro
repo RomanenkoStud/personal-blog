@@ -2,15 +2,16 @@
 import BaseLayout from '../layouts/Base.astro';
 import { getPage } from '../lib/api';
 import { env } from 'cloudflare:workers';
+import { PAGE_SLUG } from '../consts';
+import { formatMonthYear } from '../lib/format';
 
-const page = await getPage(env.DB, 'now');
+const page = await getPage(env.DB, PAGE_SLUG.NOW);
 
 if (!page) {
   return Astro.redirect('/404');
 }
 
-const updatedLabel = new Date(page.updatedAt)
-  .toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+const updatedLabel = formatMonthYear(page.updatedAt);
 ---
 
 <BaseLayout title="Now" description="What I'm currently working on, learning, and reading.">

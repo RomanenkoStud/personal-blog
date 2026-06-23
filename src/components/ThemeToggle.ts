@@ -1,28 +1,29 @@
 import { LitElement, html } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
+import { THEME } from '../consts';
 
 @customElement('theme-toggle')
 export class ThemeToggle extends LitElement {
   createRenderRoot() { return this; }
 
-  @state() private _theme: 'light' | 'dark' = 'light';
+  @state() private _theme: 'light' | 'dark' = THEME.LIGHT;
 
   private _mediaQuery: MediaQueryList | null = null;
   private _mediaHandler = (e: MediaQueryListEvent) => {
-    if (!localStorage.getItem('theme')) {
-      this._setTheme(e.matches ? 'dark' : 'light');
+    if (!localStorage.getItem(THEME.STORAGE_KEY)) {
+      this._setTheme(e.matches ? THEME.DARK : THEME.LIGHT);
     }
   };
 
   connectedCallback() {
     super.connectedCallback();
-    const stored = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    const stored = localStorage.getItem(THEME.STORAGE_KEY) as 'light' | 'dark' | null;
     if (stored) {
       this._theme = stored;
     } else {
-      this._theme = (document.documentElement.getAttribute('data-theme') as 'light' | 'dark') || 'light';
+      this._theme = (document.documentElement.getAttribute(THEME.DATA_ATTR) as 'light' | 'dark') || THEME.LIGHT;
     }
-    document.documentElement.setAttribute('data-theme', this._theme);
+    document.documentElement.setAttribute(THEME.DATA_ATTR, this._theme);
 
     this._mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     this._mediaQuery.addEventListener('change', this._mediaHandler);
@@ -35,12 +36,12 @@ export class ThemeToggle extends LitElement {
 
   private _setTheme(theme: 'light' | 'dark') {
     this._theme = theme;
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
+    document.documentElement.setAttribute(THEME.DATA_ATTR, theme);
+    localStorage.setItem(THEME.STORAGE_KEY, theme);
   }
 
   private _toggle() {
-    this._setTheme(this._theme === 'light' ? 'dark' : 'light');
+    this._setTheme(this._theme === THEME.LIGHT ? THEME.DARK : THEME.LIGHT);
   }
 
   render() {
@@ -51,9 +52,9 @@ export class ThemeToggle extends LitElement {
       <button
         @click=${this._toggle}
         class="w-8 h-8 flex items-center justify-center rounded-lg text-dim hover:text-ink hover:bg-mist transition-colors cursor-pointer"
-        aria-label=${`Switch to ${this._theme === 'light' ? 'dark' : 'light'} mode`}
+        aria-label=${`Switch to ${this._theme === THEME.LIGHT ? 'dark' : 'light'} mode`}
       >
-        ${this._theme === 'light' ? moonIcon : sunIcon}
+        ${this._theme === THEME.LIGHT ? moonIcon : sunIcon}
       </button>
     `;
   }

@@ -1,34 +1,20 @@
 ---
 import AdminLayout from '../../layouts/Admin.astro';
-import { getPage } from '../../lib/api';
+import { getPage, getProfile } from '../../lib/api';
 import { env } from 'cloudflare:workers';
+import { PAGE_SLUG } from '../../consts';
+import type { ProfileData } from '../../types/content';
 
-const page = await getPage(env.DB, 'about');
+const page = await getPage(env.DB, PAGE_SLUG.ABOUT);
+const profile = await getProfile(env.DB);
 
-const defaults = {
-  heroName: '',
-  heroBio: '',
-  heroTagline: '',
-  heroPhoto: '/img5.jpg',
-  tagline: '',
-  bio: '',
-  photo: '/img3.jpg',
-  location: '',
-  whatIDo: ['', '', ''],
-  experience: [{ title: '', startDate: '', endDate: '', location: '' }],
-  education: [{ title: '', startDate: '', endDate: '', location: '' }],
-  tech: [] as string[],
-  cta: '',
+const EMPTY: ProfileData = {
+  heroName: '', heroBio: '', heroTagline: '', heroPhoto: '',
+  tagline: '', bio: '', photo: '', location: '',
+  whatIDo: [], experience: [], education: [], tech: [], cta: '',
 };
-
-let data = defaults;
-let pageId: number | null = null;
-if (page) {
-  pageId = page.id;
-  try {
-    data = { ...defaults, ...JSON.parse(page.body) };
-  } catch {}
-}
+const data = profile ?? EMPTY;
+const pageId = page?.id ?? null;
 ---
 
 <AdminLayout title="Profile" activeNav="profile">
@@ -45,22 +31,22 @@ if (page) {
 
     <div class="field">
       <label for="heroName" class="field-label">Hero heading</label>
-      <input type="text" id="heroName" name="heroName" value={data.heroName} class="field-input" placeholder="Hi, I'm Pavlo." />
+      <input type="text" id="heroName" name="heroName" value={data.heroName} class="field-input" placeholder="Hi, I'm..." />
     </div>
 
     <div class="field">
       <label for="heroBio" class="field-label">Hero bio</label>
-      <textarea id="heroBio" name="heroBio" rows="2" class="field-textarea" placeholder="I'm a frontend engineer in Munich who...">{data.heroBio}</textarea>
+      <textarea id="heroBio" name="heroBio" rows="2" class="field-textarea" placeholder="A short bio for the homepage hero...">{data.heroBio}</textarea>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
       <div class="field">
         <label for="heroTagline" class="field-label">Hero tagline</label>
-        <input type="text" id="heroTagline" name="heroTagline" value={data.heroTagline} class="field-input" placeholder="frontend engineer · systems · munich" />
+        <input type="text" id="heroTagline" name="heroTagline" value={data.heroTagline} class="field-input" placeholder="role · focus · location" />
       </div>
       <div class="field">
         <label for="heroPhoto" class="field-label">Hero photo path</label>
-        <input type="text" id="heroPhoto" name="heroPhoto" value={data.heroPhoto} class="field-input" placeholder="/img5.jpg" />
+        <input type="text" id="heroPhoto" name="heroPhoto" value={data.heroPhoto} class="field-input" placeholder="/media/photo.jpg" />
       </div>
     </div>
 
@@ -83,11 +69,11 @@ if (page) {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
       <div class="field">
         <label for="photo" class="field-label">Photo path</label>
-        <input type="text" id="photo" name="photo" value={data.photo} class="field-input" placeholder="/img3.jpg" />
+        <input type="text" id="photo" name="photo" value={data.photo} class="field-input" placeholder="/media/photo.jpg" />
       </div>
       <div class="field">
         <label for="location" class="field-label">Location</label>
-        <input type="text" id="location" name="location" value={data.location} class="field-input" placeholder="munich · remote" />
+        <input type="text" id="location" name="location" value={data.location} class="field-input" placeholder="city · remote" />
       </div>
     </div>
 
@@ -98,7 +84,7 @@ if (page) {
         {data.whatIDo.map((item, i) => (
           <div class="list-row" style="display:flex;gap:8px;align-items:center">
             <span class="row-number">{String(i + 1).padStart(2, '0')}</span>
-            <input type="text" name="whatIDo" value={item} class="field-input" style="flex:1" placeholder="Architecture — design systems..." />
+            <input type="text" name="whatIDo" value={item} class="field-input" style="flex:1" placeholder="Describe what you do..." />
             <button type="button" class="remove-btn" title="Remove">×</button>
           </div>
         ))}
@@ -113,7 +99,7 @@ if (page) {
         {data.experience.map(exp => (
           <div class="exp-row" style="border:1px solid var(--color-border-light);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:8px">
             <div style="display:flex;gap:8px;align-items:center">
-              <input type="text" name="exp-title" value={exp.title} class="field-input" style="flex:1" placeholder="Frontend Developer · Company" />
+              <input type="text" name="exp-title" value={exp.title} class="field-input" style="flex:1" placeholder="Role · Company" />
               <button type="button" class="remove-btn" title="Remove">×</button>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:center">
@@ -146,7 +132,7 @@ if (page) {
         {data.education.map(edu => (
           <div class="edu-row" style="border:1px solid var(--color-border-light);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:8px">
             <div style="display:flex;gap:8px;align-items:center">
-              <input type="text" name="edu-title" value={edu.title} class="field-input" style="flex:1" placeholder="B.Sc. Computer Engineering · University" />
+              <input type="text" name="edu-title" value={edu.title} class="field-input" style="flex:1" placeholder="Degree · Institution" />
               <button type="button" class="remove-btn" title="Remove">×</button>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:center">
@@ -163,7 +149,7 @@ if (page) {
               </div>
               <div>
                 <label class="field-label-sm">Location</label>
-                <input type="text" name="edu-location" value={edu.location} class="field-input" placeholder="Kharkiv" />
+                <input type="text" name="edu-location" value={edu.location} class="field-input" placeholder="City" />
               </div>
             </div>
           </div>
@@ -189,7 +175,7 @@ if (page) {
     <!-- CTA -->
     <div class="field">
       <label for="cta" class="field-label">CTA text</label>
-      <input type="text" id="cta" name="cta" value={data.cta} class="field-input" placeholder="Open to senior roles — Munich & remote." />
+      <input type="text" id="cta" name="cta" value={data.cta} class="field-input" placeholder="Call to action text..." />
     </div>
 
     <!-- Submit -->
@@ -216,7 +202,7 @@ if (page) {
     row.style.cssText = 'display:flex;gap:8px;align-items:center';
     row.innerHTML = `
       <span class="row-number">${String(count + 1).padStart(2, '0')}</span>
-      <input type="text" name="whatIDo" class="field-input" style="flex:1" placeholder="Architecture — design systems..." />
+      <input type="text" name="whatIDo" class="field-input" style="flex:1" placeholder="Describe what you do..." />
       <button type="button" class="remove-btn" title="Remove">×</button>
     `;
     whatList.appendChild(row);
@@ -243,7 +229,7 @@ if (page) {
     row.style.cssText = 'border:1px solid var(--color-border-light);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:8px';
     row.innerHTML = `
       <div style="display:flex;gap:8px;align-items:center">
-        <input type="text" name="exp-title" class="field-input" style="flex:1" placeholder="Frontend Developer · Company" />
+        <input type="text" name="exp-title" class="field-input" style="flex:1" placeholder="Role · Company" />
         <button type="button" class="remove-btn" title="Remove">×</button>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:center">
@@ -287,7 +273,7 @@ if (page) {
     row.style.cssText = 'border:1px solid var(--color-border-light);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:8px';
     row.innerHTML = `
       <div style="display:flex;gap:8px;align-items:center">
-        <input type="text" name="edu-title" class="field-input" style="flex:1" placeholder="B.Sc. Computer Engineering · University" />
+        <input type="text" name="edu-title" class="field-input" style="flex:1" placeholder="Degree · Institution" />
         <button type="button" class="remove-btn" title="Remove">×</button>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:center">
@@ -304,7 +290,7 @@ if (page) {
         </div>
         <div>
           <label class="field-label-sm">Location</label>
-          <input type="text" name="edu-location" class="field-input" placeholder="Kharkiv" />
+          <input type="text" name="edu-location" class="field-input" placeholder="City" />
         </div>
       </div>
     `;
@@ -391,7 +377,7 @@ if (page) {
 
       if (!res.ok) {
         formStatus.textContent = result.error || 'Something went wrong';
-        formStatus.style.color = '#dc2626';
+        formStatus.style.color = 'var(--color-error)';
         formStatus.style.display = 'inline';
         return;
       }
@@ -401,7 +387,7 @@ if (page) {
       formStatus.style.display = 'inline';
     } catch {
       formStatus.textContent = 'Network error';
-      formStatus.style.color = '#dc2626';
+      formStatus.style.color = 'var(--color-error)';
       formStatus.style.display = 'inline';
     } finally {
       submitBtn.disabled = false;
@@ -469,7 +455,7 @@ if (page) {
     flex: none;
     transition: color .15s, border-color .15s;
   }
-  .remove-btn:hover { color: #dc2626; border-color: #dc2626; }
+  .remove-btn:hover { color: var(--color-error); border-color: var(--color-error); }
   .add-btn {
     margin-top: 8px;
     border: 1px dashed var(--color-border);
@@ -502,7 +488,7 @@ if (page) {
     padding: 0;
     line-height: 1;
   }
-  .tag-remove:hover { color: #dc2626; }
+  .tag-remove:hover { color: var(--color-error); }
   .field-label-sm {
     display: block;
     font: 500 9px 'IBM Plex Mono', monospace;

@@ -1,5 +1,6 @@
 import { LitElement, html } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
+import { ROUTES } from '../../consts';
 
 @customElement('media-uploader')
 export class MediaUploader extends LitElement {
@@ -25,7 +26,7 @@ export class MediaUploader extends LitElement {
       form.append('file', file);
 
       try {
-        const res = await fetch('/api/admin/media/upload', {
+        const res = await fetch(ROUTES.API_ADMIN_MEDIA_UPLOAD, {
           method: 'POST',
           body: form,
         });
@@ -84,7 +85,7 @@ export class MediaUploader extends LitElement {
             </div>
           `
         }
-        ${this._error ? html`<div style="font:400 11px 'IBM Plex Mono',monospace;color:#dc2626;margin-top:8px">${this._error}</div>` : ''}
+        ${this._error ? html`<div style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-error);margin-top:8px">${this._error}</div>` : ''}
       </div>
     `;
   }

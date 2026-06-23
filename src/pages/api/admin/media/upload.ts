@@ -2,27 +2,25 @@ import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 import { createMediaRecord } from '../../../../lib/admin-api';
 import { validateUpload } from '../../../../lib/validate';
+import { jsonResponse } from '../../../../lib/response';
+import { HTTP_STATUS } from '../../../../consts';
+
+const DEFAULT_FILE_EXT = 'bin';
 
 export const POST: APIRoute = async ({ request }) => {
   const formData = await request.formData();
   const file = formData.get('file') as File | null;
 
   if (!file) {
-    return new Response(JSON.stringify({ error: 'No file provided' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return jsonResponse({ error: 'No file provided' }, HTTP_STATUS.BAD_REQUEST);
   }
 
   const validation = validateUpload(file);
   if (!validation.valid) {
-    return new Response(JSON.stringify({ errors: validation.errors }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return jsonResponse({ errors: validation.errors }, HTTP_STATUS.BAD_REQUEST);
   }
 
-  const ext = file.name.split('.').pop()?.toLowerCase() ?? 'bin';
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? DEFAULT_FILE_EXT;
   const timestamp = Date.now();
   const safeName = file.name
     .replace(/\.[^.]+$/, '')
@@ -46,8 +44,5 @@ export const POST: APIRoute = async ({ request }) => {
     uploadedAt: new Date().toISOString(),
   });
 
-  return new Response(JSON.stringify({ ok: true, file: record }), {
-    status: 201,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return jsonResponse({ ok: true, file: record }, HTTP_STATUS.CREATED);
 };

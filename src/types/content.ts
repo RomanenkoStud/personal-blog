@@ -35,3 +35,19 @@ export interface NewsletterSubscriber {
   email: string;
   subscribedAt: string;
 }
+
+export interface ProfileData {
+  heroName: string;
+  heroBio: string;
+  heroTagline: string;
+  heroPhoto: string;
+  tagline: string;
+  bio: string;
+  photo: string;
+  location: string;
+  whatIDo: string[];
+  experience: { title: string; startDate: string; endDate: string; location: string }[];
+  education: { title: string; startDate: string; endDate: string; location: string }[];
+  tech: string[];
+  cta: string;
+}

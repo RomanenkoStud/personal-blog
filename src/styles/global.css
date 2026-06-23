@@ -16,6 +16,7 @@
   --color-newsletter-bg: #eef0fb;
   --color-newsletter-border: #d9dcfb;
   --color-dark-surface: #14151f;
+  --color-error: #dc2626;
   --color-skeleton: #e6e1d4;
 
   --font-heading: 'Space Grotesk', sans-serif;
@@ -41,6 +42,7 @@
   --color-newsletter-bg: #1e1f32;
   --color-newsletter-border: #2d2f4a;
   --color-dark-surface: #0d0e15;
+  --color-error: #f87171;
   --color-skeleton: #2d2f40;
 }
 

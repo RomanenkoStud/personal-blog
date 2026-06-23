@@ -3,14 +3,17 @@ import { env } from 'cloudflare:workers';
 import { eq } from 'drizzle-orm';
 import { getDb } from '../../lib/db';
 import { newsletterSubscribers } from '../../db/schema';
+import { HTTP_STATUS } from '../../consts';
+
+const CONTENT_TYPE_HTML = 'text/html; charset=utf-8';
 
 export const GET: APIRoute = async ({ url }) => {
   const email = url.searchParams.get('email');
 
   if (!email) {
     return new Response(unsubscribePage('Missing email parameter.', false), {
-      status: 400,
-      headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      status: HTTP_STATUS.BAD_REQUEST,
+      headers: { 'Content-Type': CONTENT_TYPE_HTML },
     });
   }
 
@@ -21,12 +24,12 @@ export const GET: APIRoute = async ({ url }) => {
 
   if (result.rowsAffected === 0) {
     return new Response(unsubscribePage('This email was not found in our list.', false), {
-      headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      headers: { 'Content-Type': CONTENT_TYPE_HTML },
     });
   }
 
   return new Response(unsubscribePage('You have been unsubscribed.', true), {
-    headers: { 'Content-Type': 'text/html; charset=utf-8' },
+    headers: { 'Content-Type': CONTENT_TYPE_HTML },
   });
 };
 

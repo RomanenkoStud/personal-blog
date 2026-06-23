@@ -1,9 +1,9 @@
 import { LitElement, html, nothing } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
+import { EMAIL_REGEX } from '../lib/validate';
+import { ROUTES, NEWSLETTER_RESET_MS } from '../consts';
 
 type FormState = 'idle' | 'loading' | 'success' | 'error';
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 @customElement('newsletter-form')
 export class NewsletterForm extends LitElement {
@@ -45,7 +45,7 @@ export class NewsletterForm extends LitElement {
     this._state = 'loading';
 
     try {
-      const res = await fetch('/api/newsletter', {
+      const res = await fetch(ROUTES.API_NEWSLETTER, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -58,7 +58,7 @@ export class NewsletterForm extends LitElement {
 
       this._resetTimer = setTimeout(() => {
         this._state = 'idle';
-      }, 5000);
+      }, NEWSLETTER_RESET_MS);
     } catch {
       this._state = 'error';
       this._errorMessage = 'Something went wrong. Try again.';
@@ -96,7 +96,7 @@ export class NewsletterForm extends LitElement {
           : nothing}
 
         ${this._state === 'error' && this._errorMessage
-          ? html`<p class="mt-2 text-[11px] font-mono text-red-500">${this._errorMessage}</p>`
+          ? html`<p class="mt-2 text-[11px] font-mono text-error">${this._errorMessage}</p>`
           : nothing}
       </div>
     `;

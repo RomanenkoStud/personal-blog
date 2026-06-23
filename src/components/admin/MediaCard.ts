@@ -1,5 +1,7 @@
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import { COPY_FEEDBACK_MS } from '../../consts';
+import { formatFileSize } from '../../lib/format';
 
 @customElement('media-card')
 export class MediaCard extends LitElement {
@@ -21,17 +23,11 @@ export class MediaCard extends LitElement {
   @state() private _deleting = false;
   @state() private _copied = false;
 
-  private _formatSize(bytes: number): string {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  }
-
   private async _copyUrl() {
     const url = `${window.location.origin}/media/${this.fileKey}`;
     await navigator.clipboard.writeText(url);
     this._copied = true;
-    setTimeout(() => { this._copied = false; }, 1500);
+    setTimeout(() => { this._copied = false; }, COPY_FEEDBACK_MS);
   }
 
   private async _copyMarkdown() {
@@ -39,7 +35,7 @@ export class MediaCard extends LitElement {
     const md = `![${this.alt || this.filename}](${url})`;
     await navigator.clipboard.writeText(md);
     this._copied = true;
-    setTimeout(() => { this._copied = false; }, 1500);
+    setTimeout(() => { this._copied = false; }, COPY_FEEDBACK_MS);
   }
 
   private _startEditAlt() {
@@ -94,7 +90,7 @@ export class MediaCard extends LitElement {
             ${this.filename}
           </div>
           <div style="font:400 10px 'IBM Plex Mono',monospace;color:var(--color-dim);margin-top:2px">
-            ${this._formatSize(this.size)} · ${this.contentType.split('/')[1]?.toUpperCase()}
+            ${formatFileSize(this.size)} · ${this.contentType.split('/')[1]?.toUpperCase()}
           </div>
 
           <!-- Alt text -->
@@ -133,15 +129,15 @@ export class MediaCard extends LitElement {
             </button>
             ${this._confirmDelete
               ? html`
-                <span style="font:400 10px 'Space Grotesk',sans-serif;color:#dc2626;line-height:22px">Delete?</span>
+                <span style="font:400 10px 'Space Grotesk',sans-serif;color:var(--color-error);line-height:22px">Delete?</span>
                 <button type="button" @click=${this._delete} ?disabled=${this._deleting}
-                  style="font:500 10px 'Space Grotesk',sans-serif;color:#dc2626;background:none;border:none;cursor:pointer;padding:0">${this._deleting ? '...' : 'Yes'}</button>
+                  style="font:500 10px 'Space Grotesk',sans-serif;color:var(--color-error);background:none;border:none;cursor:pointer;padding:0">${this._deleting ? '...' : 'Yes'}</button>
                 <button type="button" @click=${() => { this._confirmDelete = false; }}
                   style="font:400 10px 'Space Grotesk',sans-serif;color:var(--color-meta);background:none;border:none;cursor:pointer;padding:0">No</button>
               `
               : html`
                 <button type="button" @click=${() => { this._confirmDelete = true; }}
-                  style="height:22px;border:1px solid #fecaca;background:var(--color-surface);border-radius:4px;padding:0 8px;font:400 10px 'IBM Plex Mono',monospace;color:#dc2626;cursor:pointer">Del</button>
+                  style="height:22px;border:1px solid var(--color-error);background:var(--color-surface);border-radius:4px;padding:0 8px;font:400 10px 'IBM Plex Mono',monospace;color:var(--color-error);cursor:pointer">Del</button>
               `
             }
           </div>

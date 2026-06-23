@@ -2,6 +2,9 @@ import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 import { getDb } from '../../lib/db';
 import { newsletterSubscribers } from '../../db/schema';
+import { jsonResponse } from '../../lib/response';
+import { EMAIL_REGEX } from '../../lib/validate';
+import { HTTP_STATUS, DB_ERROR_UNIQUE_CONSTRAINT } from '../../consts';
 
 export const POST: APIRoute = async ({ request }) => {
   let email: string | undefined;
@@ -15,11 +18,8 @@ export const POST: APIRoute = async ({ request }) => {
     email = formData.get('email')?.toString();
   }
 
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return new Response(JSON.stringify({ error: 'Invalid email' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
+  if (!email || !EMAIL_REGEX.test(email)) {
+    return jsonResponse({ error: 'Invalid email' }, HTTP_STATUS.BAD_REQUEST);
   }
 
   const db = getDb(env.DB);
@@ -30,15 +30,11 @@ export const POST: APIRoute = async ({ request }) => {
       subscribedAt: new Date().toISOString(),
     });
   } catch (e: any) {
-    if (e.message?.includes('UNIQUE constraint')) {
-      return new Response(JSON.stringify({ ok: true }), {
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (e.message?.includes(DB_ERROR_UNIQUE_CONSTRAINT)) {
+      return jsonResponse({ ok: true });
     }
     throw e;
   }
 
-  return new Response(JSON.stringify({ ok: true }), {
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return jsonResponse({ ok: true });
 };

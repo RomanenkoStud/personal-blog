@@ -1,3 +1,5 @@
+export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export interface ValidationResult {
   valid: boolean;
   errors: Record<string, string>;

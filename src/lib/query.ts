@@ -1,3 +1,5 @@
+import { QUERY_PARAM, DEFAULT_PER_PAGE } from '../consts';
+
 export interface ListParams {
   page: number;
   perPage: number;
@@ -12,14 +14,12 @@ export interface PaginatedResult<T> {
   totalPages: number;
 }
 
-const DEFAULT_PER_PAGE = 6;
-
 export function parseListParams(
   url: URL,
   opts?: { filterKeys?: string[]; defaultPerPage?: number }
 ): ListParams {
-  const perPage = Math.max(1, Number(url.searchParams.get('perPage') || opts?.defaultPerPage || DEFAULT_PER_PAGE));
-  const page = Math.max(1, Number(url.searchParams.get('page') || 1));
+  const perPage = Math.max(1, Number(url.searchParams.get(QUERY_PARAM.PER_PAGE) || opts?.defaultPerPage || DEFAULT_PER_PAGE));
+  const page = Math.max(1, Number(url.searchParams.get(QUERY_PARAM.PAGE) || 1));
 
   const filters: Record<string, string> = {};
   for (const key of opts?.filterKeys ?? []) {
@@ -51,7 +51,7 @@ export function buildListHref(
     if (v) qs.set(k, v);
   }
   const page = overrides?.page ?? params.page;
-  if (page > 1) qs.set('page', String(page));
+  if (page > 1) qs.set(QUERY_PARAM.PAGE, String(page));
   const str = qs.toString();
   return str ? `${basePath}?${str}` : basePath;
 }

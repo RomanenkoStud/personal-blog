@@ -22,7 +22,7 @@ const { page, action } = Astro.props;
       required
       style="width:100%;height:36px;border:1px solid var(--color-border);background:var(--color-surface);border-radius:6px;padding:0 10px;font:400 14px 'Space Grotesk',sans-serif;color:var(--color-ink);outline:none;box-sizing:border-box"
     />
-    <div class="field-error" data-field="title" style="font:400 11px 'IBM Plex Mono',monospace;color:#dc2626;margin-top:4px;display:none"></div>
+    <div class="field-error" data-field="title" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-error);margin-top:4px;display:none"></div>
   </div>
 
   <!-- Slug (read-only) -->
@@ -51,7 +51,7 @@ const { page, action } = Astro.props;
         <markdown-preview content={page.body}></markdown-preview>
       </div>
     </div>
-    <div class="field-error" data-field="body" style="font:400 11px 'IBM Plex Mono',monospace;color:#dc2626;margin-top:4px;display:none"></div>
+    <div class="field-error" data-field="body" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-error);margin-top:4px;display:none"></div>
   </div>
 
   <!-- Submit -->
@@ -122,7 +122,7 @@ const { page, action } = Astro.props;
           showErrors(result.errors);
         } else {
           formStatus.textContent = result.error || 'Something went wrong';
-          formStatus.style.color = '#dc2626';
+          formStatus.style.color = 'var(--color-error)';
           formStatus.style.display = 'inline';
         }
         return;
@@ -133,7 +133,7 @@ const { page, action } = Astro.props;
       formStatus.style.display = 'inline';
     } catch {
       formStatus.textContent = 'Network error';
-      formStatus.style.color = '#dc2626';
+      formStatus.style.color = 'var(--color-error)';
       formStatus.style.display = 'inline';
     } finally {
       submitBtn.disabled = false;

@@ -2,6 +2,8 @@ import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 import { createPost } from '../../../../lib/admin-api';
 import { validatePost } from '../../../../lib/validate';
+import { jsonResponse } from '../../../../lib/response';
+import { HTTP_STATUS, DB_ERROR_UNIQUE_CONSTRAINT } from '../../../../consts';
 
 export const POST: APIRoute = async ({ request }) => {
   const data = await request.json();
@@ -11,10 +13,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   const validation = validatePost(data);
   if (!validation.valid) {
-    return new Response(JSON.stringify({ errors: validation.errors }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return jsonResponse({ errors: validation.errors }, HTTP_STATUS.BAD_REQUEST);
   }
 
   try {
@@ -28,17 +27,11 @@ export const POST: APIRoute = async ({ request }) => {
       readTime: data.readTime,
       excerpt: data.excerpt,
     });
-    return new Response(JSON.stringify({ ok: true, post }), {
-      status: 201,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return jsonResponse({ ok: true, post }, HTTP_STATUS.CREATED);
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : '';
-    if (message.includes('UNIQUE constraint')) {
-      return new Response(JSON.stringify({ errors: { slug: 'This slug already exists' } }), {
-        status: 409,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (message.includes(DB_ERROR_UNIQUE_CONSTRAINT)) {
+      return jsonResponse({ errors: { slug: 'This slug already exists' } }, HTTP_STATUS.CONFLICT);
     }
     throw e;
   }

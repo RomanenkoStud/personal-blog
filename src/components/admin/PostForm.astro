@@ -28,12 +28,12 @@ const defaultDate = now.toISOString().slice(0, 16);
       required
       style="width:100%;height:36px;border:1px solid var(--color-border);background:var(--color-surface);border-radius:6px;padding:0 10px;font:400 14px 'Space Grotesk',sans-serif;color:var(--color-ink);outline:none;box-sizing:border-box"
     />
-    <div class="field-error" data-field="title" style="font:400 11px 'IBM Plex Mono',monospace;color:#dc2626;margin-top:4px;display:none"></div>
+    <div class="field-error" data-field="title" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-error);margin-top:4px;display:none"></div>
   </div>
 
   <!-- Slug -->
   <slug-field title={post?.title ?? ''} value={post?.slug ?? ''}></slug-field>
-  <div class="field-error" data-field="slug" style="font:400 11px 'IBM Plex Mono',monospace;color:#dc2626;margin-top:-14px;display:none"></div>
+  <div class="field-error" data-field="slug" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-error);margin-top:-14px;display:none"></div>
 
   <!-- Area + Date + ReadTime row -->
   <div style="display:grid;grid-template-columns:1fr 1fr 120px;gap:16px">
@@ -49,7 +49,7 @@ const defaultDate = now.toISOString().slice(0, 16);
           <option value={area} selected={post?.area === area}>{area}</option>
         ))}
       </select>
-      <div class="field-error" data-field="area" style="font:400 11px 'IBM Plex Mono',monospace;color:#dc2626;margin-top:4px;display:none"></div>
+      <div class="field-error" data-field="area" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-error);margin-top:4px;display:none"></div>
     </div>
 
     <div>
@@ -62,7 +62,7 @@ const defaultDate = now.toISOString().slice(0, 16);
         required
         style="width:100%;height:36px;border:1px solid var(--color-border);background:var(--color-surface);border-radius:6px;padding:0 8px;font:400 13px 'IBM Plex Mono',monospace;color:var(--color-ink);outline:none;box-sizing:border-box"
       />
-      <div class="field-error" data-field="publishedAt" style="font:400 11px 'IBM Plex Mono',monospace;color:#dc2626;margin-top:4px;display:none"></div>
+      <div class="field-error" data-field="publishedAt" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-error);margin-top:4px;display:none"></div>
     </div>
 
     <div>
@@ -76,7 +76,7 @@ const defaultDate = now.toISOString().slice(0, 16);
         required
         style="width:100%;height:36px;border:1px solid var(--color-border);background:var(--color-surface);border-radius:6px;padding:0 8px;font:400 13px 'IBM Plex Mono',monospace;color:var(--color-ink);outline:none;box-sizing:border-box"
       />
-      <div class="field-error" data-field="readTime" style="font:400 11px 'IBM Plex Mono',monospace;color:#dc2626;margin-top:4px;display:none"></div>
+      <div class="field-error" data-field="readTime" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-error);margin-top:4px;display:none"></div>
     </div>
   </div>
 
@@ -98,7 +98,7 @@ const defaultDate = now.toISOString().slice(0, 16);
       required
       style="width:100%;border:1px solid var(--color-border);background:var(--color-surface);border-radius:6px;padding:10px;font:400 13px 'Space Grotesk',sans-serif;color:var(--color-ink);outline:none;resize:vertical;box-sizing:border-box;line-height:1.5"
     >{post?.excerpt ?? ''}</textarea>
-    <div class="field-error" data-field="excerpt" style="font:400 11px 'IBM Plex Mono',monospace;color:#dc2626;margin-top:4px;display:none"></div>
+    <div class="field-error" data-field="excerpt" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-error);margin-top:4px;display:none"></div>
   </div>
 
   <!-- Body + Preview -->
@@ -115,7 +115,7 @@ const defaultDate = now.toISOString().slice(0, 16);
         <markdown-preview content={post?.body ?? ''}></markdown-preview>
       </div>
     </div>
-    <div class="field-error" data-field="body" style="font:400 11px 'IBM Plex Mono',monospace;color:#dc2626;margin-top:4px;display:none"></div>
+    <div class="field-error" data-field="body" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-error);margin-top:4px;display:none"></div>
   </div>
 
   <!-- Submit -->
@@ -197,7 +197,7 @@ const defaultDate = now.toISOString().slice(0, 16);
           showErrors(result.errors);
         } else {
           formStatus.textContent = result.error || 'Something went wrong';
-          formStatus.style.color = '#dc2626';
+          formStatus.style.color = 'var(--color-error)';
           formStatus.style.display = 'inline';
         }
         return;
@@ -212,7 +212,7 @@ const defaultDate = now.toISOString().slice(0, 16);
       }
     } catch {
       formStatus.textContent = 'Network error';
-      formStatus.style.color = '#dc2626';
+      formStatus.style.color = 'var(--color-error)';
       formStatus.style.display = 'inline';
     } finally {
       submitBtn.disabled = false;

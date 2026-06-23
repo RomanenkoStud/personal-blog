@@ -26,12 +26,12 @@ export class DeleteButton extends LitElement {
   render() {
     if (this._confirming) {
       return html`
-        <span style="font:400 12px 'Space Grotesk',sans-serif;color:#dc2626;margin-right:6px">Delete this?</span>
+        <span style="font:400 12px 'Space Grotesk',sans-serif;color:var(--color-error);margin-right:6px">Delete this?</span>
         <button
           type="button"
           @click=${this._delete}
           ?disabled=${this._deleting}
-          style="font:500 12px 'Space Grotesk',sans-serif;color:#dc2626;background:none;border:none;cursor:pointer;margin-right:4px"
+          style="font:500 12px 'Space Grotesk',sans-serif;color:var(--color-error);background:none;border:none;cursor:pointer;margin-right:4px"
         >${this._deleting ? 'Deleting…' : 'Yes'}</button>
         <button
           type="button"
@@ -45,7 +45,7 @@ export class DeleteButton extends LitElement {
       <button
         type="button"
         @click=${() => { this._confirming = true; }}
-        style="font:400 12px 'Space Grotesk',sans-serif;color:#dc2626;background:none;border:none;cursor:pointer"
+        style="font:400 12px 'Space Grotesk',sans-serif;color:var(--color-error);background:none;border:none;cursor:pointer"
       >Delete</button>
     `;
   }

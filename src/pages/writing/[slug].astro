@@ -2,6 +2,8 @@
 import BaseLayout from '../../layouts/Base.astro';
 import { getPostBySlug, getPosts } from '../../lib/api';
 import { env } from 'cloudflare:workers';
+import { RELATED_POSTS_COUNT, RELATED_TITLE_MAX_LENGTH } from '../../consts';
+import { formatMonthYear } from '../../lib/format';
 
 const { slug } = Astro.params;
 
@@ -18,11 +20,9 @@ if (!post) {
 const allPosts = await getPosts(env.DB);
 const relatedPosts = allPosts
   .filter(p => p.area === post.area && p.slug !== post.slug)
-  .slice(0, 3);
+  .slice(0, RELATED_POSTS_COUNT);
 
-const dateLabel = new Date(post.publishedAt)
-  .toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-  .toUpperCase();
+const dateLabel = formatMonthYear(post.publishedAt).toUpperCase();
 ---
 
 <BaseLayout
@@ -74,7 +74,7 @@ const dateLabel = new Date(post.publishedAt)
               href={`/writing/${related.slug}`}
               class="border border-newsletter-border bg-newsletter-bg rounded-[20px] py-[5px] px-3 font-mono text-[11px] text-indigo no-underline hover:text-indigo"
             >
-              {related.title.length > 40 ? related.title.slice(0, 40) + '…' : related.title}
+              {related.title.length > RELATED_TITLE_MAX_LENGTH ? related.title.slice(0, RELATED_TITLE_MAX_LENGTH) + '…' : related.title}
             </a>
           ))}
         </div>

@@ -1,8 +1,9 @@
 import { desc, eq, count, sql, and, type SQL } from 'drizzle-orm';
 import { getDb } from './db';
 import * as schema from '../db/schema';
-import type { BlogPost, Page } from '../types/content';
+import type { BlogPost, Page, ProfileData } from '../types/content';
 import { type ListParams, type PaginatedResult, paginate } from './query';
+import { PAGE_SLUG } from '../consts';
 
 export async function getPosts(d1: D1Database): Promise<BlogPost[]> {
   const db = getDb(d1);
@@ -76,6 +77,16 @@ export async function getPage(d1: D1Database, slug: string): Promise<Page | null
     .from(schema.pages)
     .where(eq(schema.pages.slug, slug));
   return results[0] ?? null;
+}
+
+export async function getProfile(d1: D1Database): Promise<ProfileData | null> {
+  const page = await getPage(d1, PAGE_SLUG.ABOUT);
+  if (!page) return null;
+  try {
+    return JSON.parse(page.body) as ProfileData;
+  } catch {
+    return null;
+  }
 }
 
 export async function getSearchIndex(

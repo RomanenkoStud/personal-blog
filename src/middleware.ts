@@ -1,12 +1,12 @@
 import { defineMiddleware } from 'astro:middleware';
 import { env } from 'cloudflare:workers';
+import { AUTH_COOKIE_NAME, JWKS_TTL_MS, HTTP_STATUS, CONTENT_TYPE_JSON } from './consts';
 
 interface JWKSResponse {
   keys: JsonWebKey[];
 }
 
 let jwksCache: { keys: JsonWebKey[]; fetchedAt: number } | null = null;
-const JWKS_TTL = 5 * 60 * 1000;
 
 function parseCookie(cookieHeader: string, name: string): string | null {
   const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
@@ -30,7 +30,7 @@ function decodeJWTPayload(token: string): Record<string, unknown> {
 }
 
 async function fetchJWKS(teamName: string): Promise<JsonWebKey[]> {
-  if (jwksCache && Date.now() - jwksCache.fetchedAt < JWKS_TTL) {
+  if (jwksCache && Date.now() - jwksCache.fetchedAt < JWKS_TTL_MS) {
     return jwksCache.keys;
   }
 
@@ -82,6 +82,16 @@ async function verifyAccessJWT(token: string, teamName: string): Promise<boolean
   }
 }
 
+function forbiddenResponse(isApi: boolean): Response {
+  if (isApi) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: HTTP_STATUS.FORBIDDEN,
+      headers: { 'Content-Type': CONTENT_TYPE_JSON },
+    });
+  }
+  return new Response('Unauthorized', { status: HTTP_STATUS.FORBIDDEN });
+}
+
 export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname } = context.url;
 
@@ -95,29 +105,18 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   const cookie = context.request.headers.get('cookie') ?? '';
-  const token = parseCookie(cookie, 'CF_Authorization');
+  const token = parseCookie(cookie, AUTH_COOKIE_NAME);
+  const isApi = pathname.startsWith('/api/admin');
 
   if (!token) {
-    if (pathname.startsWith('/api/admin')) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-    return new Response('Unauthorized', { status: 403 });
+    return forbiddenResponse(isApi);
   }
 
   const teamName = env.CF_ACCESS_TEAM_NAME;
   const isValid = await verifyAccessJWT(token, teamName);
 
   if (!isValid) {
-    if (pathname.startsWith('/api/admin')) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-    return new Response('Unauthorized', { status: 403 });
+    return forbiddenResponse(isApi);
   }
 
   const payload = decodeJWTPayload(token);

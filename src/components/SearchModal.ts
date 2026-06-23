@@ -1,6 +1,7 @@
 import { LitElement, html, nothing } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import Fuse from 'fuse.js';
+import { ROUTES, SEARCH_DEBOUNCE_MS, SEARCH_RESULT_LIMIT, SEARCH_FUSE_THRESHOLD } from '../consts';
 
 interface SearchItem {
   title: string;
@@ -61,11 +62,11 @@ export class SearchModal extends LitElement {
     if (!this._fuse) {
       this._loading = true;
       try {
-        const res = await fetch('/api/search-index.json');
+        const res = await fetch(ROUTES.API_SEARCH_INDEX);
         const searchIndex: SearchItem[] = await res.json();
         this._fuse = new Fuse(searchIndex, {
           keys: ['title', 'area', 'excerpt'],
-          threshold: 0.3,
+          threshold: SEARCH_FUSE_THRESHOLD,
           includeScore: true,
         });
       } catch {
@@ -98,7 +99,7 @@ export class SearchModal extends LitElement {
 
     this._debounceTimer = setTimeout(() => {
       this._performSearch(value);
-    }, 200);
+    }, SEARCH_DEBOUNCE_MS);
   }
 
   private _performSearch(query: string) {
@@ -106,7 +107,7 @@ export class SearchModal extends LitElement {
       this._results = [];
       return;
     }
-    const fuseResults = this._fuse.search(query, { limit: 6 });
+    const fuseResults = this._fuse.search(query, { limit: SEARCH_RESULT_LIMIT });
     this._results = fuseResults.map(r => r.item);
   }
 
@@ -127,7 +128,7 @@ export class SearchModal extends LitElement {
       case 'Enter':
         e.preventDefault();
         if (this._results.length > 0 && this._results[this._selectedIndex]) {
-          window.location.href = `/writing/${this._results[this._selectedIndex].slug}`;
+          window.location.href = `${ROUTES.WRITING}/${this._results[this._selectedIndex].slug}`;
         }
         break;
       case 'Escape':
@@ -144,7 +145,7 @@ export class SearchModal extends LitElement {
   }
 
   private _navigateToResult(slug: string) {
-    window.location.href = `/writing/${slug}`;
+    window.location.href = `${ROUTES.WRITING}/${slug}`;
   }
 
   render() {
