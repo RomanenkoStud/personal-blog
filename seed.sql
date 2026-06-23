@@ -1,4 +1,4 @@
-INSERT INTO posts (title, slug, body, area, published_at, featured, read_time, excerpt) VALUES
+INSERT OR REPLACE INTO posts (title, slug, body, area, published_at, featured, read_time, excerpt) VALUES
 ('Centralized i18n across 40+ micro-frontends', 'centralized-i18n-across-40-plus-micro-frontends',
 '## The problem with distributed translations
 
@@ -121,7 +121,7 @@ Running your own infrastructure teaches you things no tutorial can. When the con
 'homelab', '2025-12-20T10:00:00.000Z', 0, 6,
 'Turning retired laptops and a couple of Raspberry Pis into a Kubernetes home lab for self-hosted services, backups, and learning infrastructure as code.');
 
-INSERT INTO pages (title, slug, body, updated_at) VALUES
+INSERT OR REPLACE INTO pages (title, slug, body, updated_at) VALUES
 ('About', 'about',
 '{"heroName":"Hi, I''m Pavlo.","heroBio":"I''m a frontend engineer in Kyiv who cares more about systems than frameworks. This is where I write about the architecture, tools, and home-lab tinkering behind the work.","heroTagline":"frontend engineer · systems & architecture · kyiv","heroPhoto":"/img5.jpg","tagline":"Lean engineering: simple systems, made on purpose.","bio":"Frontend developer with a focus on architecture and internal tooling. I don''t just build features — I build the systems that help teams scale. Design systems, centralized localization, and micro-frontend structures in multi-repo environments.","photo":"/img3.jpg","location":"kyiv · remote","whatIDo":["Architecture — design systems, localization, micro-frontends","Dev efficiency — AI agents (Claude, Copilot) in coding & testing","Ownership — refactoring legacy, automating pipelines, clean code"],"experience":[{"title":"Frontend Developer · Pragmasoft","startDate":"2023-08","endDate":"","location":"hybrid"}],"education":[{"title":"B.Sc. Computer Engineering · KhNURE","startDate":"2020-09","endDate":"2024-06","location":""}],"tech":["TypeScript","Angular","React","Next.js","Astro","Web Components","Python","AWS","CI/CD","Keycloak"],"cta":"Open to senior roles — Kyiv & remote."}',
 '2026-06-23T10:00:00.000Z'),
