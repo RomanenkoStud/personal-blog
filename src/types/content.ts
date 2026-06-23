@@ -41,6 +41,11 @@ export interface NewsletterSubscriber {
   subscribedAt: string;
 }
 
+export interface SocialLink {
+  label: string;
+  url: string;
+}
+
 export interface ProfileData {
   heroName: string;
   heroBio: string;
@@ -50,6 +55,7 @@ export interface ProfileData {
   bio: string;
   photo: string;
   location: string;
+  socials: SocialLink[];
   whatIDo: string[];
   experience: { title: string; startDate: string; endDate: string; location: string }[];
   education: { title: string; startDate: string; endDate: string; location: string }[];

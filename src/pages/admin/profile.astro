@@ -11,7 +11,7 @@ const profile = await getProfile(env.DB);
 const EMPTY: ProfileData = {
   heroName: '', heroBio: '', heroTagline: '', heroPhoto: '',
   tagline: '', bio: '', photo: '', location: '',
-  whatIDo: [], experience: [], education: [], tech: [], cta: '',
+  socials: [], whatIDo: [], experience: [], education: [], tech: [], cta: '',
 };
 const data = profile ?? EMPTY;
 const pageId = page?.id ?? null;
@@ -75,6 +75,21 @@ const pageId = page?.id ?? null;
         <label for="location" class="field-label">Location</label>
         <input type="text" id="location" name="location" value={data.location} class="field-input" placeholder="city · remote" />
       </div>
+    </div>
+
+    <!-- Socials -->
+    <div class="field">
+      <label class="field-label">Socials</label>
+      <div id="socials-list" style="display:flex;flex-direction:column;gap:8px">
+        {data.socials.map(s => (
+          <div class="social-row" style="display:flex;gap:8px;align-items:center">
+            <input type="text" name="social-label" value={s.label} class="field-input" style="width:120px;flex:none" placeholder="github" />
+            <input type="text" name="social-url" value={s.url} class="field-input" style="flex:1" placeholder="https://..." />
+            <button type="button" class="remove-btn" title="Remove">×</button>
+          </div>
+        ))}
+      </div>
+      <button type="button" id="add-social" class="add-btn">+ add link</button>
     </div>
 
     <!-- What I Do -->
@@ -192,6 +207,25 @@ const pageId = page?.id ?? null;
   const form = document.getElementById('profile-form');
   const submitBtn = document.getElementById('submit-btn');
   const formStatus = document.getElementById('form-status');
+
+  // --- Socials: add/remove ---
+  const socialsList = document.getElementById('socials-list');
+  document.getElementById('add-social').addEventListener('click', () => {
+    const row = document.createElement('div');
+    row.className = 'social-row';
+    row.style.cssText = 'display:flex;gap:8px;align-items:center';
+    row.innerHTML = `
+      <input type="text" name="social-label" class="field-input" style="width:120px;flex:none" placeholder="github" />
+      <input type="text" name="social-url" class="field-input" style="flex:1" placeholder="https://..." />
+      <button type="button" class="remove-btn" title="Remove">×</button>
+    `;
+    socialsList.appendChild(row);
+  });
+  socialsList.addEventListener('click', (e) => {
+    if (e.target.classList.contains('remove-btn')) {
+      e.target.closest('.social-row').remove();
+    }
+  });
 
   // --- What I Do: add/remove ---
   const whatList = document.getElementById('what-i-do-list');
@@ -346,6 +380,10 @@ const pageId = page?.id ?? null;
       bio: form.querySelector('#bio').value,
       photo: form.querySelector('#photo').value,
       location: form.querySelector('#location').value,
+      socials: [...socialsList.querySelectorAll('.social-row')].map(row => ({
+        label: row.querySelector('input[name="social-label"]').value.trim(),
+        url: row.querySelector('input[name="social-url"]').value.trim(),
+      })).filter(s => s.label && s.url),
       whatIDo: [...form.querySelectorAll('input[name="whatIDo"]')].map(el => el.value).filter(Boolean),
       experience: [...form.querySelectorAll('.exp-row')].map(row => ({
         title: row.querySelector('input[name="exp-title"]').value,

@@ -86,7 +86,8 @@ export async function getProfile(d1: D1Database): Promise<ProfileData | null> {
   const page = await getPage(d1, PAGE_SLUG.ABOUT);
   if (!page) return null;
   try {
-    return JSON.parse(page.body) as ProfileData;
+    const raw = JSON.parse(page.body);
+    return { socials: [], ...raw } as ProfileData;
   } catch {
     return null;
   }
