@@ -1,6 +1,6 @@
 ---
 import type { BlogPost } from '../../types/content';
-import { POST_STATUSES, POST_STATUS } from '../../consts';
+import { POST_STATUS } from '../../consts';
 
 interface Props {
   areas: string[];
@@ -12,6 +12,10 @@ interface Props {
 const { areas, post, action, method } = Astro.props;
 const isEdit = !!post;
 const selectedArea = post?.area ?? areas[0] ?? '';
+const currentStatus = post?.status ?? POST_STATUS.DRAFT;
+const isDraft = !isEdit || currentStatus === POST_STATUS.DRAFT;
+const isPublished = isEdit && currentStatus === POST_STATUS.PUBLISHED;
+const isArchived = isEdit && currentStatus === POST_STATUS.ARCHIVED;
 
 const now = new Date();
 const defaultDate = now.toISOString().slice(0, 16);
@@ -90,23 +94,9 @@ const ADD_NEW_SENTINEL = '__add_new__';
     </div>
   </div>
 
-  <!-- Status + Featured -->
-  <div style="display:flex;align-items:center;gap:24px">
-    <div>
-      <label for="status" style="display:block;font:500 11px 'IBM Plex Mono',monospace;color:var(--color-meta);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Status</label>
-      <select
-        id="status"
-        name="status"
-        required
-        style="width:160px;height:36px;border:1px solid var(--color-border);background:var(--color-surface);border-radius:6px;padding:0 8px;font:400 13px 'IBM Plex Mono',monospace;color:var(--color-ink);outline:none;box-sizing:border-box"
-      >
-        {POST_STATUSES.map(s => (
-          <option value={s} selected={(post?.status ?? POST_STATUS.DRAFT) === s}>{s}</option>
-        ))}
-      </select>
-      <div class="field-error" data-field="status" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-error);margin-top:4px;display:none"></div>
-    </div>
-    <label style="display:inline-flex;align-items:center;gap:8px;font:400 13px 'Space Grotesk',sans-serif;color:var(--color-ink);cursor:pointer;margin-top:20px">
+  <!-- Featured -->
+  <div>
+    <label style="display:inline-flex;align-items:center;gap:8px;font:400 13px 'Space Grotesk',sans-serif;color:var(--color-ink);cursor:pointer">
       <input type="checkbox" id="featured" name="featured" checked={post?.featured} style="width:16px;height:16px;accent-color:#4f56e8" />
       Featured post
     </label>
@@ -144,26 +134,53 @@ const ADD_NEW_SENTINEL = '__add_new__';
 
   <!-- Submit -->
   <div style="display:flex;align-items:center;gap:12px">
-    <button
-      type="submit"
-      id="submit-btn"
-      style="height:38px;background:#4f56e8;border:none;border-radius:6px;padding:0 24px;font:500 13px 'IBM Plex Mono',monospace;color:#fff;cursor:pointer"
-    >{isEdit ? 'Update Post' : 'Create Post'}</button>
+    {isDraft && (
+      <>
+        <button
+          type="submit"
+          data-status={POST_STATUS.PUBLISHED}
+          class="submit-action"
+          style="height:38px;background:#4f56e8;border:none;border-radius:6px;padding:0 24px;font:500 13px 'IBM Plex Mono',monospace;color:#fff;cursor:pointer"
+        >Publish</button>
+        <button
+          type="submit"
+          data-status={POST_STATUS.DRAFT}
+          class="submit-action"
+          style="height:38px;background:transparent;border:1px solid var(--color-border);border-radius:6px;padding:0 24px;font:500 13px 'IBM Plex Mono',monospace;color:var(--color-ink);cursor:pointer"
+        >{isEdit ? 'Save Draft' : 'Save as Draft'}</button>
+      </>
+    )}
+    {isPublished && (
+      <button
+        type="submit"
+        data-status={POST_STATUS.PUBLISHED}
+        class="submit-action"
+        style="height:38px;background:#4f56e8;border:none;border-radius:6px;padding:0 24px;font:500 13px 'IBM Plex Mono',monospace;color:#fff;cursor:pointer"
+      >Update Post</button>
+    )}
+    {isArchived && (
+      <button
+        type="submit"
+        data-status={POST_STATUS.ARCHIVED}
+        class="submit-action"
+        style="height:38px;background:#4f56e8;border:none;border-radius:6px;padding:0 24px;font:500 13px 'IBM Plex Mono',monospace;color:#fff;cursor:pointer"
+      >Update</button>
+    )}
     <span id="form-status" style="font:400 12px 'IBM Plex Mono',monospace;display:none"></span>
   </div>
 </form>
 
-<script define:vars={{ action, method, ADD_NEW_SENTINEL }}>
+<script define:vars={{ action, method, currentStatus, ADD_NEW_SENTINEL }}>
   const form = document.getElementById('post-form');
   const titleInput = document.getElementById('title');
   const bodyTextarea = document.getElementById('body');
   const slugField = document.querySelector('slug-field');
   const preview = document.querySelector('markdown-preview');
-  const submitBtn = document.getElementById('submit-btn');
   const formStatus = document.getElementById('form-status');
   const areaHidden = document.getElementById('area');
   const areaSelect = document.getElementById('area-select');
   const areaCustom = document.getElementById('area-custom');
+  const submitButtons = form.querySelectorAll('.submit-action');
 
   areaSelect.addEventListener('change', () => {
     if (areaSelect.value === ADD_NEW_SENTINEL) {
@@ -210,6 +227,10 @@ const ADD_NEW_SENTINEL = '__add_new__';
     e.preventDefault();
     clearErrors();
 
+    const status = e.submitter?.dataset?.status || currentStatus;
+    const submitter = e.submitter;
+    const originalText = submitter?.textContent;
+
     const fd = new FormData(form);
     const data = {
       title: fd.get('title'),
@@ -220,11 +241,11 @@ const ADD_NEW_SENTINEL = '__add_new__';
       featured: fd.has('featured'),
       excerpt: fd.get('excerpt'),
       body: fd.get('body'),
-      status: fd.get('status'),
+      status,
     };
 
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Saving…';
+    submitButtons.forEach(btn => btn.disabled = true);
+    if (submitter) submitter.textContent = 'Saving…';
     formStatus.style.display = 'none';
 
     try {
@@ -252,15 +273,16 @@ const ADD_NEW_SENTINEL = '__add_new__';
       formStatus.style.display = 'inline';
 
       if (method === 'POST') {
-        setTimeout(() => { window.location.href = '/admin/posts'; }, 600);
+        const redirect = status === 'draft' ? '/admin/posts?tab=drafts' : '/admin/posts';
+        setTimeout(() => { window.location.href = redirect; }, 600);
       }
     } catch {
       formStatus.textContent = 'Network error';
       formStatus.style.color = 'var(--color-error)';
       formStatus.style.display = 'inline';
     } finally {
-      submitBtn.disabled = false;
-      submitBtn.textContent = method === 'POST' ? 'Create Post' : 'Update Post';
+      submitButtons.forEach(btn => btn.disabled = false);
+      if (submitter) submitter.textContent = originalText;
     }
   });
 </script>

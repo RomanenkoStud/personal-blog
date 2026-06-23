@@ -1,10 +1,24 @@
 ---
 import AdminLayout from '../../../layouts/Admin.astro';
-import { getAllPosts } from '../../../lib/admin-api';
+import { getPostsByStatus } from '../../../lib/admin-api';
 import { POST_STATUS } from '../../../consts';
 import { env } from 'cloudflare:workers';
 
-const posts = await getAllPosts(env.DB);
+const tab = (Astro.url.searchParams.get('tab') ?? 'posts') as 'posts' | 'drafts' | 'archive';
+
+const statusMap = {
+  posts: POST_STATUS.PUBLISHED,
+  drafts: POST_STATUS.DRAFT,
+  archive: POST_STATUS.ARCHIVED,
+} as const;
+
+const posts = await getPostsByStatus(env.DB, statusMap[tab] ?? POST_STATUS.PUBLISHED);
+
+const tabs = [
+  { key: 'posts', label: 'Posts', href: '/admin/posts' },
+  { key: 'drafts', label: 'Drafts', href: '/admin/posts?tab=drafts' },
+  { key: 'archive', label: 'Archive', href: '/admin/posts?tab=archive' },
+] as const;
 ---
 
 <AdminLayout title="Posts" activeNav="posts">
@@ -14,39 +28,111 @@ const posts = await getAllPosts(env.DB);
     <a href="/admin/posts/new" style="display:inline-flex;align-items:center;height:34px;background:#4f56e8;border-radius:6px;padding:0 16px;font:500 12px 'IBM Plex Mono',monospace;color:#fff;text-decoration:none">+ New Post</a>
   </div>
 
+  <!-- Tabs -->
+  <div style="display:flex;gap:0;border-bottom:1px solid var(--color-border-light);margin-bottom:20px">
+    {tabs.map(t => (
+      <a
+        href={t.href}
+        style={`padding:10px 20px;font:500 12px 'IBM Plex Mono',monospace;text-decoration:none;border-bottom:2px solid ${tab === t.key ? 'var(--color-indigo)' : 'transparent'};color:${tab === t.key ? 'var(--color-indigo)' : 'var(--color-dim)'};margin-bottom:-1px`}
+      >{t.label}</a>
+    ))}
+  </div>
+
   {posts.length === 0 ? (
     <div style="text-align:center;padding:48px 0;font:400 14px 'Space Grotesk',sans-serif;color:var(--color-dim)">
-      No posts yet. <a href="/admin/posts/new" style="color:var(--color-indigo)">Create your first post.</a>
+      {tab === 'posts' && <>No published posts. <a href="/admin/posts/new" style="color:var(--color-indigo)">Create your first post.</a></>}
+      {tab === 'drafts' && 'No drafts.'}
+      {tab === 'archive' && 'No archived posts.'}
     </div>
   ) : (
     <div style="border:1px solid var(--color-border-light);border-radius:8px;overflow:hidden">
-      <!-- Header -->
-      <div style="display:grid;grid-template-columns:1fr 100px 90px 110px 70px 80px;gap:8px;padding:10px 16px;background:var(--color-surface-alt);font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:var(--color-placeholder);text-transform:uppercase">
-        <span>Title</span>
-        <span>Area</span>
-        <span>Status</span>
-        <span>Published</span>
-        <span>Featured</span>
-        <span></span>
-      </div>
-      <!-- Rows -->
-      {posts.map(post => (
-        <div style="display:grid;grid-template-columns:1fr 100px 90px 110px 70px 80px;gap:8px;align-items:center;padding:12px 16px;border-top:1px solid var(--color-border-light)">
-          <a href={`/admin/posts/${post.id}`} style="font:400 14px 'Space Grotesk',sans-serif;color:var(--color-ink);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-            {post.title}
-          </a>
-          <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-indigo)">{post.area}</span>
-          <span style={`font:500 10px 'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.04em;color:${post.status === POST_STATUS.PUBLISHED ? 'var(--color-indigo)' : post.status === POST_STATUS.DRAFT ? '#d97706' : 'var(--color-dim)'}`}>
-            {post.status}
-          </span>
-          <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim)">{post.publishedAt.slice(0, 10)}</span>
-          <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim)">{post.featured ? '★' : '—'}</span>
-          <div style="display:flex;gap:10px;align-items:center">
-            <a href={`/admin/posts/${post.id}`} style="font:400 12px 'Space Grotesk',sans-serif;color:var(--color-indigo);text-decoration:none">Edit</a>
-            <delete-button endpoint={`/api/admin/posts/${post.id}`} redirect-to="/admin/posts"></delete-button>
+
+      {/* Published posts */}
+      {tab === 'posts' && (
+        <>
+          <div style="display:grid;grid-template-columns:1fr 100px 110px 70px 140px;gap:8px;padding:10px 16px;background:var(--color-surface-alt);font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:var(--color-placeholder);text-transform:uppercase">
+            <span>Title</span>
+            <span>Area</span>
+            <span>Published</span>
+            <span>Featured</span>
+            <span></span>
           </div>
-        </div>
-      ))}
+          {posts.map(post => (
+            <div style="display:grid;grid-template-columns:1fr 100px 110px 70px 140px;gap:8px;align-items:center;padding:12px 16px;border-top:1px solid var(--color-border-light)">
+              <a href={`/admin/posts/${post.id}`} style="font:400 14px 'Space Grotesk',sans-serif;color:var(--color-ink);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                {post.title}
+              </a>
+              <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-indigo)">{post.area}</span>
+              <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim)">{post.publishedAt.slice(0, 10)}</span>
+              <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim)">{post.featured ? '★' : '—'}</span>
+              <div style="display:flex;gap:10px;align-items:center">
+                <a href={`/admin/posts/${post.id}`} style="font:400 12px 'Space Grotesk',sans-serif;color:var(--color-indigo);text-decoration:none">Edit</a>
+                <status-action-button
+                  endpoint={`/api/admin/posts/${post.id}`}
+                  target-status="archived"
+                  label="Archive"
+                  needs-confirm
+                ></status-action-button>
+                <delete-button endpoint={`/api/admin/posts/${post.id}`} redirect-to="/admin/posts"></delete-button>
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+
+      {/* Draft posts */}
+      {tab === 'drafts' && (
+        <>
+          <div style="display:grid;grid-template-columns:1fr 100px 100px;gap:8px;padding:10px 16px;background:var(--color-surface-alt);font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:var(--color-placeholder);text-transform:uppercase">
+            <span>Title</span>
+            <span>Area</span>
+            <span></span>
+          </div>
+          {posts.map(post => (
+            <div style="display:grid;grid-template-columns:1fr 100px 100px;gap:8px;align-items:center;padding:12px 16px;border-top:1px solid var(--color-border-light)">
+              <a href={`/admin/posts/${post.id}`} style="font:400 14px 'Space Grotesk',sans-serif;color:var(--color-ink);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                {post.title}
+              </a>
+              <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-indigo)">{post.area}</span>
+              <div style="display:flex;gap:10px;align-items:center">
+                <a href={`/admin/posts/${post.id}`} style="font:400 12px 'Space Grotesk',sans-serif;color:var(--color-indigo);text-decoration:none">Edit</a>
+                <delete-button endpoint={`/api/admin/posts/${post.id}`} redirect-to="/admin/posts?tab=drafts"></delete-button>
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+
+      {/* Archived posts */}
+      {tab === 'archive' && (
+        <>
+          <div style="display:grid;grid-template-columns:1fr 100px 110px 140px;gap:8px;padding:10px 16px;background:var(--color-surface-alt);font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:var(--color-placeholder);text-transform:uppercase">
+            <span>Title</span>
+            <span>Area</span>
+            <span>Published</span>
+            <span></span>
+          </div>
+          {posts.map(post => (
+            <div style="display:grid;grid-template-columns:1fr 100px 110px 140px;gap:8px;align-items:center;padding:12px 16px;border-top:1px solid var(--color-border-light)">
+              <a href={`/admin/posts/${post.id}`} style="font:400 14px 'Space Grotesk',sans-serif;color:var(--color-ink);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                {post.title}
+              </a>
+              <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-indigo)">{post.area}</span>
+              <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim)">{post.publishedAt.slice(0, 10)}</span>
+              <div style="display:flex;gap:10px;align-items:center">
+                <a href={`/admin/posts/${post.id}`} style="font:400 12px 'Space Grotesk',sans-serif;color:var(--color-indigo);text-decoration:none">Edit</a>
+                <status-action-button
+                  endpoint={`/api/admin/posts/${post.id}`}
+                  target-status="published"
+                  label="Unarchive"
+                ></status-action-button>
+                <delete-button endpoint={`/api/admin/posts/${post.id}`} redirect-to="/admin/posts?tab=archive"></delete-button>
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+
     </div>
   )}
 
@@ -54,4 +140,5 @@ const posts = await getAllPosts(env.DB);
 
 <script>
   import '../../../components/admin/DeleteButton';
+  import '../../../components/admin/StatusActionButton';
 </script>

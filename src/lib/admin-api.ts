@@ -8,6 +8,11 @@ export async function getAllPosts(d1: D1Database): Promise<BlogPost[]> {
   return db.select().from(schema.posts).orderBy(desc(schema.posts.publishedAt));
 }
 
+export async function getPostsByStatus(d1: D1Database, status: string): Promise<BlogPost[]> {
+  const db = getDb(d1);
+  return db.select().from(schema.posts).where(eq(schema.posts.status, status)).orderBy(desc(schema.posts.publishedAt));
+}
+
 export async function getDistinctAreas(d1: D1Database): Promise<string[]> {
   const db = getDb(d1);
   const rows = await db
@@ -50,6 +55,12 @@ export async function deletePost(d1: D1Database, id: number): Promise<boolean> {
   const db = getDb(d1);
   const result = await db.delete(schema.posts).where(eq(schema.posts.id, id));
   return result.rowsAffected > 0;
+}
+
+export async function updatePostStatus(d1: D1Database, id: number, status: string): Promise<BlogPost | null> {
+  const db = getDb(d1);
+  const result = await db.update(schema.posts).set({ status }).where(eq(schema.posts.id, id)).returning();
+  return result[0] ?? null;
 }
 
 export async function getPageById(d1: D1Database, id: number): Promise<Page | null> {

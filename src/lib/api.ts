@@ -1,4 +1,4 @@
-import { desc, eq, count, sql, and, type SQL } from 'drizzle-orm';
+import { desc, eq, ne, count, sql, and, type SQL } from 'drizzle-orm';
 import { getDb } from './db';
 import * as schema from '../db/schema';
 import type { BlogPost, Page, ProfileData } from '../types/content';
@@ -55,12 +55,14 @@ export async function getAreas(d1: D1Database): Promise<{ area: string; count: n
   return results;
 }
 
+const isNotDraft = ne(schema.posts.status, POST_STATUS.DRAFT);
+
 export async function getPostBySlug(d1: D1Database, slug: string): Promise<BlogPost | null> {
   const db = getDb(d1);
   const results = await db
     .select()
     .from(schema.posts)
-    .where(and(eq(schema.posts.slug, slug), isPublished));
+    .where(and(eq(schema.posts.slug, slug), isNotDraft));
   return results[0] ?? null;
 }
 

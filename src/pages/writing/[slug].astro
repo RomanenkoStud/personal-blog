@@ -2,7 +2,7 @@
 import BaseLayout from '../../layouts/Base.astro';
 import { getPostBySlug, getPosts } from '../../lib/api';
 import { env } from 'cloudflare:workers';
-import { RELATED_POSTS_COUNT, RELATED_TITLE_MAX_LENGTH } from '../../consts';
+import { RELATED_POSTS_COUNT, RELATED_TITLE_MAX_LENGTH, POST_STATUS } from '../../consts';
 import { formatMonthYear } from '../../lib/format';
 
 const { slug } = Astro.params;
@@ -23,6 +23,7 @@ const relatedPosts = allPosts
   .slice(0, RELATED_POSTS_COUNT);
 
 const dateLabel = formatMonthYear(post.publishedAt).toUpperCase();
+const isArchived = post.status === POST_STATUS.ARCHIVED;
 ---
 
 <BaseLayout
@@ -32,6 +33,15 @@ const dateLabel = formatMonthYear(post.publishedAt).toUpperCase();
   publishedAt={post.publishedAt}
 >
   <article class="page-container">
+
+    {isArchived && (
+      <div class="mx-[92px] mt-8 mb-0 max-sm:mx-4 max-sm:mt-5">
+        <div class="flex items-center gap-2 py-2.5 px-4 rounded-md border border-dashed border-border bg-surface-alt">
+          <span class="font-mono text-[10px] font-medium tracking-[.1em] text-placeholder uppercase">archived</span>
+          <span class="font-heading text-[12px] text-dim">This article is no longer listed but remains accessible via direct link.</span>
+        </div>
+      </div>
+    )}
 
     <!-- Header -->
     <div class="px-[92px] pt-11 pb-8 text-center max-sm:px-4 max-sm:pt-7 max-sm:pb-5">
