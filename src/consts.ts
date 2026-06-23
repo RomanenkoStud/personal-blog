@@ -18,7 +18,15 @@ export const NAV_LINKS = [
 export const AREAS = ['architecture', 'devex', 'ai', 'cases', 'homelab'] as const;
 export type Area = typeof AREAS[number];
 
-export const POST_STATUSES = ['published', 'draft', 'archived'] as const;
+export const POST_STATUS = {
+  PUBLISHED: 'published',
+  DRAFT: 'draft',
+  ARCHIVED: 'archived',
+} as const;
+
+export type PostStatus = typeof POST_STATUS[keyof typeof POST_STATUS];
+
+export const POST_STATUSES = Object.values(POST_STATUS);
 
 // --- Page slugs ---
 export const PAGE_SLUG = {

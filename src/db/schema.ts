@@ -1,4 +1,5 @@
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { POST_STATUS } from '../consts';
 
 export const posts = sqliteTable('posts', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -10,7 +11,7 @@ export const posts = sqliteTable('posts', {
   featured: integer('featured', { mode: 'boolean' }).notNull().default(false),
   readTime: integer('read_time').notNull(),
   excerpt: text('excerpt').notNull(),
-  status: text('status').notNull().default('published'),
+  status: text('status').notNull().default(POST_STATUS.PUBLISHED),
 });
 
 export const pages = sqliteTable('pages', {

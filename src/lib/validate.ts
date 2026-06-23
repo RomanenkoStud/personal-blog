@@ -32,7 +32,7 @@ export function validatePost(data: Record<string, unknown>): ValidationResult {
     errors.excerpt = 'Excerpt is required';
   }
   if (!data.status || typeof data.status !== 'string' || !POST_STATUSES.includes(data.status as any)) {
-    errors.status = 'Status must be published, draft, or archived';
+    errors.status = `Status must be ${POST_STATUSES.join(', ')}`;
   }
 
   return { valid: Object.keys(errors).length === 0, errors };

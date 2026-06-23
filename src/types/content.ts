@@ -1,4 +1,6 @@
-export type PostStatus = 'published' | 'draft' | 'archived';
+import type { PostStatus } from '../consts';
+
+export type { PostStatus };
 
 export interface BlogPost {
   id: number;

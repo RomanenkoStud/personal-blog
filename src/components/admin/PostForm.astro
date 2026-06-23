@@ -1,6 +1,6 @@
 ---
 import type { BlogPost } from '../../types/content';
-import { AREAS, POST_STATUSES } from '../../consts';
+import { AREAS, POST_STATUSES, POST_STATUS } from '../../consts';
 
 interface Props {
   post?: BlogPost;
@@ -91,7 +91,7 @@ const defaultDate = now.toISOString().slice(0, 16);
         style="width:160px;height:36px;border:1px solid var(--color-border);background:var(--color-surface);border-radius:6px;padding:0 8px;font:400 13px 'IBM Plex Mono',monospace;color:var(--color-ink);outline:none;box-sizing:border-box"
       >
         {POST_STATUSES.map(s => (
-          <option value={s} selected={(post?.status ?? 'draft') === s}>{s}</option>
+          <option value={s} selected={(post?.status ?? POST_STATUS.DRAFT) === s}>{s}</option>
         ))}
       </select>
       <div class="field-error" data-field="status" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-error);margin-top:4px;display:none"></div>

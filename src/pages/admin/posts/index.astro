@@ -1,6 +1,7 @@
 ---
 import AdminLayout from '../../../layouts/Admin.astro';
 import { getAllPosts } from '../../../lib/admin-api';
+import { POST_STATUS } from '../../../consts';
 import { env } from 'cloudflare:workers';
 
 const posts = await getAllPosts(env.DB);
@@ -35,7 +36,7 @@ const posts = await getAllPosts(env.DB);
             {post.title}
           </a>
           <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-indigo)">{post.area}</span>
-          <span style={`font:500 10px 'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.04em;color:${post.status === 'published' ? 'var(--color-indigo)' : post.status === 'draft' ? '#d97706' : 'var(--color-dim)'}`}>
+          <span style={`font:500 10px 'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.04em;color:${post.status === POST_STATUS.PUBLISHED ? 'var(--color-indigo)' : post.status === POST_STATUS.DRAFT ? '#d97706' : 'var(--color-dim)'}`}>
             {post.status}
           </span>
           <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim)">{post.publishedAt.slice(0, 10)}</span>

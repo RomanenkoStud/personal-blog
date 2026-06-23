@@ -3,9 +3,9 @@ import { getDb } from './db';
 import * as schema from '../db/schema';
 import type { BlogPost, Page, ProfileData } from '../types/content';
 import { type ListParams, type PaginatedResult, paginate } from './query';
-import { PAGE_SLUG } from '../consts';
+import { PAGE_SLUG, POST_STATUS } from '../consts';
 
-const isPublished = eq(schema.posts.status, 'published');
+const isPublished = eq(schema.posts.status, POST_STATUS.PUBLISHED);
 
 export async function getPosts(d1: D1Database): Promise<BlogPost[]> {
   const db = getDb(d1);
