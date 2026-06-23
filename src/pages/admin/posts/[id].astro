@@ -1,7 +1,8 @@
 ---
 import AdminLayout from '../../../layouts/Admin.astro';
 import PostForm from '../../../components/admin/PostForm.astro';
-import { getPostById } from '../../../lib/admin-api';
+import { getPostById, getDistinctAreas } from '../../../lib/admin-api';
+import { DEFAULT_AREAS } from '../../../consts';
 import { env } from 'cloudflare:workers';
 
 const id = Number(Astro.params.id);
@@ -9,10 +10,14 @@ if (isNaN(id)) {
   return Astro.redirect('/admin/posts');
 }
 
-const post = await getPostById(env.DB, id);
+const [post, dbAreas] = await Promise.all([
+  getPostById(env.DB, id),
+  getDistinctAreas(env.DB),
+]);
 if (!post) {
   return Astro.redirect('/admin/posts');
 }
+const areas = [...new Set([...DEFAULT_AREAS, ...dbAreas])];
 ---
 
 <AdminLayout title={`Edit · ${post.title}`} activeNav="posts">
@@ -26,6 +31,6 @@ if (!post) {
     <a href={`/writing/${post.slug}`} target="_blank" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-indigo);text-decoration:none">View on site &rarr;</a>
   </div>
 
-  <PostForm post={post} action={`/api/admin/posts/${post.id}`} method="PUT" />
+  <PostForm areas={areas} post={post} action={`/api/admin/posts/${post.id}`} method="PUT" />
 
 </AdminLayout>

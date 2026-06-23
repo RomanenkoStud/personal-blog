@@ -1,6 +1,12 @@
 ---
 import AdminLayout from '../../../layouts/Admin.astro';
 import PostForm from '../../../components/admin/PostForm.astro';
+import { getDistinctAreas } from '../../../lib/admin-api';
+import { DEFAULT_AREAS } from '../../../consts';
+import { env } from 'cloudflare:workers';
+
+const dbAreas = await getDistinctAreas(env.DB);
+const areas = [...new Set([...DEFAULT_AREAS, ...dbAreas])];
 ---
 
 <AdminLayout title="New Post" activeNav="posts">
@@ -11,6 +17,6 @@ import PostForm from '../../../components/admin/PostForm.astro';
 
   <div style="font:400 26px 'Space Grotesk',sans-serif;color:var(--color-ink);margin-bottom:24px">New Post</div>
 
-  <PostForm action="/api/admin/posts" method="POST" />
+  <PostForm areas={areas} action="/api/admin/posts" method="POST" />
 
 </AdminLayout>

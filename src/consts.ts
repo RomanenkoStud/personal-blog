@@ -15,8 +15,7 @@ export const NAV_LINKS = [
   { href: '/about', label: 'about' },
 ];
 
-export const AREAS = ['architecture', 'devex', 'ai', 'cases', 'homelab'] as const;
-export type Area = typeof AREAS[number];
+export const DEFAULT_AREAS = ['architecture', 'devex', 'ai', 'cases', 'homelab'] as const;
 
 export const POST_STATUS = {
   PUBLISHED: 'published',

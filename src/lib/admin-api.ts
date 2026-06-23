@@ -8,6 +8,15 @@ export async function getAllPosts(d1: D1Database): Promise<BlogPost[]> {
   return db.select().from(schema.posts).orderBy(desc(schema.posts.publishedAt));
 }
 
+export async function getDistinctAreas(d1: D1Database): Promise<string[]> {
+  const db = getDb(d1);
+  const rows = await db
+    .selectDistinct({ area: schema.posts.area })
+    .from(schema.posts)
+    .orderBy(schema.posts.area);
+  return rows.map(r => r.area);
+}
+
 export async function getPostById(d1: D1Database, id: number): Promise<BlogPost | null> {
   const db = getDb(d1);
   const results = await db.select().from(schema.posts).where(eq(schema.posts.id, id));
