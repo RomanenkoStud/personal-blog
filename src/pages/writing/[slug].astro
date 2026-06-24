@@ -4,6 +4,7 @@ import { getPostBySlug, getPosts } from '../../lib/api';
 import { env } from 'cloudflare:workers';
 import { RELATED_POSTS_COUNT, RELATED_TITLE_MAX_LENGTH, POST_STATUS } from '../../consts';
 import { formatMonthYear } from '../../lib/format';
+import { isSandboxBlock, parseSandboxBlock } from '../../lib/sandbox';
 
 const { slug } = Astro.params;
 
@@ -55,6 +56,21 @@ const isArchived = post.status === POST_STATUS.ARCHIVED;
     <!-- Body -->
     <div class="px-[92px] pb-2 max-sm:px-4">
       {post.body.split('\n\n').map(paragraph => {
+        if (isSandboxBlock(paragraph)) {
+          const sandbox = parseSandboxBlock(paragraph);
+          if (sandbox) {
+            return (
+              <code-sandbox
+                repo={sandbox.repo}
+                branch={sandbox.branch}
+                file={sandbox.file}
+                view={sandbox.view}
+                height={sandbox.height}
+                label={sandbox.title}
+              ></code-sandbox>
+            );
+          }
+        }
         if (paragraph.startsWith('## ')) {
           return <h2 class="font-heading font-semibold text-[20px] text-ink mt-8 mb-4">{paragraph.replace('## ', '')}</h2>;
         }
@@ -93,3 +109,7 @@ const isArchived = post.status === POST_STATUS.ARCHIVED;
 
   </article>
 </BaseLayout>
+
+<script>
+  import '../../components/CodeSandbox';
+</script>

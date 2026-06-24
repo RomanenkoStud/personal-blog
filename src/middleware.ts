@@ -95,6 +95,18 @@ function forbiddenResponse(isApi: boolean): Response {
 export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname } = context.url;
 
+  // Article pages may embed runnable <code-sandbox> StackBlitz projects, which
+  // need the page to be cross-origin isolated for WebContainers to boot. The
+  // embed is loaded with `crossOriginIsolated: true` so StackBlitz serves its
+  // iframe with matching COEP headers. Google Fonts survive require-corp (they
+  // send CORP: cross-origin).
+  if (pathname.startsWith('/writing/')) {
+    const response = await next();
+    response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+    response.headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
+    return response;
+  }
+
   if (!pathname.startsWith('/admin') && !pathname.startsWith('/api/admin')) {
     return next();
   }
