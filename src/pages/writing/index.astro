@@ -53,7 +53,7 @@ const href = (overrides?: Parameters<typeof buildListHref>[2]) =>
           {postsByYear[year].map(post => (
             <a href={`/writing/${post.slug}`} class="group flex items-baseline gap-[18px] py-[13px] border-t border-border-light no-underline text-inherit hover:text-inherit max-sm:flex-col max-sm:gap-1">
               <span class="w-[58px] font-mono text-[11px] text-placeholder shrink-0">{post.publishedAt.slice(0, 7)}</span>
-              <span class="flex-1 font-heading text-[15px] text-ink group-hover:text-indigo">{post.title}</span>
+              <span class="flex-1 font-heading text-[15px] text-ink group-hover:text-indigo">{post.featured && <span class="text-indigo mr-1.5" title="Featured">★</span>}{post.title}</span>
               <span class="font-mono text-[10px] text-indigo shrink-0">{post.area}</span>
             </a>
           ))}

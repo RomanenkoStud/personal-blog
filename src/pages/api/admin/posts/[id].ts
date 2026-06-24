@@ -74,20 +74,31 @@ export const PATCH: APIRoute = async ({ params, request }) => {
     return jsonResponse({ error: 'Invalid ID' }, HTTP_STATUS.BAD_REQUEST);
   }
 
-  const { status } = await request.json();
+  const body = await request.json();
 
   const current = await getPostById(env.DB, id);
   if (!current) {
     return jsonResponse({ error: 'Post not found' }, HTTP_STATUS.NOT_FOUND);
   }
 
-  const allowed = VALID_PATCH_TRANSITIONS[current.status];
-  if (!allowed || !allowed.includes(status)) {
-    return jsonResponse({ error: 'Invalid status transition' }, HTTP_STATUS.BAD_REQUEST);
+  if ('status' in body) {
+    const allowed = VALID_PATCH_TRANSITIONS[current.status];
+    if (!allowed || !allowed.includes(body.status)) {
+      return jsonResponse({ error: 'Invalid status transition' }, HTTP_STATUS.BAD_REQUEST);
+    }
+    const post = await updatePostStatus(env.DB, id, body.status);
+    return jsonResponse({ ok: true, post });
   }
 
-  const post = await updatePostStatus(env.DB, id, status);
-  return jsonResponse({ ok: true, post });
+  if ('featured' in body) {
+    const post = await updatePost(env.DB, id, { featured: Boolean(body.featured) });
+    if (!post) {
+      return jsonResponse({ error: 'Post not found' }, HTTP_STATUS.NOT_FOUND);
+    }
+    return jsonResponse({ ok: true, post });
+  }
+
+  return jsonResponse({ error: 'No valid field to update' }, HTTP_STATUS.BAD_REQUEST);
 };
 
 export const DELETE: APIRoute = async ({ params }) => {

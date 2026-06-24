@@ -1,14 +1,19 @@
 ---
 import BaseLayout from '../layouts/Base.astro';
-import { getPosts, getPage, getProfile } from '../lib/api';
+import { getPostsList, getPage, getProfile } from '../lib/api';
 import { env } from 'cloudflare:workers';
-import { PAGE_SLUG, LATEST_POSTS_COUNT, NOW_SNIPPET_LENGTH, SITE_TITLE } from '../consts';
+import { PAGE_SLUG, FEATURED_POSTS_COUNT, LATEST_POSTS_COUNT, NOW_SNIPPET_LENGTH, SITE_TITLE } from '../consts';
 import { stripMarkdown, truncate } from '../lib/format';
 
-const posts = await getPosts(env.DB);
-const latestPosts = posts.slice(0, LATEST_POSTS_COUNT);
-const nowPage = await getPage(env.DB, PAGE_SLUG.NOW);
-const profile = await getProfile(env.DB);
+const [featuredResult, latestResult, nowPage, profile] = await Promise.all([
+  getPostsList(env.DB, { page: 1, perPage: FEATURED_POSTS_COUNT, filters: { featured: 'true' } }),
+  getPostsList(env.DB, { page: 1, perPage: LATEST_POSTS_COUNT, filters: { featured: 'false' } }),
+  getPage(env.DB, PAGE_SLUG.NOW),
+  getProfile(env.DB),
+]);
+
+const [leadPost, ...runnerUpPosts] = featuredResult.items;
+const latestPosts = latestResult.items;
 
 const nowSnippet = nowPage
   ? truncate(stripMarkdown(nowPage.body), NOW_SNIPPET_LENGTH)
@@ -38,6 +43,36 @@ const nowSnippet = nowPage
             <div class="relative leading-none">
               <img src={profile.heroPhoto} alt={SITE_TITLE} class="w-full h-[240px] object-cover object-[center_40%] block max-sm:h-[180px]" />
             </div>
+          </div>
+        )}
+      </section>
+    )}
+
+    {leadPost && (
+      <section class="px-[26px] pt-3 pb-4 max-sm:px-4">
+        <span class="section-label"><span class="text-indigo not-italic">&#9733;</span> featured</span>
+
+        <a href={`/writing/${leadPost.slug}`} class="group block mt-3 pl-4 border-l-2 border-indigo no-underline text-inherit hover:text-inherit">
+          <div class="font-heading text-[21px] leading-[1.3] text-ink transition-colors duration-150 group-hover:text-indigo max-sm:text-[19px]">{leadPost.title}</div>
+          {leadPost.excerpt && (
+            <div class="mt-1.5 font-heading text-[13.5px] leading-[1.55] text-meta line-clamp-1 max-sm:line-clamp-2">{leadPost.excerpt}</div>
+          )}
+          <div class="font-mono text-[11px] text-dim mt-2">
+            {leadPost.publishedAt.slice(0, 7)} &middot; <span class="text-indigo">{leadPost.area}</span>
+            {leadPost.readTime ? <span> &middot; {leadPost.readTime} min</span> : null}
+          </div>
+        </a>
+
+        {runnerUpPosts.length > 0 && (
+          <div class="grid grid-cols-2 gap-x-7 mt-4 max-sm:grid-cols-1 max-sm:gap-x-0">
+            {runnerUpPosts.map(post => (
+              <a href={`/writing/${post.slug}`} class="group block py-3 border-t border-border-light no-underline text-inherit hover:text-inherit">
+                <div class="font-heading text-[15px] leading-[1.35] text-ink transition-colors duration-150 group-hover:text-indigo">{post.title}</div>
+                <div class="font-mono text-[11px] text-dim mt-1">
+                  {post.publishedAt.slice(0, 7)} &middot; <span class="text-indigo">{post.area}</span>
+                </div>
+              </a>
+            ))}
           </div>
         )}
       </section>

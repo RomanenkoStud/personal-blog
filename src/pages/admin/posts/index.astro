@@ -64,7 +64,7 @@ const tabs = [
               </a>
               <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-indigo)">{post.area}</span>
               <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim)">{post.publishedAt.slice(0, 10)}</span>
-              <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim)">{post.featured ? '★' : '—'}</span>
+              <featured-toggle endpoint={`/api/admin/posts/${post.id}`} featured={post.featured || undefined}></featured-toggle>
               <div style="display:flex;gap:10px;align-items:center">
                 <a href={`/admin/posts/${post.id}`} style="font:400 12px 'Space Grotesk',sans-serif;color:var(--color-indigo);text-decoration:none">Edit</a>
                 <status-action-button
@@ -141,4 +141,5 @@ const tabs = [
 <script>
   import '../../../components/admin/DeleteButton';
   import '../../../components/admin/StatusActionButton';
+  import '../../../components/admin/FeaturedToggle';
 </script>

@@ -61,6 +61,7 @@ export const QUERY_PARAM = {
 export const DEFAULT_PER_PAGE = 6;
 
 // --- UI limits ---
+export const FEATURED_POSTS_COUNT = 5;
 export const LATEST_POSTS_COUNT = 5;
 export const RELATED_POSTS_COUNT = 3;
 export const NOW_SNIPPET_LENGTH = 120;
