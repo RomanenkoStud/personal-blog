@@ -4,7 +4,8 @@ import { getPostBySlug, getPosts } from '../../lib/api';
 import { env } from 'cloudflare:workers';
 import { RELATED_POSTS_COUNT, RELATED_TITLE_MAX_LENGTH, POST_STATUS } from '../../consts';
 import { formatMonthYear } from '../../lib/format';
-import { isSandboxBlock, parseSandboxBlock } from '../../lib/sandbox';
+import { isSandboxBlock, parseSandboxBlock, sandboxOwnerRepo, sandboxStackblitzUrl } from '../../lib/sandbox';
+import WindowFrame from '../../components/WindowFrame.astro';
 
 const { slug } = Astro.params;
 
@@ -59,15 +60,32 @@ const isArchived = post.status === POST_STATUS.ARCHIVED;
         if (isSandboxBlock(paragraph)) {
           const sandbox = parseSandboxBlock(paragraph);
           if (sandbox) {
+            const ownerRepo = sandboxOwnerRepo(sandbox.repo);
             return (
-              <code-sandbox
-                repo={sandbox.repo}
-                branch={sandbox.branch}
-                file={sandbox.file}
-                view={sandbox.view}
-                height={sandbox.height}
-                label={sandbox.title}
-              ></code-sandbox>
+              <WindowFrame label={sandbox.title || ownerRepo} file={sandbox.file} class="my-6">
+                <Fragment slot="actions">
+                  <a
+                    href={`https://github.com/${ownerRepo}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="font-mono text-[10px] text-dim no-underline hover:text-indigo"
+                  >GitHub ↗</a>
+                  <a
+                    href={sandboxStackblitzUrl(sandbox.repo, sandbox.branch, sandbox.file)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="font-mono text-[10px] font-medium text-indigo no-underline hover:text-periwinkle"
+                  >Run in StackBlitz ↗</a>
+                </Fragment>
+                <code-sandbox
+                  class="block"
+                  repo={sandbox.repo}
+                  branch={sandbox.branch}
+                  file={sandbox.file}
+                  view={sandbox.view}
+                  height={sandbox.height}
+                ></code-sandbox>
+              </WindowFrame>
             );
           }
         }

@@ -1,0 +1,48 @@
+---
+/**
+ * Mac-style window chrome shared by the hero photo and the in-article sandbox.
+ * Pure SSR; the traffic-light buttons are enhanced by `window-frame.ts`. The
+ * default slot is the body, the `actions` slot fills the right of the title bar,
+ * and `class` is applied to the host element.
+ */
+interface Props {
+  label?: string;
+  file?: string;
+  class?: string;
+}
+
+const { label, file, class: className } = Astro.props;
+---
+
+<window-frame class:list={['block', className]}>
+  <div data-wf-card class="overflow-hidden rounded-lg border border-border bg-surface-alt shadow-sm">
+    <div class="flex items-center gap-2 border-b border-border-light bg-surface px-3.5 py-2">
+      <div class="wf-lights flex items-center gap-1.5">
+        <button type="button" data-wf-btn="close" class="wf-dot bg-[#ff5f57]" aria-label="Close"></button>
+        <button type="button" data-wf-btn="min" class="wf-dot bg-[#febc2e]" aria-label="Minimize"></button>
+        <button type="button" data-wf-btn="max" class="wf-dot bg-[#28c840]" aria-label="Maximize"></button>
+      </div>
+      {label && (
+        <span class="ml-1 truncate font-mono text-[11px] text-dim">
+          {label}{file && <span class="text-placeholder"> / {file}</span>}
+        </span>
+      )}
+      <div class="ml-auto flex items-center gap-3 empty:hidden">
+        <slot name="actions" />
+      </div>
+    </div>
+    <div data-wf-body class="leading-none">
+      <slot />
+    </div>
+  </div>
+
+  <button
+    type="button"
+    data-wf-reopen
+    hidden
+    class="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border bg-surface-alt px-3 py-1.5 font-mono text-[10px] text-dim transition-colors hover:border-indigo hover:text-indigo"
+  >
+    <span class="size-2 rounded-full bg-[#28c840]"></span>
+    reopen{label ? ` ${label}` : ''}
+  </button>
+</window-frame>

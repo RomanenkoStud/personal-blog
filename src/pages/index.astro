@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/Base.astro';
+import WindowFrame from '../components/WindowFrame.astro';
 import { getPostsList, getPage, getProfile } from '../lib/api';
 import { env } from 'cloudflare:workers';
 import { PAGE_SLUG, FEATURED_POSTS_COUNT, LATEST_POSTS_COUNT, NOW_SNIPPET_LENGTH, SITE_TITLE } from '../consts';
@@ -31,19 +32,9 @@ const nowSnippet = nowPage
           {profile.heroTagline && <div class="mt-5 font-mono text-[11px] text-dim tracking-[.04em]">{profile.heroTagline}</div>}
         </div>
         {profile.heroPhoto && (
-          <div class="shrink-0 w-[280px] rounded-lg overflow-hidden border border-border shadow-[0_4px_24px_rgba(0,0,0,.08)] max-sm:w-full">
-            <div class="flex items-center gap-2 py-[7px] px-2.5 bg-surface-alt border-b border-border-light">
-              <span class="flex gap-[5px]">
-                <span class="size-[7px] rounded-full bg-border"></span>
-                <span class="size-[7px] rounded-full bg-border"></span>
-                <span class="size-[7px] rounded-full bg-border"></span>
-              </span>
-              <span class="font-mono text-[9px] text-dim tracking-[.02em]">~/photos/summit.jpg</span>
-            </div>
-            <div class="relative leading-none">
-              <img src={profile.heroPhoto} alt={SITE_TITLE} class="w-full h-[240px] object-cover object-[center_40%] block max-sm:h-[180px]" />
-            </div>
-          </div>
+          <WindowFrame label="~/photos/summit.jpg" class="shrink-0 w-[280px] max-sm:w-full">
+            <img src={profile.heroPhoto} alt={SITE_TITLE} class="w-full h-[240px] object-cover object-[center_40%] block max-sm:h-[180px]" />
+          </WindowFrame>
         )}
       </section>
     )}

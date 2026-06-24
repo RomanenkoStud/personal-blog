@@ -81,3 +81,20 @@ export function parseSandboxBlock(chunk: string): SandboxConfig | null {
     title: fields.title || undefined,
   };
 }
+
+export function sandboxOwnerRepo(repo: string): string {
+  return repo.split('/tree/')[0];
+}
+
+export function sandboxProjectSlug(repo: string, branch?: string): string {
+  if (branch && !repo.includes('/tree/')) {
+    return `${repo}/tree/${branch}`;
+  }
+  return repo;
+}
+
+export function sandboxStackblitzUrl(repo: string, branch?: string, file?: string): string {
+  const slug = sandboxProjectSlug(repo, branch);
+  const query = file ? `?file=${encodeURIComponent(file)}` : '';
+  return `https://stackblitz.com/github/${slug}${query}`;
+}
