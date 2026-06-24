@@ -39,6 +39,9 @@ export interface NewsletterSubscriber {
   id: number;
   email: string;
   subscribedAt: string;
+  confirmed: boolean;
+  confirmToken: string | null;
+  unsubscribeToken: string | null;
 }
 
 export interface SocialLink {

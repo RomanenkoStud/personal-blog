@@ -8,6 +8,10 @@ directory = "dist/client"
 [vars]
 CF_ACCESS_TEAM_NAME = "holy-night-66db"
 GITHUB_REPO = "romanenkostud/romanenkostud"
+NEWSLETTER_FROM = "newsletter@pavloromanenko.com"
+# RESEND_API_KEY is a secret, sourced from the GitHub Actions secret of the same
+# name and pushed to the Worker on each deploy (see .github/workflows/deploy.yml).
+# Without it, confirmation/notification emails are logged to the console instead of sent.
 
 [[d1_databases]]
 binding = "DB"

@@ -38,4 +38,7 @@ export const newsletterSubscribers = sqliteTable('newsletter_subscribers', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   email: text('email').notNull().unique(),
   subscribedAt: text('subscribed_at').notNull(),
+  confirmed: integer('confirmed', { mode: 'boolean' }).notNull().default(false),
+  confirmToken: text('confirm_token'),
+  unsubscribeToken: text('unsubscribe_token'),
 });

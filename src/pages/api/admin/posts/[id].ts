@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
-import { getPostById, updatePost, deletePost, updatePostStatus } from '../../../../lib/admin-api';
+import { getPostById, updatePost, deletePost, updatePostStatus, notifySubscribersOfPost } from '../../../../lib/admin-api';
 import { validatePost } from '../../../../lib/validate';
 import { jsonResponse } from '../../../../lib/response';
 import { HTTP_STATUS, POST_STATUS, DB_ERROR_UNIQUE_CONSTRAINT } from '../../../../consts';
@@ -56,6 +56,12 @@ export const PUT: APIRoute = async ({ params, request }) => {
 
     if (!post) {
       return jsonResponse({ error: 'Post not found' }, HTTP_STATUS.NOT_FOUND);
+    }
+
+    const justPublished = current.status === POST_STATUS.DRAFT && post.status === POST_STATUS.PUBLISHED;
+    if (data.notify && justPublished) {
+      const origin = new URL(request.url).origin;
+      await notifySubscribersOfPost(env.DB, origin, post);
     }
 
     return jsonResponse({ ok: true, post });

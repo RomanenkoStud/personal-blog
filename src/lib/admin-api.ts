@@ -2,6 +2,7 @@ import { desc, eq, sql } from 'drizzle-orm';
 import { getDb } from './db';
 import * as schema from '../db/schema';
 import type { BlogPost, Page, MediaFile, NewsletterSubscriber } from '../types/content';
+import { sendEmail, articleEmail } from './email';
 
 export async function getAllPosts(d1: D1Database): Promise<BlogPost[]> {
   const db = getDb(d1);
@@ -138,6 +139,41 @@ export async function deleteSubscriber(d1: D1Database, id: number): Promise<bool
   const db = getDb(d1);
   const result = await db.delete(schema.newsletterSubscribers).where(eq(schema.newsletterSubscribers.id, id));
   return result.rowsAffected > 0;
+}
+
+export async function getConfirmedSubscribers(d1: D1Database): Promise<NewsletterSubscriber[]> {
+  const db = getDb(d1);
+  return db
+    .select()
+    .from(schema.newsletterSubscribers)
+    .where(eq(schema.newsletterSubscribers.confirmed, true));
+}
+
+/** Emails every confirmed subscriber about a freshly published post. Returns how many were notified. */
+export async function notifySubscribersOfPost(
+  d1: D1Database,
+  origin: string,
+  post: Pick<BlogPost, 'title' | 'slug' | 'excerpt'>,
+): Promise<number> {
+  const db = getDb(d1);
+  const subscribers = await getConfirmedSubscribers(d1);
+
+  await Promise.allSettled(
+    subscribers.map(async (sub) => {
+      let token = sub.unsubscribeToken;
+      if (!token) {
+        token = crypto.randomUUID();
+        await db
+          .update(schema.newsletterSubscribers)
+          .set({ unsubscribeToken: token })
+          .where(eq(schema.newsletterSubscribers.id, sub.id));
+      }
+      const { subject, html } = articleEmail(origin, post, token);
+      return sendEmail({ to: sub.email, subject, html });
+    }),
+  );
+
+  return subscribers.length;
 }
 
 export async function getDashboardStats(d1: D1Database) {

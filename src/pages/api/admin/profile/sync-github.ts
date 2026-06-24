@@ -6,10 +6,10 @@ import { HTTP_STATUS } from '../../../../consts';
 import { profileToReadme } from '../../../../lib/github-readme';
 
 export const POST: APIRoute = async () => {
-  const { GITHUB_TOKEN, GITHUB_REPO } = env;
-  if (!GITHUB_TOKEN || !GITHUB_REPO) {
+  const { GH_PROFILE_TOKEN, GITHUB_REPO } = env;
+  if (!GH_PROFILE_TOKEN || !GITHUB_REPO) {
     return jsonResponse(
-      { error: 'GITHUB_TOKEN and GITHUB_REPO must be configured' },
+      { error: 'GH_PROFILE_TOKEN and GITHUB_REPO must be configured' },
       HTTP_STATUS.BAD_REQUEST,
     );
   }
@@ -22,7 +22,7 @@ export const POST: APIRoute = async () => {
   const readme = profileToReadme(profile);
   const apiBase = `https://api.github.com/repos/${GITHUB_REPO}/contents/README.md`;
   const headers = {
-    Authorization: `Bearer ${GITHUB_TOKEN}`,
+    Authorization: `Bearer ${GH_PROFILE_TOKEN}`,
     Accept: 'application/vnd.github+json',
     'User-Agent': 'personal-blog-admin',
   };

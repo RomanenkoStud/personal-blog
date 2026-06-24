@@ -3,8 +3,10 @@
 interface Env {
   DB: D1Database;
   CF_ACCESS_TEAM_NAME: string;
-  GITHUB_TOKEN: string;
+  GH_PROFILE_TOKEN: string;
   GITHUB_REPO: string;
+  RESEND_API_KEY?: string;
+  NEWSLETTER_FROM?: string;
 }
 
 declare namespace App {

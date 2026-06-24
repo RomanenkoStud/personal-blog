@@ -1,10 +1,12 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
+import { eq } from 'drizzle-orm';
 import { getDb } from '../../lib/db';
 import { newsletterSubscribers } from '../../db/schema';
 import { jsonResponse } from '../../lib/response';
 import { EMAIL_REGEX } from '../../lib/validate';
-import { HTTP_STATUS, DB_ERROR_UNIQUE_CONSTRAINT } from '../../consts';
+import { sendEmail, confirmationEmail } from '../../lib/email';
+import { HTTP_STATUS } from '../../consts';
 
 export const POST: APIRoute = async ({ request }) => {
   let email: string | undefined;
@@ -22,19 +24,41 @@ export const POST: APIRoute = async ({ request }) => {
     return jsonResponse({ error: 'Invalid email' }, HTTP_STATUS.BAD_REQUEST);
   }
 
+  email = email.trim().toLowerCase();
+  const origin = new URL(request.url).origin;
   const db = getDb(env.DB);
 
-  try {
+  const existing = await db
+    .select()
+    .from(newsletterSubscribers)
+    .where(eq(newsletterSubscribers.email, email));
+  const subscriber = existing[0];
+
+  // Already confirmed — succeed silently without leaking subscription state.
+  if (subscriber?.confirmed) {
+    return jsonResponse({ ok: true });
+  }
+
+  const confirmToken = crypto.randomUUID();
+
+  if (subscriber) {
+    // Pending subscriber re-requested — refresh the token and resend.
+    await db
+      .update(newsletterSubscribers)
+      .set({ confirmToken })
+      .where(eq(newsletterSubscribers.id, subscriber.id));
+  } else {
     await db.insert(newsletterSubscribers).values({
       email,
       subscribedAt: new Date().toISOString(),
+      confirmed: false,
+      confirmToken,
+      unsubscribeToken: crypto.randomUUID(),
     });
-  } catch (e: any) {
-    if (e.message?.includes(DB_ERROR_UNIQUE_CONSTRAINT)) {
-      return jsonResponse({ ok: true });
-    }
-    throw e;
   }
+
+  const { subject, html } = confirmationEmail(origin, confirmToken);
+  await sendEmail({ to: email, subject, html });
 
   return jsonResponse({ ok: true });
 };

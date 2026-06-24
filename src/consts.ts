@@ -45,9 +45,15 @@ export const ROUTES = {
   ADMIN_POSTS: '/admin/posts',
   ADMIN_SUBSCRIBERS: '/admin/subscribers',
   API_NEWSLETTER: '/api/newsletter',
+  API_NEWSLETTER_CONFIRM: '/api/newsletter/confirm',
+  API_UNSUBSCRIBE: '/api/unsubscribe',
   API_SEARCH_INDEX: '/api/search-index.json',
   API_ADMIN_MEDIA_UPLOAD: '/api/admin/media/upload',
 } as const;
+
+// --- Newsletter / email ---
+export const NEWSLETTER_FROM_NAME = 'Pavlo Romanenko';
+export const NEWSLETTER_FROM_FALLBACK = 'newsletter@pavloromanenko.com';
 
 // --- Auth ---
 export const AUTH_COOKIE_NAME = 'CF_Authorization';

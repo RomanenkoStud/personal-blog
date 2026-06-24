@@ -133,7 +133,14 @@ const ADD_NEW_SENTINEL = '__add_new__';
   </div>
 
   <!-- Submit -->
-  <div style="display:flex;align-items:center;gap:12px">
+  <div style="display:flex;flex-direction:column;gap:14px">
+    {isDraft && (
+      <label style="display:inline-flex;align-items:center;gap:8px;font:400 13px 'Space Grotesk',sans-serif;color:var(--color-meta);cursor:pointer">
+        <input type="checkbox" id="notify" style="width:16px;height:16px;accent-color:#4f56e8" />
+        Notify subscribers when published
+      </label>
+    )}
+    <div style="display:flex;align-items:center;gap:12px">
     {isDraft && (
       <>
         <button
@@ -167,6 +174,7 @@ const ADD_NEW_SENTINEL = '__add_new__';
       >Update</button>
     )}
     <span id="form-status" style="font:400 12px 'IBM Plex Mono',monospace;display:none"></span>
+    </div>
   </div>
 </form>
 
@@ -230,6 +238,7 @@ const ADD_NEW_SENTINEL = '__add_new__';
     const status = e.submitter?.dataset?.status || currentStatus;
     const submitter = e.submitter;
     const originalText = submitter?.textContent;
+    const notifyCheckbox = document.getElementById('notify');
 
     const fd = new FormData(form);
     const data = {
@@ -242,6 +251,7 @@ const ADD_NEW_SENTINEL = '__add_new__';
       excerpt: fd.get('excerpt'),
       body: fd.get('body'),
       status,
+      notify: status === 'published' && !!notifyCheckbox?.checked,
     };
 
     submitButtons.forEach(btn => btn.disabled = true);

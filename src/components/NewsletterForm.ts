@@ -92,7 +92,7 @@ export class NewsletterForm extends LitElement {
         </form>
 
         ${this._state === 'success'
-          ? html`<p class="mt-2 text-[11px] font-mono text-indigo">You're in! Watch your inbox.</p>`
+          ? html`<p class="mt-2 text-[11px] font-mono text-indigo">Almost there — check your inbox to confirm.</p>`
           : nothing}
 
         ${this._state === 'error' && this._errorMessage

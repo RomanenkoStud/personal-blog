@@ -1,9 +1,9 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
-import { createPost } from '../../../../lib/admin-api';
+import { createPost, notifySubscribersOfPost } from '../../../../lib/admin-api';
 import { validatePost } from '../../../../lib/validate';
 import { jsonResponse } from '../../../../lib/response';
-import { HTTP_STATUS, DB_ERROR_UNIQUE_CONSTRAINT } from '../../../../consts';
+import { HTTP_STATUS, POST_STATUS, DB_ERROR_UNIQUE_CONSTRAINT } from '../../../../consts';
 
 export const POST: APIRoute = async ({ request }) => {
   const data = await request.json();
@@ -28,6 +28,12 @@ export const POST: APIRoute = async ({ request }) => {
       excerpt: data.excerpt,
       status: data.status,
     });
+
+    if (data.notify && post.status === POST_STATUS.PUBLISHED) {
+      const origin = new URL(request.url).origin;
+      await notifySubscribersOfPost(env.DB, origin, post);
+    }
+
     return jsonResponse({ ok: true, post }, HTTP_STATUS.CREATED);
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : '';

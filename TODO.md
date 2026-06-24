@@ -12,9 +12,7 @@
 - Embed `<div class="cf-turnstile">` in the `NewsletterForm` component
 - Verify the token server-side in `/api/newsletter` via `https://challenges.cloudflare.com/turnstile/v0/siteverify`
 
-## Double Opt-In
-- Add `confirmed` (boolean, default false) and `confirm_token` (text) columns to `newsletter_subscribers`
-- On subscribe: generate a token, store unconfirmed, send confirmation email
-- Create `GET /api/newsletter/confirm?token=...` endpoint to set `confirmed = true`
-- Choose an email provider: Resend, Mailchannels (free via CF Workers), or SES
-- Only treat confirmed subscribers as active when sending newsletters
+## Enable newsletter email in production
+Double opt-in is built; emails just log to the console until a provider key is set.
+- Add `RESEND_API_KEY` to the repo's GitHub Actions secrets (deploy pushes it to the Worker)
+- Verify the sending domain in Resend and adjust `NEWSLETTER_FROM` in `wrangler.toml`
