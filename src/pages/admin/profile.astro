@@ -1,9 +1,10 @@
 ---
 import AdminLayout from '../../layouts/Admin.astro';
-import { getPage, getProfile } from '../../lib/api';
+import { getPage } from '@/server/repositories/pages';
+import { getProfile } from '@/server/services/profile';
 import { env } from 'cloudflare:workers';
-import { PAGE_SLUG } from '../../consts';
-import type { ProfileData } from '../../types/content';
+import { PAGE_SLUG } from '@/config';
+import type { ProfileData } from '@/types/content';
 
 const page = await getPage(env.DB, PAGE_SLUG.ABOUT);
 const profile = await getProfile(env.DB);

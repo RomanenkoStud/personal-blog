@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../layouts/Base.astro';
-import { getPosts } from '../lib/api';
+import { getPosts } from '@/server/repositories/posts';
 import { env } from 'cloudflare:workers';
 
 const posts = await getPosts(env.DB);

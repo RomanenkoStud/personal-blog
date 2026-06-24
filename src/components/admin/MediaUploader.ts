@@ -1,6 +1,6 @@
 import { LitElement, html } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import { ROUTES } from '../../consts';
+import { ROUTES } from '@/config';
 
 @customElement('media-uploader')
 export class MediaUploader extends LitElement {

@@ -1,9 +1,9 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
-import { updatePage } from '../../../../lib/admin-api';
-import { validatePage } from '../../../../lib/validate';
-import { jsonResponse } from '../../../../lib/response';
-import { HTTP_STATUS } from '../../../../consts';
+import { updatePage } from '@/server/repositories/pages';
+import { validatePage } from '@/lib/validation';
+import { jsonResponse } from '@/server/http';
+import { HTTP_STATUS } from '@/config';
 
 export const PUT: APIRoute = async ({ params, request }) => {
   const id = Number(params.id);

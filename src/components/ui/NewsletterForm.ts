@@ -1,7 +1,7 @@
 import { LitElement, html, nothing } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import { EMAIL_REGEX } from '../lib/validate';
-import { ROUTES, NEWSLETTER_RESET_MS } from '../consts';
+import { EMAIL_REGEX } from '@/lib/validation';
+import { ROUTES, NEWSLETTER_RESET_MS } from '@/config';
 
 type FormState = 'idle' | 'loading' | 'success' | 'error';
 

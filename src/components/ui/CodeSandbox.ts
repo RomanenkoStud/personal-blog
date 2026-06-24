@@ -1,8 +1,8 @@
 import { LitElement, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
-import type { SandboxView } from '../lib/sandbox';
-import { SANDBOX_DEFAULT_HEIGHT, sandboxOwnerRepo, sandboxProjectSlug, sandboxStackblitzUrl } from '../lib/sandbox';
+import type { SandboxView } from '@/lib/sandbox';
+import { SANDBOX_DEFAULT_HEIGHT, sandboxOwnerRepo, sandboxProjectSlug, sandboxStackblitzUrl } from '@/lib/sandbox';
 
 /**
  * Runnable in-article code embed. On click it lazy-loads the StackBlitz SDK to

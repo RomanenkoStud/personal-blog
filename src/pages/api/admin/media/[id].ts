@@ -1,8 +1,8 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
-import { updateMediaAlt, deleteMediaRecord } from '../../../../lib/admin-api';
-import { jsonResponse } from '../../../../lib/response';
-import { HTTP_STATUS } from '../../../../consts';
+import { updateMediaAlt, deleteMediaRecord } from '@/server/repositories/media';
+import { jsonResponse } from '@/server/http';
+import { HTTP_STATUS } from '@/config';
 
 export const PATCH: APIRoute = async ({ params, request }) => {
   const id = Number(params.id);

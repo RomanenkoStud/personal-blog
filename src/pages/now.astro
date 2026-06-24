@@ -1,9 +1,9 @@
 ---
 import BaseLayout from '../layouts/Base.astro';
-import { getPage } from '../lib/api';
+import { getPage } from '@/server/repositories/pages';
 import { env } from 'cloudflare:workers';
-import { PAGE_SLUG } from '../consts';
-import { formatMonthYear } from '../lib/format';
+import { PAGE_SLUG } from '@/config';
+import { formatMonthYear } from '@/lib/format';
 
 const page = await getPage(env.DB, PAGE_SLUG.NOW);
 

@@ -1,6 +1,6 @@
 ---
 import AdminLayout from '../../../layouts/Admin.astro';
-import { getAllMedia } from '../../../lib/admin-api';
+import { getAllMedia } from '@/server/repositories/media';
 import { env } from 'cloudflare:workers';
 
 const files = await getAllMedia(env.DB);

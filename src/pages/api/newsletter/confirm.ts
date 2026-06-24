@@ -1,10 +1,10 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 import { eq } from 'drizzle-orm';
-import { getDb } from '../../../lib/db';
-import { newsletterSubscribers } from '../../../db/schema';
-import { statusPage, CONTENT_TYPE_HTML } from '../../../lib/html-page';
-import { HTTP_STATUS } from '../../../consts';
+import { getDb } from '@/server/db/client';
+import { newsletterSubscribers } from '@/server/db/schema';
+import { statusPage, CONTENT_TYPE_HTML } from '@/server/http';
+import { HTTP_STATUS } from '@/config';
 
 export const GET: APIRoute = async ({ url }) => {
   const token = url.searchParams.get('token');

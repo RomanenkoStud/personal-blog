@@ -1,7 +1,7 @@
 ---
 import AdminLayout from '../../layouts/Admin.astro';
-import { getPosts } from '../../lib/api';
-import { getDashboardStats } from '../../lib/admin-api';
+import { getPosts } from '@/server/repositories/posts';
+import { getDashboardStats } from '@/server/services/dashboard';
 import { env } from 'cloudflare:workers';
 
 const stats = await getDashboardStats(env.DB);

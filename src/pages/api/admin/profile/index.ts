@@ -1,11 +1,10 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
-import { getPage } from '../../../../lib/api';
-import { updatePage } from '../../../../lib/admin-api';
-import { getDb } from '../../../../lib/db';
-import * as schema from '../../../../db/schema';
-import { jsonResponse } from '../../../../lib/response';
-import { HTTP_STATUS, PAGE_SLUG } from '../../../../consts';
+import { getPage, updatePage } from '@/server/repositories/pages';
+import { getDb } from '@/server/db/client';
+import * as schema from '@/server/db/schema';
+import { jsonResponse } from '@/server/http';
+import { HTTP_STATUS, PAGE_SLUG } from '@/config';
 
 export const PUT: APIRoute = async ({ request }) => {
   const { body } = await request.json();

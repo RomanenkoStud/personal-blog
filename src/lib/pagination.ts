@@ -1,4 +1,4 @@
-import { QUERY_PARAM, DEFAULT_PER_PAGE } from '../consts';
+import { QUERY_PARAM, DEFAULT_PER_PAGE } from '@/config';
 
 export interface ListParams {
   page: number;

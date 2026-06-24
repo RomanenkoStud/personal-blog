@@ -1,8 +1,8 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
-import { deleteSubscriber } from '../../../../lib/admin-api';
-import { jsonResponse } from '../../../../lib/response';
-import { HTTP_STATUS } from '../../../../consts';
+import { deleteSubscriber } from '@/server/repositories/subscribers';
+import { jsonResponse } from '@/server/http';
+import { HTTP_STATUS } from '@/config';
 
 export const DELETE: APIRoute = async ({ params }) => {
   const id = Number(params.id);

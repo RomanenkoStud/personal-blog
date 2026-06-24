@@ -1,4 +1,4 @@
-import type { PostStatus } from '../consts';
+import type { PostStatus } from '@/config';
 
 export type { PostStatus };
 

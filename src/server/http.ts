@@ -1,4 +1,13 @@
+import { CONTENT_TYPE_JSON } from '@/config';
+
 export const CONTENT_TYPE_HTML = 'text/html; charset=utf-8';
+
+export function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': CONTENT_TYPE_JSON },
+  });
+}
 
 /** Minimal standalone HTML page for public email-link landings (confirm / unsubscribe). */
 export function statusPage(opts: {

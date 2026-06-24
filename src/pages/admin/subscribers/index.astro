@@ -1,6 +1,6 @@
 ---
 import AdminLayout from '../../../layouts/Admin.astro';
-import { getAllSubscribers } from '../../../lib/admin-api';
+import { getAllSubscribers } from '@/server/repositories/subscribers';
 import { env } from 'cloudflare:workers';
 
 const subscribers = await getAllSubscribers(env.DB);

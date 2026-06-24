@@ -1,10 +1,12 @@
 ---
 import BaseLayout from '../layouts/Base.astro';
-import WindowFrame from '../components/WindowFrame.astro';
-import { getPostsList, getPage, getProfile } from '../lib/api';
+import WindowFrame from '@/components/ui/WindowFrame.astro';
+import { getPostsList } from '@/server/repositories/posts';
+import { getPage } from '@/server/repositories/pages';
+import { getProfile } from '@/server/services/profile';
 import { env } from 'cloudflare:workers';
-import { PAGE_SLUG, FEATURED_POSTS_COUNT, LATEST_POSTS_COUNT, NOW_SNIPPET_LENGTH, SITE_TITLE } from '../consts';
-import { stripMarkdown, truncate } from '../lib/format';
+import { PAGE_SLUG, FEATURED_POSTS_COUNT, LATEST_POSTS_COUNT, NOW_SNIPPET_LENGTH, SITE_TITLE } from '@/config';
+import { stripMarkdown, truncate } from '@/lib/format';
 
 const [featuredResult, latestResult, nowPage, profile] = await Promise.all([
   getPostsList(env.DB, { page: 1, perPage: FEATURED_POSTS_COUNT, filters: { featured: 'true' } }),

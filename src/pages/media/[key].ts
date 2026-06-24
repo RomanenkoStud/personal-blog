@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
-import { HTTP_STATUS, MEDIA_CACHE_MAX_AGE } from '../../consts';
+import { HTTP_STATUS, MEDIA_CACHE_MAX_AGE } from '@/config';
 
 export const GET: APIRoute = async ({ params }) => {
   const key = params.key;

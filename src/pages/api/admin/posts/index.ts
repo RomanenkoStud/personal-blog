@@ -1,9 +1,10 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
-import { createPost, notifySubscribersOfPost } from '../../../../lib/admin-api';
-import { validatePost } from '../../../../lib/validate';
-import { jsonResponse } from '../../../../lib/response';
-import { HTTP_STATUS, POST_STATUS, DB_ERROR_UNIQUE_CONSTRAINT } from '../../../../consts';
+import { createPost } from '@/server/repositories/posts';
+import { notifySubscribersOfPost } from '@/server/services/newsletter';
+import { validatePost } from '@/lib/validation';
+import { jsonResponse } from '@/server/http';
+import { HTTP_STATUS, POST_STATUS, DB_ERROR_UNIQUE_CONSTRAINT } from '@/config';
 
 export const POST: APIRoute = async ({ request }) => {
   const data = await request.json();

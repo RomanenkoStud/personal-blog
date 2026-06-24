@@ -1,9 +1,9 @@
 ---
 import AdminLayout from '../../../layouts/Admin.astro';
-import { getAllPages } from '../../../lib/admin-api';
+import { getAllPages } from '@/server/repositories/pages';
 import { env } from 'cloudflare:workers';
 
-import { PAGE_SLUG } from '../../../consts';
+import { PAGE_SLUG } from '@/config';
 
 const pages = (await getAllPages(env.DB)).filter(p => p.slug !== PAGE_SLUG.ABOUT);
 ---

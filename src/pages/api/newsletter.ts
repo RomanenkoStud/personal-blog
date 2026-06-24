@@ -1,12 +1,13 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 import { eq } from 'drizzle-orm';
-import { getDb } from '../../lib/db';
-import { newsletterSubscribers } from '../../db/schema';
-import { jsonResponse } from '../../lib/response';
-import { EMAIL_REGEX } from '../../lib/validate';
-import { sendEmail, confirmationEmail } from '../../lib/email';
-import { HTTP_STATUS } from '../../consts';
+import { getDb } from '@/server/db/client';
+import { newsletterSubscribers } from '@/server/db/schema';
+import { jsonResponse } from '@/server/http';
+import { EMAIL_REGEX } from '@/lib/validation';
+import { sendEmail } from '@/server/email/client';
+import { confirmationEmail } from '@/server/email/templates';
+import { HTTP_STATUS } from '@/config';
 
 export const POST: APIRoute = async ({ request }) => {
   let email: string | undefined;

@@ -1,4 +1,17 @@
-import type { ProfileData } from '../types/content';
+import type { ProfileData } from '@/types/content';
+import { getPage } from '@/server/repositories/pages';
+import { PAGE_SLUG } from '@/config';
+
+export async function getProfile(d1: D1Database): Promise<ProfileData | null> {
+  const page = await getPage(d1, PAGE_SLUG.ABOUT);
+  if (!page) return null;
+  try {
+    const raw = JSON.parse(page.body);
+    return { socials: [], ...raw } as ProfileData;
+  } catch {
+    return null;
+  }
+}
 
 export function profileToReadme(profile: ProfileData): string {
   const lines: string[] = [];

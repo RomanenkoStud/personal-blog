@@ -1,7 +1,7 @@
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { COPY_FEEDBACK_MS } from '../../consts';
-import { formatFileSize } from '../../lib/format';
+import { COPY_FEEDBACK_MS } from '@/config';
+import { formatFileSize } from '@/lib/format';
 
 @customElement('media-card')
 export class MediaCard extends LitElement {

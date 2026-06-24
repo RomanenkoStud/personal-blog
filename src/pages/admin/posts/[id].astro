@@ -1,8 +1,8 @@
 ---
 import AdminLayout from '../../../layouts/Admin.astro';
-import PostForm from '../../../components/admin/PostForm.astro';
-import { getPostById, getDistinctAreas } from '../../../lib/admin-api';
-import { DEFAULT_AREAS } from '../../../consts';
+import PostForm from '@/components/admin/PostForm.astro';
+import { getPostById, getDistinctAreas } from '@/server/repositories/posts';
+import { DEFAULT_AREAS } from '@/config';
 import { env } from 'cloudflare:workers';
 
 const id = Number(Astro.params.id);

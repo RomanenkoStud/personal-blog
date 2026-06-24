@@ -1,7 +1,7 @@
 import { LitElement, html, nothing } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import Fuse from 'fuse.js';
-import { ROUTES, SEARCH_DEBOUNCE_MS, SEARCH_RESULT_LIMIT, SEARCH_FUSE_THRESHOLD } from '../consts';
+import { ROUTES, SEARCH_DEBOUNCE_MS, SEARCH_RESULT_LIMIT, SEARCH_FUSE_THRESHOLD } from '@/config';
 
 interface SearchItem {
   title: string;

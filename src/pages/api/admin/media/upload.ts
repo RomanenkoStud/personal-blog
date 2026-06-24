@@ -1,9 +1,9 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
-import { createMediaRecord } from '../../../../lib/admin-api';
-import { validateUpload } from '../../../../lib/validate';
-import { jsonResponse } from '../../../../lib/response';
-import { HTTP_STATUS } from '../../../../consts';
+import { createMediaRecord } from '@/server/repositories/media';
+import { validateUpload } from '@/lib/validation';
+import { jsonResponse } from '@/server/http';
+import { HTTP_STATUS } from '@/config';
 
 const DEFAULT_FILE_EXT = 'bin';
 

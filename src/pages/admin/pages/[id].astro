@@ -1,7 +1,7 @@
 ---
 import AdminLayout from '../../../layouts/Admin.astro';
-import PageForm from '../../../components/admin/PageForm.astro';
-import { getPageById } from '../../../lib/admin-api';
+import PageForm from '@/components/admin/PageForm.astro';
+import { getPageById } from '@/server/repositories/pages';
 import { env } from 'cloudflare:workers';
 
 const id = Number(Astro.params.id);

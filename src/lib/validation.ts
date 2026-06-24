@@ -1,4 +1,4 @@
-import { POST_STATUSES } from '../consts';
+import { POST_STATUSES } from '@/config';
 
 export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

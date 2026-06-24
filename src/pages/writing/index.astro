@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../layouts/Base.astro';
-import { getPostsList, getAreas } from '../../lib/api';
-import { parseListParams, buildListHref } from '../../lib/query';
+import { getPostsList, getAreas } from '@/server/repositories/posts';
+import { parseListParams, buildListHref } from '@/lib/pagination';
 import { env } from 'cloudflare:workers';
 
 const params = parseListParams(Astro.url, { filterKeys: ['area'] });

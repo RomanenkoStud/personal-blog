@@ -1,9 +1,10 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
-import { getPostById, updatePost, deletePost, updatePostStatus, notifySubscribersOfPost } from '../../../../lib/admin-api';
-import { validatePost } from '../../../../lib/validate';
-import { jsonResponse } from '../../../../lib/response';
-import { HTTP_STATUS, POST_STATUS, DB_ERROR_UNIQUE_CONSTRAINT } from '../../../../consts';
+import { getPostById, updatePost, deletePost, updatePostStatus } from '@/server/repositories/posts';
+import { notifySubscribersOfPost } from '@/server/services/newsletter';
+import { validatePost } from '@/lib/validation';
+import { jsonResponse } from '@/server/http';
+import { HTTP_STATUS, POST_STATUS, DB_ERROR_UNIQUE_CONSTRAINT } from '@/config';
 
 const VALID_PUT_TRANSITIONS: Record<string, string[]> = {
   [POST_STATUS.DRAFT]: [POST_STATUS.DRAFT, POST_STATUS.PUBLISHED],

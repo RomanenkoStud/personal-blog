@@ -1,11 +1,11 @@
 ---
 import BaseLayout from '../../layouts/Base.astro';
-import { getPostBySlug, getPosts } from '../../lib/api';
+import { getPostBySlug, getPosts } from '@/server/repositories/posts';
 import { env } from 'cloudflare:workers';
-import { RELATED_POSTS_COUNT, RELATED_TITLE_MAX_LENGTH, POST_STATUS } from '../../consts';
-import { formatMonthYear } from '../../lib/format';
-import { isSandboxBlock, parseSandboxBlock, sandboxOwnerRepo, sandboxStackblitzUrl } from '../../lib/sandbox';
-import WindowFrame from '../../components/WindowFrame.astro';
+import { RELATED_POSTS_COUNT, RELATED_TITLE_MAX_LENGTH, POST_STATUS } from '@/config';
+import { formatMonthYear } from '@/lib/format';
+import { isSandboxBlock, parseSandboxBlock, sandboxOwnerRepo, sandboxStackblitzUrl } from '@/lib/sandbox';
+import WindowFrame from '@/components/ui/WindowFrame.astro';
 
 const { slug } = Astro.params;
 
@@ -129,5 +129,5 @@ const isArchived = post.status === POST_STATUS.ARCHIVED;
 </BaseLayout>
 
 <script>
-  import '../../components/CodeSandbox';
+  import '@/components/ui/CodeSandbox';
 </script>

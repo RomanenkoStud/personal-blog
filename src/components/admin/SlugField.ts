@@ -1,6 +1,6 @@
 import { LitElement, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { slugify } from '../../lib/validate';
+import { slugify } from '@/lib/validation';
 
 @customElement('slug-field')
 export class SlugField extends LitElement {

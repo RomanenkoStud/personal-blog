@@ -1,9 +1,8 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
-import { getProfile } from '../../../../lib/api';
-import { jsonResponse } from '../../../../lib/response';
-import { HTTP_STATUS } from '../../../../consts';
-import { profileToReadme } from '../../../../lib/github-readme';
+import { getProfile, profileToReadme } from '@/server/services/profile';
+import { jsonResponse } from '@/server/http';
+import { HTTP_STATUS } from '@/config';
 
 export const POST: APIRoute = async () => {
   const { GH_PROFILE_TOKEN, GITHUB_REPO } = env;

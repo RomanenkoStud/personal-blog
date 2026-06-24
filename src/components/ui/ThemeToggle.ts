@@ -1,6 +1,6 @@
 import { LitElement, html } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import { THEME } from '../consts';
+import { THEME } from '@/config';
 
 @customElement('theme-toggle')
 export class ThemeToggle extends LitElement {
