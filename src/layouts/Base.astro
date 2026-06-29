@@ -11,15 +11,16 @@ interface Props {
   ogImage?: string;
   ogType?: 'website' | 'article';
   publishedAt?: string;
+  noIndex?: boolean;
 }
 
-const { title, description, ogImage, ogType, publishedAt } = Astro.props;
+const { title, description, ogImage, ogType, publishedAt, noIndex } = Astro.props;
 const currentPath = Astro.url.pathname;
 ---
 
 <html lang="en" data-theme="light">
 <head>
-  <Head title={title} description={description} ogImage={ogImage} ogType={ogType} publishedAt={publishedAt} />
+  <Head title={title} description={description} ogImage={ogImage} ogType={ogType} publishedAt={publishedAt} noIndex={noIndex} />
   <ThemeInit />
 </head>
 <body>

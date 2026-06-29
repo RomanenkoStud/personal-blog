@@ -5,6 +5,7 @@ interface Props {
   ogImage?: string;
   ogType?: 'website' | 'article';
   publishedAt?: string;
+  noIndex?: boolean;
 }
 
 import { SITE_TITLE, SITE_DESCRIPTION, SITE_URL } from '@/config';
@@ -15,6 +16,7 @@ const {
   ogImage = '/og-default.png',
   ogType = 'website',
   publishedAt,
+  noIndex = false,
 } = Astro.props;
 
 const pageTitle = title ? `${title} | ${SITE_TITLE}` : SITE_TITLE;
@@ -25,6 +27,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>{pageTitle}</title>
 <meta name="description" content={description} />
+{noIndex && <meta name="robots" content="noindex, nofollow" />}
 <link rel="canonical" href={canonicalURL} />
 
 <!-- Open Graph -->

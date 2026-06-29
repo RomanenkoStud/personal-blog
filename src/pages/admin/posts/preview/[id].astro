@@ -1,0 +1,134 @@
+---
+import BaseLayout from '../../../../layouts/Base.astro';
+import { getPostById } from '@/server/repositories/posts';
+import { env } from 'cloudflare:workers';
+import { RELATED_POSTS_COUNT, RELATED_TITLE_MAX_LENGTH, POST_STATUS } from '@/config';
+import { formatMonthYear } from '@/lib/format';
+import { isSandboxBlock, parseSandboxBlock, sandboxOwnerRepo, sandboxStackblitzUrl } from '@/lib/sandbox';
+import WindowFrame from '@/components/ui/WindowFrame.astro';
+
+const id = Number(Astro.params.id);
+if (isNaN(id)) {
+  return Astro.redirect('/admin/posts');
+}
+
+const post = await getPostById(env.DB, id);
+
+if (!post) {
+  return Astro.redirect('/admin/posts');
+}
+
+const dateLabel = formatMonthYear(post.publishedAt).toUpperCase();
+const isDraft = post.status === POST_STATUS.DRAFT;
+const isArchived = post.status === POST_STATUS.ARCHIVED;
+---
+
+<BaseLayout
+  title={`[Preview] ${post.title}`}
+  description={post.excerpt}
+  ogType="article"
+  noIndex={true}
+>
+  <article class="page-container">
+
+    <!-- Draft preview banner -->
+    <div class="mx-[92px] mt-8 mb-0 max-sm:mx-4 max-sm:mt-5">
+      <div class="flex items-center justify-between gap-2 py-2.5 px-4 rounded-md border border-dashed border-indigo/40 bg-indigo/5">
+        <div class="flex items-center gap-2">
+          <span class="font-mono text-[10px] font-medium tracking-[.1em] text-indigo uppercase">{post.status} preview</span>
+          <span class="font-heading text-[12px] text-dim">This is how the article will look once published. Not visible to the public.</span>
+        </div>
+        <a
+          href={`/admin/posts/${post.id}`}
+          class="font-mono text-[10px] text-indigo no-underline hover:text-periwinkle shrink-0"
+        >
+          &larr; Back to editor
+        </a>
+      </div>
+    </div>
+
+    {isArchived && (
+      <div class="mx-[92px] mt-3 mb-0 max-sm:mx-4">
+        <div class="flex items-center gap-2 py-2.5 px-4 rounded-md border border-dashed border-border bg-surface-alt">
+          <span class="font-mono text-[10px] font-medium tracking-[.1em] text-placeholder uppercase">archived</span>
+          <span class="font-heading text-[12px] text-dim">This article is no longer listed but remains accessible via direct link.</span>
+        </div>
+      </div>
+    )}
+
+    <!-- Header -->
+    <div class="px-[92px] pt-11 pb-8 text-center max-sm:px-4 max-sm:pt-7 max-sm:pb-5">
+      <div class="font-mono text-[11px] text-dim mb-[18px]">{post.area.toUpperCase()} &middot; {post.readTime} MIN &middot; {dateLabel}</div>
+      <div class="font-heading text-[30px] leading-[1.25] text-ink max-sm:text-2xl">{post.title}</div>
+      {post.excerpt && (
+        <div class="mt-4 font-heading text-[13px] italic text-meta">{post.excerpt}</div>
+      )}
+    </div>
+
+    <!-- Body -->
+    <div class="px-[92px] pb-2 max-sm:px-4">
+      {post.body.split('\n\n').map(paragraph => {
+        if (isSandboxBlock(paragraph)) {
+          const sandbox = parseSandboxBlock(paragraph);
+          if (sandbox) {
+            const ownerRepo = sandboxOwnerRepo(sandbox.repo);
+            return (
+              <WindowFrame label={sandbox.title || ownerRepo} file={sandbox.file} class="my-6">
+                <Fragment slot="actions">
+                  <a
+                    href={`https://github.com/${ownerRepo}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="font-mono text-[10px] text-dim no-underline hover:text-indigo"
+                  >GitHub ↗</a>
+                  <a
+                    href={sandboxStackblitzUrl(sandbox.repo, sandbox.branch, sandbox.file)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="font-mono text-[10px] font-medium text-indigo no-underline hover:text-periwinkle"
+                  >Run in StackBlitz ↗</a>
+                </Fragment>
+                <code-sandbox
+                  class="block"
+                  repo={sandbox.repo}
+                  branch={sandbox.branch}
+                  file={sandbox.file}
+                  view={sandbox.view}
+                  height={sandbox.height}
+                ></code-sandbox>
+              </WindowFrame>
+            );
+          }
+        }
+        if (paragraph.startsWith('## ')) {
+          return <h2 class="font-heading font-semibold text-[20px] text-ink mt-8 mb-4">{paragraph.replace('## ', '')}</h2>;
+        }
+        if (paragraph.startsWith('# ')) {
+          return <h1 class="font-heading font-bold text-2xl text-ink mt-8 mb-4">{paragraph.replace('# ', '')}</h1>;
+        }
+        if (paragraph.startsWith('> ')) {
+          return (
+            <div class="py-5 text-center">
+              <div class="font-heading text-[21px] leading-[1.4] italic text-ink max-w-[540px] mx-auto">
+                &ldquo;{paragraph.replace(/^>\s*"?/, '').replace(/"$/, '')}&rdquo;
+              </div>
+            </div>
+          );
+        }
+        return <p class="font-heading text-base leading-[1.7] text-body mb-4">{paragraph}</p>;
+      })}
+    </div>
+
+    <!-- Related notes placeholder for drafts -->
+    {isDraft && (
+      <div class="mx-[92px] mt-3 mb-[30px] border-t border-border-light pt-[18px] max-sm:mx-4 max-sm:mb-6">
+        <span class="font-mono font-medium text-[9px] tracking-[.1em] text-placeholder uppercase">related notes — shown after publish</span>
+      </div>
+    )}
+
+  </article>
+</BaseLayout>
+
+<script>
+  import '@/components/ui/CodeSandbox';
+</script>

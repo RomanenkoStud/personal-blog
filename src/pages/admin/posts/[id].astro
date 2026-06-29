@@ -28,7 +28,10 @@ const areas = [...new Set([...DEFAULT_AREAS, ...dbAreas])];
 
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
     <div style="font:400 26px 'Space Grotesk',sans-serif;color:var(--color-ink)">Edit Post</div>
-    <a href={`/writing/${post.slug}`} target="_blank" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-indigo);text-decoration:none">View on site &rarr;</a>
+    <div style="display:flex;align-items:center;gap:16px">
+      <a href={`/admin/posts/preview/${post.id}`} target="_blank" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim);text-decoration:none">Preview &rarr;</a>
+      <a href={`/writing/${post.slug}`} target="_blank" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-indigo);text-decoration:none">View on site &rarr;</a>
+    </div>
   </div>
 
   <PostForm areas={areas} post={post} action={`/api/admin/posts/${post.id}`} method="PUT" />

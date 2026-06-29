@@ -13,14 +13,17 @@ function forbiddenResponse(isApi: boolean): Response {
   return new Response('Unauthorized', { status: HTTP_STATUS.FORBIDDEN });
 }
 
+// Article pages (and draft previews) may embed runnable <code-sandbox> StackBlitz
+// projects, which need the page to be cross-origin isolated for WebContainers to
+// boot. The embed is loaded with `crossOriginIsolated: true` so StackBlitz serves
+// its iframe with matching COEP headers. Google Fonts survive require-corp (they
+// send CORP: cross-origin).
+const needsCoepCoop = (pathname: string) =>
+  pathname.startsWith('/writing/') || pathname.startsWith('/admin/posts/preview/');
+
 export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname } = context.url;
 
-  // Article pages may embed runnable <code-sandbox> StackBlitz projects, which
-  // need the page to be cross-origin isolated for WebContainers to boot. The
-  // embed is loaded with `crossOriginIsolated: true` so StackBlitz serves its
-  // iframe with matching COEP headers. Google Fonts survive require-corp (they
-  // send CORP: cross-origin).
   if (pathname.startsWith('/writing/')) {
     const response = await next();
     response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
@@ -34,7 +37,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   if (import.meta.env.DEV) {
     context.locals.adminEmail = 'dev@localhost';
-    return next();
+    const response = await next();
+    if (needsCoepCoop(pathname)) {
+      response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+      response.headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
+    }
+    return response;
   }
 
   const cookie = context.request.headers.get('cookie') ?? '';
@@ -55,5 +63,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const payload = decodeJWTPayload(token);
   context.locals.adminEmail = (payload.email as string) ?? 'admin';
 
-  return next();
+  const response = await next();
+  if (needsCoepCoop(pathname)) {
+    response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+    response.headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
+  }
+  return response;
 });
