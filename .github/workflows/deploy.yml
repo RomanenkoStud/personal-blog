@@ -19,14 +19,10 @@ jobs:
           node-version: 22
           cache: npm
 
-      - run: npm ci
+      - name: Configure npm libc
+        run: echo "libc=glibc" >> ~/.npmrc
 
-      - name: Install rollup Linux native binary
-        run: |
-          ROLLUP_VER=$(node -e "console.log(require('./node_modules/rollup/package.json').version)")
-          TARBALL=$(npm view "@rollup/rollup-linux-x64-gnu@$ROLLUP_VER" dist.tarball)
-          mkdir -p node_modules/@rollup/rollup-linux-x64-gnu
-          curl -fsSL "$TARBALL" | tar -xz --strip-components=1 -C node_modules/@rollup/rollup-linux-x64-gnu
+      - run: npm ci
 
       - run: npm run build
 
