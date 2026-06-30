@@ -19,10 +19,25 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Configure npm libc
-        run: echo "libc=glibc" >> ~/.npmrc
-
       - run: npm ci
+
+      - name: Install Linux glibc native binaries
+        run: |
+          node -e "
+          const { execSync } = require('child_process');
+          const { mkdirSync } = require('fs');
+          const lock = require('./package-lock.json');
+          const pkgs = Object.entries(lock.packages)
+            .filter(([k, v]) => v.optional && v.os?.includes('linux') && v.cpu?.includes('x64') &&
+                                (k.includes('gnu') || k.includes('@img/sharp')))
+            .map(([k, v]) => [k.replace('node_modules/', ''), v.version]);
+          for (const [name, version] of pkgs) {
+            const tarball = execSync('npm view ' + JSON.stringify(name + '@' + version) + ' dist.tarball').toString().trim();
+            mkdirSync('node_modules/' + name, { recursive: true });
+            execSync('curl -fsSL ' + JSON.stringify(tarball) + ' | tar -xz --strip-components=1 -C ' + JSON.stringify('node_modules/' + name));
+            console.log('Installed:', name, version);
+          }
+          "
 
       - run: npm run build
 
