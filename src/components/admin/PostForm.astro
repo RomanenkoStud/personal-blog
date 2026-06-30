@@ -43,8 +43,8 @@ const ADD_NEW_SENTINEL = '__add_new__';
   <slug-field title={post?.title ?? ''} value={post?.slug ?? ''}></slug-field>
   <div class="field-error" data-field="slug" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-error);margin-top:-14px;display:none"></div>
 
-  <!-- Area + Date + ReadTime row -->
-  <div style="display:grid;grid-template-columns:1fr 1fr 120px;gap:16px">
+  <!-- Area + Date row -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
     <div>
       <label for="area-select" style="display:block;font:500 11px 'IBM Plex Mono',monospace;color:var(--color-meta);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Area</label>
       <input type="hidden" id="area" name="area" value={selectedArea} />
@@ -77,20 +77,6 @@ const ADD_NEW_SENTINEL = '__add_new__';
         style="width:100%;height:36px;border:1px solid var(--color-border);background:var(--color-surface);border-radius:6px;padding:0 8px;font:400 13px 'IBM Plex Mono',monospace;color:var(--color-ink);outline:none;box-sizing:border-box"
       />
       <div class="field-error" data-field="publishedAt" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-error);margin-top:4px;display:none"></div>
-    </div>
-
-    <div>
-      <label for="readTime" style="display:block;font:500 11px 'IBM Plex Mono',monospace;color:var(--color-meta);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Read min</label>
-      <input
-        type="number"
-        id="readTime"
-        name="readTime"
-        min="1"
-        value={post?.readTime ?? 5}
-        required
-        style="width:100%;height:36px;border:1px solid var(--color-border);background:var(--color-surface);border-radius:6px;padding:0 8px;font:400 13px 'IBM Plex Mono',monospace;color:var(--color-ink);outline:none;box-sizing:border-box"
-      />
-      <div class="field-error" data-field="readTime" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-error);margin-top:4px;display:none"></div>
     </div>
   </div>
 
@@ -246,7 +232,6 @@ const ADD_NEW_SENTINEL = '__add_new__';
       slug: fd.get('slug'),
       area: fd.get('area'),
       publishedAt: new Date(fd.get('publishedAt')).toISOString(),
-      readTime: Number(fd.get('readTime')),
       featured: fd.has('featured'),
       excerpt: fd.get('excerpt'),
       body: fd.get('body'),

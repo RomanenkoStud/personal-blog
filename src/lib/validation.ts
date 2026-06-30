@@ -25,9 +25,6 @@ export function validatePost(data: Record<string, unknown>): ValidationResult {
   if (!data.publishedAt || typeof data.publishedAt !== 'string') {
     errors.publishedAt = 'Published date is required';
   }
-  if (data.readTime === undefined || typeof data.readTime !== 'number' || data.readTime < 1) {
-    errors.readTime = 'Read time must be at least 1 minute';
-  }
   if (!data.excerpt || typeof data.excerpt !== 'string' || data.excerpt.trim().length === 0) {
     errors.excerpt = 'Excerpt is required';
   }

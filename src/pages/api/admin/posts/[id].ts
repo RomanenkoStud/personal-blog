@@ -3,6 +3,7 @@ import { env } from 'cloudflare:workers';
 import { getPostById, updatePost, deletePost, updatePostStatus } from '@/server/repositories/posts';
 import { notifySubscribersOfPost } from '@/server/services/newsletter';
 import { validatePost } from '@/lib/validation';
+import { calcReadTime } from '@/lib/read-time';
 import { jsonResponse } from '@/server/http';
 import { HTTP_STATUS, POST_STATUS, DB_ERROR_UNIQUE_CONSTRAINT } from '@/config';
 
@@ -24,7 +25,7 @@ export const PUT: APIRoute = async ({ params, request }) => {
   }
 
   const data = await request.json();
-  data.readTime = Number(data.readTime);
+  data.readTime = calcReadTime(data.body);
   data.featured = Boolean(data.featured);
 
   const validation = validatePost(data);
