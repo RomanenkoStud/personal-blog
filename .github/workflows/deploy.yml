@@ -17,11 +17,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
-      - run: rm -f package-lock.json && npm install
-
-      - name: Debug rollup packages
-        run: ls node_modules/@rollup/ && grep "\"version\"" node_modules/rollup/package.json | head -1
+      - run: npm ci
+        env:
+          npm_config_libc: glibc
 
       - run: npm run build
 
