@@ -1,3 +1,5 @@
+import type { BodyPlugin } from './body-parser';
+
 /**
  * Parsing for the in-article ```sandbox directive.
  *
@@ -98,3 +100,8 @@ export function sandboxStackblitzUrl(repo: string, branch?: string, file?: strin
   const query = file ? `?file=${encodeURIComponent(file)}` : '';
   return `https://stackblitz.com/github/${slug}${query}`;
 }
+
+export const sandboxPlugin: BodyPlugin<SandboxConfig> = {
+  fenceName: 'sandbox',
+  parse: parseSandboxBlock,
+};

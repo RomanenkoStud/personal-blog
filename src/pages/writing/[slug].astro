@@ -4,8 +4,7 @@ import { getPostBySlug, getPosts } from '@/server/repositories/posts';
 import { env } from 'cloudflare:workers';
 import { RELATED_POSTS_COUNT, RELATED_TITLE_MAX_LENGTH, POST_STATUS } from '@/config';
 import { formatMonthYear } from '@/lib/format';
-import { isSandboxBlock, parseSandboxBlock, sandboxOwnerRepo, sandboxStackblitzUrl } from '@/lib/sandbox';
-import WindowFrame from '@/components/ui/WindowFrame.astro';
+import PostBody from '@/components/ui/PostBody.astro';
 
 const { slug } = Astro.params;
 
@@ -56,56 +55,7 @@ const isArchived = post.status === POST_STATUS.ARCHIVED;
 
     <!-- Body -->
     <div class="px-[92px] pb-2 max-sm:px-4">
-      {post.body.split('\n\n').map(paragraph => {
-        if (isSandboxBlock(paragraph)) {
-          const sandbox = parseSandboxBlock(paragraph);
-          if (sandbox) {
-            const ownerRepo = sandboxOwnerRepo(sandbox.repo);
-            return (
-              <WindowFrame label={sandbox.title || ownerRepo} file={sandbox.file} class="my-6">
-                <Fragment slot="actions">
-                  <a
-                    href={`https://github.com/${ownerRepo}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="font-mono text-[10px] text-dim no-underline hover:text-indigo"
-                  >GitHub ↗</a>
-                  <a
-                    href={sandboxStackblitzUrl(sandbox.repo, sandbox.branch, sandbox.file)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="font-mono text-[10px] font-medium text-indigo no-underline hover:text-periwinkle"
-                  >Run in StackBlitz ↗</a>
-                </Fragment>
-                <code-sandbox
-                  class="block"
-                  repo={sandbox.repo}
-                  branch={sandbox.branch}
-                  file={sandbox.file}
-                  view={sandbox.view}
-                  height={sandbox.height}
-                ></code-sandbox>
-              </WindowFrame>
-            );
-          }
-        }
-        if (paragraph.startsWith('## ')) {
-          return <h2 class="font-heading font-semibold text-[20px] text-ink mt-8 mb-4">{paragraph.replace('## ', '')}</h2>;
-        }
-        if (paragraph.startsWith('# ')) {
-          return <h1 class="font-heading font-bold text-2xl text-ink mt-8 mb-4">{paragraph.replace('# ', '')}</h1>;
-        }
-        if (paragraph.startsWith('> ')) {
-          return (
-            <div class="py-5 text-center">
-              <div class="font-heading text-[21px] leading-[1.4] italic text-ink max-w-[540px] mx-auto">
-                &ldquo;{paragraph.replace(/^>\s*"?/, '').replace(/"$/, '')}&rdquo;
-              </div>
-            </div>
-          );
-        }
-        return <p class="font-heading text-base leading-[1.7] text-body mb-4">{paragraph}</p>;
-      })}
+      <PostBody body={post.body} />
     </div>
 
     <!-- Related notes -->

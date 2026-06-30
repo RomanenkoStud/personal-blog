@@ -1,5 +1,12 @@
-import { LitElement, html } from 'lit';
+import { LitElement, html, nothing } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import { marked } from 'marked';
+import { parseBodyBlocks } from '@/lib/body-parser';
+import { sandboxPlugin } from '@/lib/sandbox';
+import type { SandboxConfig } from '@/lib/sandbox';
+
+marked.use({ gfm: true, breaks: false });
 
 @customElement('markdown-preview')
 export class MarkdownPreview extends LitElement {
@@ -14,21 +21,27 @@ export class MarkdownPreview extends LitElement {
       return html`<div style="font:400 13px 'IBM Plex Mono',monospace;color:var(--color-placeholder);padding:16px;font-style:italic">Start writing to see a preview…</div>`;
     }
 
-    const paragraphs = this.content.split('\n\n');
+    const blocks = parseBodyBlocks(this.content, [sandboxPlugin]);
+
     return html`
-      <div style="padding:16px">
-        ${paragraphs.map((p) => {
-          if (p.startsWith('## ')) {
-            return html`<h2 style="font:600 20px 'Space Grotesk',serif;color:var(--color-ink);margin:24px 0 12px">${p.slice(3)}</h2>`;
+      <div class="post-body" style="padding:16px">
+        ${blocks.map(block => {
+          if (block.type === 'markdown') {
+            return html`<div>${unsafeHTML(marked.parse(block.content) as string)}</div>`;
           }
-          if (p.startsWith('# ')) {
-            return html`<h1 style="font:700 24px 'Space Grotesk',serif;color:var(--color-ink);margin:24px 0 12px">${p.slice(2)}</h1>`;
+
+          if (block.type === 'plugin' && block.plugin === 'sandbox') {
+            const sandbox = block.data as SandboxConfig;
+            const label = sandbox.title || sandbox.repo;
+            return html`
+              <div style="margin:12px 0;border:1px dashed var(--color-border);border-radius:6px;padding:10px 14px;display:flex;align-items:center;gap:8px">
+                <span style="font:500 10px 'IBM Plex Mono',monospace;color:var(--color-placeholder);text-transform:uppercase;letter-spacing:.08em">sandbox</span>
+                <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-meta)">${label}${sandbox.branch ? `@${sandbox.branch}` : ''}</span>
+              </div>
+            `;
           }
-          if (p.startsWith('> ')) {
-            const text = p.replace(/^>\s*"?/, '').replace(/"$/, '');
-            return html`<div style="padding:16px 0;text-align:center"><div style="font:400 18px/1.4 'Space Grotesk',serif;font-style:italic;color:var(--color-ink)">“${text}”</div></div>`;
-          }
-          return html`<p style="font:400 15px/1.7 'Space Grotesk',serif;color:var(--color-body);margin:0 0 12px">${p}</p>`;
+
+          return nothing;
         })}
       </div>
     `;

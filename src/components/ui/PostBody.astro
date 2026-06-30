@@ -1,0 +1,59 @@
+---
+import { marked } from 'marked';
+import { parseBodyBlocks } from '@/lib/body-parser';
+import { sandboxPlugin } from '@/lib/sandbox';
+import type { SandboxConfig } from '@/lib/sandbox';
+import { sandboxOwnerRepo, sandboxStackblitzUrl } from '@/lib/sandbox';
+import WindowFrame from '@/components/ui/WindowFrame.astro';
+
+interface Props {
+  body: string;
+}
+
+const { body } = Astro.props;
+
+marked.use({ gfm: true, breaks: false });
+
+const blocks = parseBodyBlocks(body, [sandboxPlugin]);
+---
+
+<div class="post-body">
+  {blocks.map(block => {
+    if (block.type === 'markdown') {
+      return <div set:html={marked.parse(block.content)} />;
+    }
+
+    if (block.type === 'plugin' && block.plugin === 'sandbox') {
+      const sandbox = block.data as SandboxConfig;
+      const ownerRepo = sandboxOwnerRepo(sandbox.repo);
+      return (
+        <WindowFrame label={sandbox.title || ownerRepo} file={sandbox.file} class="my-6">
+          <Fragment slot="actions">
+            <a
+              href={`https://github.com/${ownerRepo}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="font-mono text-[10px] text-dim no-underline hover:text-indigo"
+            >GitHub ↗</a>
+            <a
+              href={sandboxStackblitzUrl(sandbox.repo, sandbox.branch, sandbox.file)}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="font-mono text-[10px] font-medium text-indigo no-underline hover:text-periwinkle"
+            >Run in StackBlitz ↗</a>
+          </Fragment>
+          <code-sandbox
+            class="block"
+            repo={sandbox.repo}
+            branch={sandbox.branch}
+            file={sandbox.file}
+            view={sandbox.view}
+            height={sandbox.height}
+          ></code-sandbox>
+        </WindowFrame>
+      );
+    }
+
+    return null;
+  })}
+</div>
