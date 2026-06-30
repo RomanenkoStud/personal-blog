@@ -2,7 +2,7 @@
 import AdminLayout from '../../../layouts/Admin.astro';
 import PostForm from '@/components/admin/PostForm.astro';
 import { getPostById, getDistinctAreas } from '@/server/repositories/posts';
-import { DEFAULT_AREAS } from '@/config';
+import { DEFAULT_AREAS, POST_STATUS } from '@/config';
 import { env } from 'cloudflare:workers';
 
 const id = Number(Astro.params.id);
@@ -30,7 +30,9 @@ const areas = [...new Set([...DEFAULT_AREAS, ...dbAreas])];
     <div style="font:400 26px 'Space Grotesk',sans-serif;color:var(--color-ink)">Edit Post</div>
     <div style="display:flex;align-items:center;gap:16px">
       <a href={`/admin/posts/preview/${post.id}`} target="_blank" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim);text-decoration:none">Preview &rarr;</a>
-      <a href={`/writing/${post.slug}`} target="_blank" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-indigo);text-decoration:none">View on site &rarr;</a>
+      {post.status !== POST_STATUS.DRAFT && (
+        <a href={`/writing/${post.slug}`} target="_blank" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-indigo);text-decoration:none">View on site &rarr;</a>
+      )}
     </div>
   </div>
 

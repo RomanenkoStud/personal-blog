@@ -40,9 +40,10 @@ const isArchived = post.status === POST_STATUS.ARCHIVED;
         </div>
         <a
           href={`/admin/posts/${post.id}`}
+          id="back-to-editor"
           class="font-mono text-[10px] text-indigo no-underline hover:text-periwinkle shrink-0"
         >
-          &larr; Back to editor
+          ← Back to editor
         </a>
       </div>
     </div>
@@ -131,4 +132,21 @@ const isArchived = post.status === POST_STATUS.ARCHIVED;
 
 <script>
   import '@/components/ui/CodeSandbox';
+
+  // COOP: same-origin (required for sandbox embeds) severs window.opener so the
+  // preview tab can't call opener.focus(). window.close() is the reliable way to
+  // return to the originating editor tab when the preview was opened via
+  // target="_blank". If close() is blocked (e.g. user navigated here directly),
+  // the <a> href is the fallback.
+  document.getElementById('back-to-editor')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const href = (e.currentTarget as HTMLAnchorElement).href;
+    if (window.history.length <= 1) {
+      window.close();
+      // If close() was blocked by the browser, navigate to the editor directly.
+      window.location.href = href;
+    } else {
+      window.history.back();
+    }
+  });
 </script>
