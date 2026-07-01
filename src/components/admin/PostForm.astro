@@ -117,7 +117,13 @@ const ADD_NEW_SENTINEL = '__add_new__';
 
   <!-- Body + Preview -->
   <div>
-    <label for="body" style="display:block;font:500 11px 'IBM Plex Mono',monospace;color:var(--color-meta);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Body</label>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <label for="body" style="font:500 11px 'IBM Plex Mono',monospace;color:var(--color-meta);text-transform:uppercase;letter-spacing:.06em">Body</label>
+      <label style="display:inline-flex;align-items:center;gap:6px;font:400 11px 'IBM Plex Mono',monospace;color:var(--color-meta);cursor:pointer">
+        <input type="checkbox" id="sync-scroll" style="width:12px;height:12px;accent-color:#4f56e8" />
+        sync scroll
+      </label>
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;min-height:400px">
       <textarea
         id="body"
@@ -125,7 +131,7 @@ const ADD_NEW_SENTINEL = '__add_new__';
         required
         style="width:100%;height:100%;min-height:400px;border:1px solid var(--color-border);background:var(--color-surface);border-radius:6px;padding:12px;font:400 13px 'IBM Plex Mono',monospace;color:var(--color-ink);outline:none;resize:vertical;box-sizing:border-box;line-height:1.6"
       >{post?.body ?? ''}</textarea>
-      <div style="border:1px solid var(--color-border-light);border-radius:6px;background:var(--color-surface);overflow-y:auto;max-height:600px">
+      <div id="preview-panel" style="border:1px solid var(--color-border-light);border-radius:6px;background:var(--color-surface);overflow-y:auto;min-height:400px">
         <markdown-preview content={post?.body ?? ''}></markdown-preview>
       </div>
     </div>
@@ -233,6 +239,23 @@ const ADD_NEW_SENTINEL = '__add_new__';
 
   excerptTextarea.addEventListener('input', updateSeoPanel);
   focusKeywordInput.addEventListener('input', updateSeoPanel);
+
+  const previewPanel = document.getElementById('preview-panel');
+  new ResizeObserver(() => {
+    previewPanel.style.height = bodyTextarea.offsetHeight + 'px';
+  }).observe(bodyTextarea);
+
+  const syncScrollCheckbox = document.getElementById('sync-scroll');
+  let scrollSyncing = false;
+  function syncScroll(source, target) {
+    if (scrollSyncing || !syncScrollCheckbox.checked) return;
+    scrollSyncing = true;
+    const ratio = source.scrollTop / (source.scrollHeight - source.clientHeight) || 0;
+    target.scrollTop = ratio * (target.scrollHeight - target.clientHeight);
+    scrollSyncing = false;
+  }
+  bodyTextarea.addEventListener('scroll', () => syncScroll(bodyTextarea, previewPanel));
+  previewPanel.addEventListener('scroll', () => syncScroll(previewPanel, bodyTextarea));
 
   bodyTextarea.addEventListener('input', () => {
     preview.content = bodyTextarea.value;
