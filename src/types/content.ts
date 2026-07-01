@@ -11,6 +11,7 @@ export interface BlogPost {
   publishedAt: string;
   featured: boolean;
   readTime: number;
+  focusKeyword: string;
   excerpt: string;
   status: PostStatus;
 }

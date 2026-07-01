@@ -52,6 +52,7 @@ export const PUT: APIRoute = async ({ params, request }) => {
       publishedAt: data.publishedAt,
       featured: data.featured,
       readTime: data.readTime,
+      focusKeyword: data.focusKeyword ?? '',
       excerpt: data.excerpt,
       status: data.status,
     });

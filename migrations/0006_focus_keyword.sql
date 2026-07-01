@@ -1,0 +1,1 @@
+ALTER TABLE posts ADD COLUMN focus_keyword TEXT NOT NULL DEFAULT '';

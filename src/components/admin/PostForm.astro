@@ -88,6 +88,20 @@ const ADD_NEW_SENTINEL = '__add_new__';
     </label>
   </div>
 
+  <!-- Focus keyword -->
+  <div>
+    <label for="focusKeyword" style="display:block;font:500 11px 'IBM Plex Mono',monospace;color:var(--color-meta);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Focus Keyword</label>
+    <input
+      type="text"
+      id="focusKeyword"
+      name="focusKeyword"
+      value={post?.focusKeyword ?? ''}
+      placeholder="e.g. react server components"
+      style="width:100%;height:36px;border:1px solid var(--color-border);background:var(--color-surface);border-radius:6px;padding:0 10px;font:400 13px 'IBM Plex Mono',monospace;color:var(--color-ink);outline:none;box-sizing:border-box"
+    />
+    <div style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-placeholder);margin-top:4px">The main keyword you want this post to rank for</div>
+  </div>
+
   <!-- Excerpt -->
   <div>
     <label for="excerpt" style="display:block;font:500 11px 'IBM Plex Mono',monospace;color:var(--color-meta);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Excerpt</label>
@@ -117,6 +131,9 @@ const ADD_NEW_SENTINEL = '__add_new__';
     </div>
     <div class="field-error" data-field="body" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-error);margin-top:4px;display:none"></div>
   </div>
+
+  <!-- SEO panel -->
+  <seo-panel></seo-panel>
 
   <!-- Submit -->
   <div style="display:flex;flex-direction:column;gap:14px">
@@ -164,17 +181,34 @@ const ADD_NEW_SENTINEL = '__add_new__';
   </div>
 </form>
 
-<script define:vars={{ action, method, currentStatus, ADD_NEW_SENTINEL }}>
+<script define:vars={{ action, method, currentStatus, ADD_NEW_SENTINEL, initialTitle: post?.title ?? '', initialSlug: post?.slug ?? '', initialExcerpt: post?.excerpt ?? '', initialBody: post?.body ?? '', initialKeyword: post?.focusKeyword ?? '' }}>
   const form = document.getElementById('post-form');
   const titleInput = document.getElementById('title');
   const bodyTextarea = document.getElementById('body');
+  const excerptTextarea = document.getElementById('excerpt');
+  const focusKeywordInput = document.getElementById('focusKeyword');
   const slugField = document.querySelector('slug-field');
   const preview = document.querySelector('markdown-preview');
+  const seoPanel = document.querySelector('seo-panel');
   const formStatus = document.getElementById('form-status');
   const areaHidden = document.getElementById('area');
   const areaSelect = document.getElementById('area-select');
   const areaCustom = document.getElementById('area-custom');
   const submitButtons = form.querySelectorAll('.submit-action');
+
+  function updateSeoPanel() {
+    seoPanel.keyword = focusKeywordInput.value;
+    seoPanel.title = titleInput.value;
+    seoPanel.slug = slugField.value;
+    seoPanel.excerpt = excerptTextarea.value;
+    seoPanel.body = bodyTextarea.value;
+  }
+
+  seoPanel.keyword = initialKeyword;
+  seoPanel.title = initialTitle;
+  seoPanel.slug = initialSlug;
+  seoPanel.excerpt = initialExcerpt;
+  seoPanel.body = initialBody;
 
   areaSelect.addEventListener('change', () => {
     if (areaSelect.value === ADD_NEW_SENTINEL) {
@@ -194,10 +228,15 @@ const ADD_NEW_SENTINEL = '__add_new__';
 
   titleInput.addEventListener('input', () => {
     slugField.title = titleInput.value;
+    requestAnimationFrame(updateSeoPanel);
   });
+
+  excerptTextarea.addEventListener('input', updateSeoPanel);
+  focusKeywordInput.addEventListener('input', updateSeoPanel);
 
   bodyTextarea.addEventListener('input', () => {
     preview.content = bodyTextarea.value;
+    updateSeoPanel();
   });
 
   function clearErrors() {
@@ -233,6 +272,7 @@ const ADD_NEW_SENTINEL = '__add_new__';
       area: fd.get('area'),
       publishedAt: new Date(fd.get('publishedAt')).toISOString(),
       featured: fd.has('featured'),
+      focusKeyword: fd.get('focusKeyword') ?? '',
       excerpt: fd.get('excerpt'),
       body: fd.get('body'),
       status,
@@ -285,4 +325,5 @@ const ADD_NEW_SENTINEL = '__add_new__';
 <script>
   import './SlugField';
   import './MarkdownPreview';
+  import './SeoPanel';
 </script>

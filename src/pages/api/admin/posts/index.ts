@@ -27,6 +27,7 @@ export const POST: APIRoute = async ({ request }) => {
       publishedAt: data.publishedAt,
       featured: data.featured,
       readTime: data.readTime,
+      focusKeyword: data.focusKeyword ?? '',
       excerpt: data.excerpt,
       status: data.status,
     });

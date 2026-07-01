@@ -10,6 +10,7 @@ export const posts = sqliteTable('posts', {
   publishedAt: text('published_at').notNull(),
   featured: integer('featured', { mode: 'boolean' }).notNull().default(false),
   readTime: integer('read_time').notNull(),
+  focusKeyword: text('focus_keyword').notNull().default(''),
   excerpt: text('excerpt').notNull(),
   status: text('status').notNull().default(POST_STATUS.PUBLISHED),
 });
