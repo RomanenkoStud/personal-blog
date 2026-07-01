@@ -23,9 +23,11 @@
     "drizzle-orm": "^0.45.2",
     "fuse.js": "^7.4.2",
     "lit": "^3.3.3",
-    "marked": "^18.0.5"
+    "marked": "^18.0.5",
+    "satori": "^0.26.0"
   },
   "devDependencies": {
+    "@fontsource/space-grotesk": "^5.2.10",
     "@tailwindcss/vite": "^4.3.1",
     "drizzle-kit": "^1.0.0-rc.3",
     "tailwindcss": "^4.3.1",

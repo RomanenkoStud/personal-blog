@@ -1,8 +1,9 @@
 ---
 import BaseLayout from '../../layouts/Base.astro';
 import { getPostBySlug, getPosts } from '@/server/repositories/posts';
+import { getProfile } from '@/server/services/profile';
 import { env } from 'cloudflare:workers';
-import { RELATED_POSTS_COUNT, RELATED_TITLE_MAX_LENGTH, POST_STATUS } from '@/config';
+import { RELATED_POSTS_COUNT, RELATED_TITLE_MAX_LENGTH, POST_STATUS, SITE_TITLE, SITE_URL } from '@/config';
 import { formatMonthYear } from '@/lib/format';
 import PostBody from '@/components/ui/PostBody.astro';
 
@@ -18,7 +19,8 @@ if (!post) {
   return Astro.redirect('/404');
 }
 
-const allPosts = await getPosts(env.DB);
+const [allPosts, profile] = await Promise.all([getPosts(env.DB), getProfile(env.DB)]);
+const authorName = profile?.heroName;
 const relatedPosts = allPosts
   .filter(p => p.area === post.area && p.slug !== post.slug)
   .slice(0, RELATED_POSTS_COUNT);
@@ -30,8 +32,11 @@ const isArchived = post.status === POST_STATUS.ARCHIVED;
 <BaseLayout
   title={post.title}
   description={post.excerpt}
+  ogImage={`/og/${post.slug}.svg`}
   ogType="article"
   publishedAt={post.publishedAt}
+  articleTag={post.area}
+  author={authorName}
 >
   <article class="page-container">
 
@@ -77,6 +82,23 @@ const isArchived = post.status === POST_STATUS.ARCHIVED;
 
   </article>
 </BaseLayout>
+
+<script type="application/ld+json" set:text={JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: post.title,
+  description: post.excerpt,
+  author: { '@type': 'Person', name: authorName ?? SITE_TITLE, url: SITE_URL },
+  datePublished: post.publishedAt,
+  url: `${SITE_URL}/writing/${post.slug}`,
+  image: `${SITE_URL}/og/${post.slug}.svg`,
+  keywords: post.area,
+  publisher: {
+    '@type': 'Person',
+    name: SITE_TITLE,
+    url: SITE_URL,
+  },
+})} />
 
 <script>
   import '@/components/ui/CodeSandbox';

@@ -2,15 +2,23 @@ import type { ProfileData } from '@/types/content';
 import { getPage } from '@/server/repositories/pages';
 import { PAGE_SLUG } from '@/config';
 
+// Cached per isolate — profile rarely changes, cleared on admin save.
+let cache: ProfileData | null | undefined = undefined;
+
 export async function getProfile(d1: D1Database): Promise<ProfileData | null> {
+  if (cache !== undefined) return cache;
   const page = await getPage(d1, PAGE_SLUG.ABOUT);
-  if (!page) return null;
+  if (!page) { cache = null; return null; }
   try {
-    const raw = JSON.parse(page.body);
-    return { socials: [], ...raw } as ProfileData;
+    cache = { socials: [], ...JSON.parse(page.body) } as ProfileData;
   } catch {
-    return null;
+    cache = null;
   }
+  return cache;
+}
+
+export function clearProfileCache(): void {
+  cache = undefined;
 }
 
 export function profileToReadme(profile: ProfileData): string {

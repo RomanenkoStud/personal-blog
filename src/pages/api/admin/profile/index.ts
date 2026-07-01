@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 import { getPage, updatePage } from '@/server/repositories/pages';
+import { clearProfileCache } from '@/server/services/profile';
 import { getDb } from '@/server/db/client';
 import * as schema from '@/server/db/schema';
 import { jsonResponse } from '@/server/http';
@@ -27,6 +28,7 @@ export const PUT: APIRoute = async ({ request }) => {
       slug: PAGE_SLUG.ABOUT,
       body,
     });
+    clearProfileCache();
     return jsonResponse({ ok: true, page });
   }
 
@@ -38,5 +40,6 @@ export const PUT: APIRoute = async ({ request }) => {
     updatedAt: new Date().toISOString(),
   }).returning();
 
+  clearProfileCache();
   return jsonResponse({ ok: true, page: result[0] });
 };
