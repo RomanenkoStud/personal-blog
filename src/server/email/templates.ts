@@ -13,7 +13,7 @@ function shell(bodyHtml: string): string {
 }
 
 function button(href: string, label: string): string {
-  return `<a href="${href}" style="display:inline-block;background:#4f56e8;color:#fff;text-decoration:none;font-size:14px;font-weight:500;padding:11px 22px;border-radius:6px">${label}</a>`;
+  return `<a href="${href}" style="display:inline-block;background:#3a7d6c;color:#fff;text-decoration:none;font-size:14px;font-weight:500;padding:11px 22px;border-radius:6px">${label}</a>`;
 }
 
 export function confirmUrl(origin: string, token: string): string {

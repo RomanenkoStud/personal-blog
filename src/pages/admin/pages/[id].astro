@@ -23,7 +23,7 @@ if (!page) {
 
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
     <div style="font:400 26px 'Space Grotesk',sans-serif;color:var(--color-ink)">Edit Page</div>
-    <a href={`/${page.slug}`} target="_blank" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-indigo);text-decoration:none">View on site &rarr;</a>
+    <a href={`/${page.slug}`} target="_blank" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-accent);text-decoration:none">View on site &rarr;</a>
   </div>
 
   <PageForm page={page} action={`/api/admin/pages/${page.id}`} />

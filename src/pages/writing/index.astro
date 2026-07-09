@@ -32,7 +32,7 @@ const href = (overrides?: Parameters<typeof buildListHref>[2]) =>
 
     <!-- Title + filter chips -->
     <div class="pt-[30px] pb-[18px]">
-      <div class="font-heading text-[26px] text-ink">Everything I've written</div>
+      <div class="font-display text-[26px] text-ink">Everything I've written</div>
       <div class="flex gap-2 mt-4 flex-wrap">
         <a href={href({ page: 1, filters: {} })} class:list={['chip', { active: !activeArea }]}>all</a>
         {areas.map(({ area, count }) => (
@@ -47,14 +47,14 @@ const href = (overrides?: Parameters<typeof buildListHref>[2]) =>
     {years.map(year => (
       <div>
         <div class="pt-4 pb-2">
-          <span class="font-mono font-medium text-[10px] tracking-[.14em] text-indigo">{year}</span>
+          <span class="font-mono font-medium text-[10px] tracking-[.14em] text-accent">{year}</span>
         </div>
         <div>
           {postsByYear[year].map(post => (
             <a href={`/writing/${post.slug}`} class="group flex items-baseline gap-[18px] py-[13px] border-t border-border-light no-underline text-inherit hover:text-inherit max-sm:flex-col max-sm:gap-1">
               <span class="w-[58px] font-mono text-[11px] text-placeholder shrink-0">{post.publishedAt.slice(0, 7)}</span>
-              <span class="flex-1 font-heading text-[15px] text-ink group-hover:text-indigo">{post.featured && <span class="text-indigo mr-1.5" title="Featured">★</span>}{post.title}</span>
-              <span class="font-mono text-[10px] text-indigo shrink-0">{post.area}</span>
+              <span class="flex-1 font-heading text-[15px] text-ink group-hover:text-accent">{post.featured && <span class="text-accent mr-1.5" title="Featured">★</span>}{post.title}</span>
+              <span class="font-mono text-[10px] text-accent shrink-0">{post.area}</span>
             </a>
           ))}
         </div>

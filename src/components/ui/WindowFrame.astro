@@ -15,7 +15,7 @@ const { label, file, class: className } = Astro.props;
 ---
 
 <window-frame class:list={['block', className]}>
-  <div data-wf-card class="overflow-hidden rounded-lg border border-border bg-surface-alt shadow-sm">
+  <div data-wf-card class="overflow-hidden rounded-none border border-border bg-surface-alt">
     <div class="flex items-center gap-2 border-b border-border-light bg-surface px-3.5 py-2">
       <div class="wf-lights flex items-center gap-1.5">
         <button type="button" data-wf-btn="close" class="wf-dot bg-[#ff5f57]" aria-label="Close"></button>
@@ -40,7 +40,7 @@ const { label, file, class: className } = Astro.props;
     type="button"
     data-wf-reopen
     hidden
-    class="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border bg-surface-alt px-3 py-1.5 font-mono text-[10px] text-dim transition-colors hover:border-indigo hover:text-indigo"
+    class="inline-flex items-center gap-1.5 rounded-none border border-dashed border-border bg-surface-alt px-3 py-1.5 font-mono text-[10px] text-dim transition-colors hover:border-accent hover:text-accent"
   >
     <span class="size-2 rounded-full bg-[#28c840]"></span>
     reopen{label ? ` ${label}` : ''}

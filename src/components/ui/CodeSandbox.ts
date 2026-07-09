@@ -119,13 +119,13 @@ export class CodeSandbox extends LitElement {
                 <div class="flex items-center gap-3">
                   <button
                     @click=${this._run}
-                    class="cursor-pointer rounded-[5px] bg-indigo px-3.5 py-1.5 font-mono text-[10px] font-medium text-white transition-colors hover:bg-periwinkle"
+                    class="cursor-pointer rounded-none bg-accent px-3.5 py-1.5 font-mono text-[10px] font-medium text-on-accent transition-colors hover:bg-accent-soft"
                   >Retry</button>
                   <a
                     href="${this._stackblitzUrl}"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="font-mono text-[10px] text-indigo no-underline hover:text-periwinkle"
+                    class="font-mono text-[10px] text-accent no-underline hover:text-accent-soft"
                   >Open in StackBlitz ↗</a>
                 </div>
               `
@@ -135,7 +135,7 @@ export class CodeSandbox extends LitElement {
                 </p>
                 <button
                   @click=${this._run}
-                  class="cursor-pointer rounded-[5px] bg-indigo px-4 py-1.5 font-mono text-[10px] font-medium text-white transition-colors hover:bg-periwinkle"
+                  class="cursor-pointer rounded-none bg-accent px-4 py-1.5 font-mono text-[10px] font-medium text-on-accent transition-colors hover:bg-accent-soft"
                 >▶ Run sandbox</button>
                 <p class="font-mono text-[9px] text-placeholder">
                   Boots a Node environment in your browser · no install

@@ -25,10 +25,10 @@ export function statusPage(opts: {
   <style>
     body { font-family: 'Space Grotesk', system-ui, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #fbfbfd; color: #1a1c2e; }
     .box { text-align: center; max-width: 400px; padding: 40px 24px; }
-    .icon { font-size: 32px; margin-bottom: 16px; color: ${opts.success ? '#4f56e8' : '#dc2626'}; }
+    .icon { font-size: 32px; margin-bottom: 16px; color: ${opts.success ? '#3a7d6c' : '#dc2626'}; }
     h1 { font-size: 20px; font-weight: 400; margin: 0 0 8px; }
     p { font-size: 14px; color: #6b6e7e; margin: 0 0 24px; }
-    a { color: #4f56e8; text-decoration: none; font-size: 13px; }
+    a { color: #3a7d6c; text-decoration: none; font-size: 13px; }
     a:hover { text-decoration: underline; }
   </style>
 </head>

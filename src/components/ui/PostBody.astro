@@ -33,13 +33,13 @@ const blocks = parseBodyBlocks(body, [sandboxPlugin]);
               href={`https://github.com/${ownerRepo}`}
               target="_blank"
               rel="noopener noreferrer"
-              class="font-mono text-[10px] text-dim no-underline hover:text-indigo"
+              class="font-mono text-[10px] text-dim no-underline hover:text-accent"
             >GitHub ↗</a>
             <a
               href={sandboxStackblitzUrl(sandbox.repo, sandbox.branch, sandbox.file)}
               target="_blank"
               rel="noopener noreferrer"
-              class="font-mono text-[10px] font-medium text-indigo no-underline hover:text-periwinkle"
+              class="font-mono text-[10px] font-medium text-accent no-underline hover:text-accent-soft"
             >Run in StackBlitz ↗</a>
           </Fragment>
           <code-sandbox

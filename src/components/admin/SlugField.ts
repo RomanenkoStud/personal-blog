@@ -56,7 +56,7 @@ export class SlugField extends LitElement {
             ? html`<button
                 type="button"
                 @click=${this._resetSync}
-                style="font:400 10px 'IBM Plex Mono',monospace;color:var(--color-indigo);background:none;border:none;cursor:pointer;white-space:nowrap"
+                style="font:400 10px 'IBM Plex Mono',monospace;color:var(--color-accent);background:none;border:none;cursor:pointer;white-space:nowrap"
               >sync from title</button>`
             : null}
         </div>

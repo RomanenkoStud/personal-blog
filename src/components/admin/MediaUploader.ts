@@ -68,7 +68,7 @@ export class MediaUploader extends LitElement {
         @dragover=${(e: DragEvent) => { e.preventDefault(); this._dragover = true; }}
         @dragleave=${() => { this._dragover = false; }}
         @drop=${this._onDrop}
-        style="border:2px dashed ${this._dragover ? 'var(--color-indigo)' : 'var(--color-border)'};border-radius:8px;padding:28px;text-align:center;transition:border-color .15s;background:${this._dragover ? 'var(--color-surface-alt)' : 'transparent'}"
+        style="border:2px dashed ${this._dragover ? 'var(--color-accent)' : 'var(--color-border)'};border-radius:8px;padding:28px;text-align:center;transition:border-color .15s;background:${this._dragover ? 'var(--color-surface-alt)' : 'transparent'}"
       >
         ${this._uploading
           ? html`<div style="font:400 13px 'IBM Plex Mono',monospace;color:var(--color-meta)">${this._progress}</div>`
@@ -76,7 +76,7 @@ export class MediaUploader extends LitElement {
             <div style="font:400 14px 'Space Grotesk',sans-serif;color:var(--color-dim);margin-bottom:12px">
               Drag & drop images here, or
             </div>
-            <label style="display:inline-flex;align-items:center;height:34px;background:#4f56e8;border-radius:6px;padding:0 16px;font:500 12px 'IBM Plex Mono',monospace;color:#fff;cursor:pointer">
+            <label style="display:inline-flex;align-items:center;height:34px;background:#3a7d6c;border-radius:6px;padding:0 16px;font:500 12px 'IBM Plex Mono',monospace;color:#fff;cursor:pointer">
               Browse files
               <input type="file" accept="image/*" multiple @change=${this._onFileSelect} style="display:none" />
             </label>

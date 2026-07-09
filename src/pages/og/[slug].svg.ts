@@ -41,7 +41,7 @@ export const GET: APIRoute = async ({ params, url }) => {
           {
             type: 'div',
             props: {
-              style: { fontSize: 18, color: '#4f56e8', fontWeight: 700, letterSpacing: '0.06em' },
+              style: { fontSize: 18, color: '#79bbaa', fontWeight: 700, letterSpacing: '0.06em' },
               children: siteName.toUpperCase(),
             },
           },
@@ -81,7 +81,7 @@ export const GET: APIRoute = async ({ params, url }) => {
                     style: {
                       fontSize: 14,
                       color: '#14151f',
-                      backgroundColor: '#4f56e8',
+                      backgroundColor: '#79bbaa',
                       padding: '4px 12px',
                       borderRadius: '20px',
                       fontWeight: 700,

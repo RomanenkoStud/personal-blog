@@ -22,7 +22,7 @@ const pageId = page?.id ?? null;
 
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
     <div style="font:400 26px 'Space Grotesk',sans-serif;color:var(--color-ink)">Profile</div>
-    <a href="/about" target="_blank" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-indigo);text-decoration:none">View on site →</a>
+    <a href="/about" target="_blank" style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-accent);text-decoration:none">View on site →</a>
   </div>
 
   <form id="profile-form" style="display:flex;flex-direction:column;gap:24px;max-width:720px">
@@ -423,7 +423,7 @@ const pageId = page?.id ?? null;
       }
 
       formStatus.textContent = 'Saved!';
-      formStatus.style.color = 'var(--color-indigo)';
+      formStatus.style.color = 'var(--color-accent)';
       formStatus.style.display = 'inline';
     } catch {
       formStatus.textContent = 'Network error';
@@ -454,7 +454,7 @@ const pageId = page?.id ?? null;
       }
 
       formStatus.textContent = 'Synced to GitHub!';
-      formStatus.style.color = 'var(--color-indigo)';
+      formStatus.style.color = 'var(--color-accent)';
       formStatus.style.display = 'inline';
     } catch {
       formStatus.textContent = 'Network error';
@@ -489,7 +489,7 @@ const pageId = page?.id ?? null;
     box-sizing: border-box;
     transition: border-color .15s;
   }
-  .field-input:focus { border-color: var(--color-indigo); }
+  .field-input:focus { border-color: var(--color-accent); }
   .field-textarea {
     width: 100%;
     border: 1px solid var(--color-border);
@@ -504,10 +504,10 @@ const pageId = page?.id ?? null;
     line-height: 1.6;
     transition: border-color .15s;
   }
-  .field-textarea:focus { border-color: var(--color-indigo); }
+  .field-textarea:focus { border-color: var(--color-accent); }
   .row-number {
     font: 500 12px 'IBM Plex Mono', monospace;
-    color: var(--color-indigo);
+    color: var(--color-accent);
     width: 22px;
     flex: none;
   }
@@ -538,7 +538,7 @@ const pageId = page?.id ?? null;
     cursor: pointer;
     transition: border-color .15s, color .15s;
   }
-  .add-btn:hover { border-color: var(--color-indigo); color: var(--color-indigo); }
+  .add-btn:hover { border-color: var(--color-accent); color: var(--color-accent); }
   .tag {
     display: inline-flex;
     align-items: center;
@@ -577,11 +577,11 @@ const pageId = page?.id ?? null;
     cursor: pointer;
   }
   .present-check {
-    accent-color: var(--color-indigo);
+    accent-color: var(--color-accent);
   }
   .section-divider {
     font: 500 11px 'IBM Plex Mono', monospace;
-    color: var(--color-indigo);
+    color: var(--color-accent);
     letter-spacing: .08em;
     text-transform: uppercase;
     padding-bottom: 6px;
@@ -589,7 +589,7 @@ const pageId = page?.id ?? null;
   }
   .submit-btn {
     height: 38px;
-    background: #4f56e8;
+    background: #3a7d6c;
     border: none;
     border-radius: 6px;
     padding: 0 24px;
@@ -598,5 +598,5 @@ const pageId = page?.id ?? null;
     cursor: pointer;
     transition: background .15s;
   }
-  .submit-btn:hover { background: #7c81f2; }
+  .submit-btn:hover { background: #5a9b8a; }
 </style>

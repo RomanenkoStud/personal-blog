@@ -163,7 +163,7 @@ export class SearchModal extends LitElement {
         aria-label="Search"
         style="position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);display:flex;align-items:flex-start;justify-content:center;padding-top:20vh"
       >
-        <div style="width:100%;max-width:32rem;background:var(--color-surface);border:1px solid var(--color-border);border-radius:12px;box-shadow:0 25px 50px -12px rgba(0,0,0,.25);overflow:hidden;margin:0 16px">
+        <div style="width:100%;max-width:32rem;background:var(--color-surface);border:1px solid var(--color-border);border-radius:0;box-shadow:0 25px 50px -12px rgba(0,0,0,.25);overflow:hidden;margin:0 16px">
           <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--color-border)">
             ${searchIcon}
             <input
