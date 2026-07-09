@@ -31,7 +31,7 @@ const pages = (await getAllPages(env.DB)).filter(p => p.slug !== PAGE_SLUG.ABOUT
           <span style="font:400 14px 'Space Grotesk',sans-serif;color:var(--color-ink)">{page.title}</span>
           <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim)">/{page.slug}</span>
           <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim)">{page.updatedAt.slice(0, 10)}</span>
-          <a href={`/admin/pages/${page.id}`} style="font:400 12px 'Space Grotesk',sans-serif;color:var(--color-indigo);text-decoration:none">Edit</a>
+          <a href={`/admin/pages/${page.id}`} style="font:400 12px 'Space Grotesk',sans-serif;color:var(--color-accent);text-decoration:none">Edit</a>
         </div>
       ))}
     </div>

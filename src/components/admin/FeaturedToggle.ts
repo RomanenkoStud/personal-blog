@@ -38,7 +38,7 @@ export class FeaturedToggle extends LitElement {
         title=${this.featured ? 'Remove from featured' : 'Mark as featured'}
         style="background:none;border:none;cursor:pointer;font-size:16px;line-height:1;padding:2px;opacity:${this._busy ? '.4' : '1'};transition:opacity .15s"
       >${this.featured
-          ? html`<span style="color:#4f56e8">&#9733;</span>`
+          ? html`<span style="color:#3a7d6c">&#9733;</span>`
           : html`<span style="color:var(--color-border)">&#9734;</span>`
       }</button>
     `;

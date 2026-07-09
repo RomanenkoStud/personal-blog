@@ -103,7 +103,7 @@ export class MediaCard extends LitElement {
                   placeholder="Alt text"
                   style="flex:1;height:24px;border:1px solid var(--color-border);background:var(--color-surface);border-radius:4px;padding:0 6px;font:400 11px 'IBM Plex Mono',monospace;color:var(--color-ink);outline:none;box-sizing:border-box;min-width:0" />
                 <button type="button" @click=${this._saveAlt} ?disabled=${this._saving}
-                  style="height:24px;background:#4f56e8;border:none;border-radius:4px;padding:0 8px;font:500 10px 'IBM Plex Mono',monospace;color:#fff;cursor:pointer;white-space:nowrap">${this._saving ? '...' : 'OK'}</button>
+                  style="height:24px;background:#3a7d6c;border:none;border-radius:4px;padding:0 8px;font:500 10px 'IBM Plex Mono',monospace;color:#fff;cursor:pointer;white-space:nowrap">${this._saving ? '...' : 'OK'}</button>
               </div>
             `
             : html`
@@ -112,7 +112,7 @@ export class MediaCard extends LitElement {
                   ${this.alt || 'No alt text'}
                 </span>
                 <button type="button" @click=${this._startEditAlt}
-                  style="font:400 10px 'Space Grotesk',sans-serif;color:var(--color-indigo);background:none;border:none;cursor:pointer;padding:0;white-space:nowrap">edit</button>
+                  style="font:400 10px 'Space Grotesk',sans-serif;color:var(--color-accent);background:none;border:none;cursor:pointer;padding:0;white-space:nowrap">edit</button>
               </div>
             `
           }

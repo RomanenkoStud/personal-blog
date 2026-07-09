@@ -37,7 +37,7 @@ const recentPosts = posts.slice(0, 5);
 
   <!-- Quick actions -->
   <div style="display:flex;gap:10px;margin-bottom:28px">
-    <a href="/admin/posts/new" style="display:inline-flex;align-items:center;height:34px;background:#4f56e8;border-radius:6px;padding:0 16px;font:500 12px 'IBM Plex Mono',monospace;color:#fff;text-decoration:none">+ New Post</a>
+    <a href="/admin/posts/new" style="display:inline-flex;align-items:center;height:34px;background:#3a7d6c;border-radius:6px;padding:0 16px;font:500 12px 'IBM Plex Mono',monospace;color:#fff;text-decoration:none">+ New Post</a>
     <a href="/" target="_blank" style="display:inline-flex;align-items:center;height:34px;border:1px solid var(--color-border);border-radius:6px;padding:0 16px;font:400 12px 'IBM Plex Mono',monospace;color:var(--color-meta);text-decoration:none">View Site &rarr;</a>
   </div>
 
@@ -52,7 +52,7 @@ const recentPosts = posts.slice(0, 5);
         <div>
           <div style="font:400 14px 'Space Grotesk',sans-serif;color:var(--color-ink)">{post.title}</div>
           <div style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim);margin-top:3px">
-            {post.publishedAt.slice(0, 10)} · <span style="color:var(--color-indigo)">{post.area}</span>
+            {post.publishedAt.slice(0, 10)} · <span style="color:var(--color-accent)">{post.area}</span>
           </div>
         </div>
         <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-placeholder)">Edit &rarr;</span>

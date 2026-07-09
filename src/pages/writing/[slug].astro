@@ -42,7 +42,7 @@ const isArchived = post.status === POST_STATUS.ARCHIVED;
 
     {isArchived && (
       <div class="mx-[92px] mt-8 mb-0 max-sm:mx-4 max-sm:mt-5">
-        <div class="flex items-center gap-2 py-2.5 px-4 rounded-md border border-dashed border-border bg-surface-alt">
+        <div class="flex items-center gap-2 py-2.5 px-4 rounded-none border border-dashed border-border bg-surface-alt">
           <span class="font-mono text-[10px] font-medium tracking-[.1em] text-placeholder uppercase">archived</span>
           <span class="font-heading text-[12px] text-dim">This article is no longer listed but remains accessible via direct link.</span>
         </div>
@@ -52,7 +52,7 @@ const isArchived = post.status === POST_STATUS.ARCHIVED;
     <!-- Header -->
     <div class="px-[92px] pt-11 pb-8 text-center max-sm:px-4 max-sm:pt-7 max-sm:pb-5">
       <div class="font-mono text-[11px] text-dim mb-[18px]">{post.area.toUpperCase()} &middot; {post.readTime} MIN &middot; {dateLabel}</div>
-      <div class="font-heading text-[30px] leading-[1.25] text-ink max-sm:text-2xl">{post.title}</div>
+      <div class="font-display text-[30px] leading-[1.25] text-ink max-sm:text-2xl">{post.title}</div>
       {post.excerpt && (
         <div class="mt-4 font-heading text-[13px] italic text-meta">{post.excerpt}</div>
       )}
@@ -71,7 +71,7 @@ const isArchived = post.status === POST_STATUS.ARCHIVED;
           {relatedPosts.map(related => (
             <a
               href={`/writing/${related.slug}`}
-              class="border border-newsletter-border bg-newsletter-bg rounded-[20px] py-[5px] px-3 font-mono text-[11px] text-indigo no-underline hover:text-indigo"
+              class="border border-newsletter-border bg-newsletter-bg rounded-[20px] py-[5px] px-3 font-mono text-[11px] text-accent no-underline hover:text-accent"
             >
               {related.title.length > RELATED_TITLE_MAX_LENGTH ? related.title.slice(0, RELATED_TITLE_MAX_LENGTH) + '…' : related.title}
             </a>

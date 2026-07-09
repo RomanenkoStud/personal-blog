@@ -25,7 +25,7 @@ const tabs = [
 
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
     <div style="font:400 26px 'Space Grotesk',sans-serif;color:var(--color-ink)">Posts</div>
-    <a href="/admin/posts/new" style="display:inline-flex;align-items:center;height:34px;background:#4f56e8;border-radius:6px;padding:0 16px;font:500 12px 'IBM Plex Mono',monospace;color:#fff;text-decoration:none">+ New Post</a>
+    <a href="/admin/posts/new" style="display:inline-flex;align-items:center;height:34px;background:#3a7d6c;border-radius:6px;padding:0 16px;font:500 12px 'IBM Plex Mono',monospace;color:#fff;text-decoration:none">+ New Post</a>
   </div>
 
   <!-- Tabs -->
@@ -33,14 +33,14 @@ const tabs = [
     {tabs.map(t => (
       <a
         href={t.href}
-        style={`padding:10px 20px;font:500 12px 'IBM Plex Mono',monospace;text-decoration:none;border-bottom:2px solid ${tab === t.key ? 'var(--color-indigo)' : 'transparent'};color:${tab === t.key ? 'var(--color-indigo)' : 'var(--color-dim)'};margin-bottom:-1px`}
+        style={`padding:10px 20px;font:500 12px 'IBM Plex Mono',monospace;text-decoration:none;border-bottom:2px solid ${tab === t.key ? 'var(--color-accent)' : 'transparent'};color:${tab === t.key ? 'var(--color-accent)' : 'var(--color-dim)'};margin-bottom:-1px`}
       >{t.label}</a>
     ))}
   </div>
 
   {posts.length === 0 ? (
     <div style="text-align:center;padding:48px 0;font:400 14px 'Space Grotesk',sans-serif;color:var(--color-dim)">
-      {tab === 'posts' && <>No published posts. <a href="/admin/posts/new" style="color:var(--color-indigo)">Create your first post.</a></>}
+      {tab === 'posts' && <>No published posts. <a href="/admin/posts/new" style="color:var(--color-accent)">Create your first post.</a></>}
       {tab === 'drafts' && 'No drafts.'}
       {tab === 'archive' && 'No archived posts.'}
     </div>
@@ -62,11 +62,11 @@ const tabs = [
               <a href={`/admin/posts/${post.id}`} style="font:400 14px 'Space Grotesk',sans-serif;color:var(--color-ink);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
                 {post.title}
               </a>
-              <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-indigo)">{post.area}</span>
+              <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-accent)">{post.area}</span>
               <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim)">{post.publishedAt.slice(0, 10)}</span>
               <featured-toggle endpoint={`/api/admin/posts/${post.id}`} featured={post.featured || undefined}></featured-toggle>
               <div style="display:flex;gap:10px;align-items:center">
-                <a href={`/admin/posts/${post.id}`} style="font:400 12px 'Space Grotesk',sans-serif;color:var(--color-indigo);text-decoration:none">Edit</a>
+                <a href={`/admin/posts/${post.id}`} style="font:400 12px 'Space Grotesk',sans-serif;color:var(--color-accent);text-decoration:none">Edit</a>
                 <status-action-button
                   endpoint={`/api/admin/posts/${post.id}`}
                   target-status="archived"
@@ -93,9 +93,9 @@ const tabs = [
               <a href={`/admin/posts/${post.id}`} style="font:400 14px 'Space Grotesk',sans-serif;color:var(--color-ink);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
                 {post.title}
               </a>
-              <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-indigo)">{post.area}</span>
+              <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-accent)">{post.area}</span>
               <div style="display:flex;gap:10px;align-items:center">
-                <a href={`/admin/posts/${post.id}`} style="font:400 12px 'Space Grotesk',sans-serif;color:var(--color-indigo);text-decoration:none">Edit</a>
+                <a href={`/admin/posts/${post.id}`} style="font:400 12px 'Space Grotesk',sans-serif;color:var(--color-accent);text-decoration:none">Edit</a>
                 <delete-button endpoint={`/api/admin/posts/${post.id}`} redirect-to="/admin/posts?tab=drafts"></delete-button>
               </div>
             </div>
@@ -117,10 +117,10 @@ const tabs = [
               <a href={`/admin/posts/${post.id}`} style="font:400 14px 'Space Grotesk',sans-serif;color:var(--color-ink);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
                 {post.title}
               </a>
-              <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-indigo)">{post.area}</span>
+              <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-accent)">{post.area}</span>
               <span style="font:400 11px 'IBM Plex Mono',monospace;color:var(--color-dim)">{post.publishedAt.slice(0, 10)}</span>
               <div style="display:flex;gap:10px;align-items:center">
-                <a href={`/admin/posts/${post.id}`} style="font:400 12px 'Space Grotesk',sans-serif;color:var(--color-indigo);text-decoration:none">Edit</a>
+                <a href={`/admin/posts/${post.id}`} style="font:400 12px 'Space Grotesk',sans-serif;color:var(--color-accent);text-decoration:none">Edit</a>
                 <status-action-button
                   endpoint={`/api/admin/posts/${post.id}`}
                   target-status="published"

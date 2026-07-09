@@ -19,14 +19,14 @@ const maxNotes = Math.max(...areas.map(([, p]) => p.length), 1);
   <div class="page-container">
 
     <div class="px-16 pt-10 pb-[26px] text-center max-sm:px-4 max-sm:pt-7 max-sm:pb-5">
-      <div class="font-heading text-[23px] leading-[1.4] text-ink max-w-[440px] mx-auto max-sm:text-[20px]">Everything I've written, sorted by what it's about.</div>
+      <div class="font-display text-[23px] leading-[1.4] text-ink max-w-[440px] mx-auto max-sm:text-[20px]">Everything I've written, sorted by what it's about.</div>
     </div>
 
     <div class="px-10 pb-3.5 flex flex-col gap-0.5 max-sm:px-4">
       {areas.map(([area, areaPosts]) => (
         <a href={`/writing?area=${area}`} class="group flex items-center gap-3.5 py-[15px] px-1.5 border-t border-border-light no-underline text-inherit hover:text-inherit">
-          <span class="w-[130px] font-heading text-[15px] text-ink capitalize group-hover:text-indigo">{area}</span>
-          <div class="flex-1 h-2 bg-border-light rounded-[3px]" style={`max-width:${Math.round((areaPosts.length / maxNotes) * 280)}px`}></div>
+          <span class="w-[130px] font-heading text-[15px] text-ink capitalize group-hover:text-accent">{area}</span>
+          <div class="flex-1 h-2 bg-border-light rounded-none" style={`max-width:${Math.round((areaPosts.length / maxNotes) * 280)}px`}></div>
           <span class="ml-auto font-mono text-[11px] text-placeholder">{areaPosts.length} {areaPosts.length === 1 ? 'note' : 'notes'}</span>
         </a>
       ))}

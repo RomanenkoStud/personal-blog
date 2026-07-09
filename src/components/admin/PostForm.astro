@@ -83,7 +83,7 @@ const ADD_NEW_SENTINEL = '__add_new__';
   <!-- Featured -->
   <div>
     <label style="display:inline-flex;align-items:center;gap:8px;font:400 13px 'Space Grotesk',sans-serif;color:var(--color-ink);cursor:pointer">
-      <input type="checkbox" id="featured" name="featured" checked={post?.featured} style="width:16px;height:16px;accent-color:#4f56e8" />
+      <input type="checkbox" id="featured" name="featured" checked={post?.featured} style="width:16px;height:16px;accent-color:#3a7d6c" />
       Featured post
     </label>
   </div>
@@ -120,7 +120,7 @@ const ADD_NEW_SENTINEL = '__add_new__';
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
       <label for="body" style="font:500 11px 'IBM Plex Mono',monospace;color:var(--color-meta);text-transform:uppercase;letter-spacing:.06em">Body</label>
       <label style="display:inline-flex;align-items:center;gap:6px;font:400 11px 'IBM Plex Mono',monospace;color:var(--color-meta);cursor:pointer">
-        <input type="checkbox" id="sync-scroll" style="width:12px;height:12px;accent-color:#4f56e8" />
+        <input type="checkbox" id="sync-scroll" style="width:12px;height:12px;accent-color:#3a7d6c" />
         sync scroll
       </label>
     </div>
@@ -145,7 +145,7 @@ const ADD_NEW_SENTINEL = '__add_new__';
   <div style="display:flex;flex-direction:column;gap:14px">
     {isDraft && (
       <label style="display:inline-flex;align-items:center;gap:8px;font:400 13px 'Space Grotesk',sans-serif;color:var(--color-meta);cursor:pointer">
-        <input type="checkbox" id="notify" style="width:16px;height:16px;accent-color:#4f56e8" />
+        <input type="checkbox" id="notify" style="width:16px;height:16px;accent-color:#3a7d6c" />
         Notify subscribers when published
       </label>
     )}
@@ -156,7 +156,7 @@ const ADD_NEW_SENTINEL = '__add_new__';
           type="submit"
           data-status={POST_STATUS.PUBLISHED}
           class="submit-action"
-          style="height:38px;background:#4f56e8;border:none;border-radius:6px;padding:0 24px;font:500 13px 'IBM Plex Mono',monospace;color:#fff;cursor:pointer"
+          style="height:38px;background:#3a7d6c;border:none;border-radius:6px;padding:0 24px;font:500 13px 'IBM Plex Mono',monospace;color:#fff;cursor:pointer"
         >Publish</button>
         <button
           type="submit"
@@ -171,7 +171,7 @@ const ADD_NEW_SENTINEL = '__add_new__';
         type="submit"
         data-status={POST_STATUS.PUBLISHED}
         class="submit-action"
-        style="height:38px;background:#4f56e8;border:none;border-radius:6px;padding:0 24px;font:500 13px 'IBM Plex Mono',monospace;color:#fff;cursor:pointer"
+        style="height:38px;background:#3a7d6c;border:none;border-radius:6px;padding:0 24px;font:500 13px 'IBM Plex Mono',monospace;color:#fff;cursor:pointer"
       >Update Post</button>
     )}
     {isArchived && (
@@ -179,7 +179,7 @@ const ADD_NEW_SENTINEL = '__add_new__';
         type="submit"
         data-status={POST_STATUS.ARCHIVED}
         class="submit-action"
-        style="height:38px;background:#4f56e8;border:none;border-radius:6px;padding:0 24px;font:500 13px 'IBM Plex Mono',monospace;color:#fff;cursor:pointer"
+        style="height:38px;background:#3a7d6c;border:none;border-radius:6px;padding:0 24px;font:500 13px 'IBM Plex Mono',monospace;color:#fff;cursor:pointer"
       >Update</button>
     )}
     <span id="form-status" style="font:400 12px 'IBM Plex Mono',monospace;display:none"></span>
@@ -327,7 +327,7 @@ const ADD_NEW_SENTINEL = '__add_new__';
       }
 
       formStatus.textContent = 'Saved!';
-      formStatus.style.color = 'var(--color-indigo)';
+      formStatus.style.color = 'var(--color-accent)';
       formStatus.style.display = 'inline';
 
       if (method === 'POST') {

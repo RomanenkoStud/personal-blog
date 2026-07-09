@@ -21,7 +21,7 @@ const emailLink = data?.socials.find(s => s.label.toLowerCase() === 'email');
 
       <!-- Left sidebar -->
       <div class="w-[150px] shrink-0 max-sm:w-full max-sm:flex max-sm:flex-col max-sm:items-center max-sm:text-center max-sm:pb-5 max-sm:border-b max-sm:border-border-light max-sm:mb-5">
-        {data.photo && <img src={data.photo} alt={SITE_TITLE} class="w-[150px] h-[170px] rounded-md object-cover object-[center_top] max-sm:size-[100px] max-sm:rounded-full" />}
+        {data.photo && <img src={data.photo} alt={SITE_TITLE} class="w-[150px] h-[170px] rounded-none object-cover object-[center_top] max-sm:size-[100px] max-sm:rounded-full" />}
         <div class="mt-3.5 font-mono text-[11px] leading-[1.9] text-meta max-sm:mt-3">
           {data.location && <span class="block">{data.location}</span>}
           {data.socials.length > 0 && (
@@ -30,7 +30,7 @@ const emailLink = data?.socials.find(s => s.label.toLowerCase() === 'email');
                 const isEmail = s.label.toLowerCase() === 'email';
                 const href = isEmail ? `mailto:${s.url}` : s.url;
                 return (
-                  <a href={href} {...(!isEmail && { target: '_blank', rel: 'noopener' })} class="text-meta no-underline hover:text-indigo">
+                  <a href={href} {...(!isEmail && { target: '_blank', rel: 'noopener' })} class="text-meta no-underline hover:text-accent">
                     <span class="max-sm:hidden" aria-hidden="true">→ </span>{s.label}
                   </a>
                 );
@@ -42,7 +42,7 @@ const emailLink = data?.socials.find(s => s.label.toLowerCase() === 'email');
 
       <!-- Main content -->
       <div class="flex-1 min-w-0">
-        <div class="font-heading text-[26px] leading-[1.3] text-ink">{data.tagline}</div>
+        <div class="font-display text-[26px] leading-[1.3] text-ink">{data.tagline}</div>
 
         {data.bio && (
           <p class="mt-3.5 font-heading text-sm leading-[1.7] text-ink">{data.bio}</p>
@@ -54,7 +54,7 @@ const emailLink = data?.socials.find(s => s.label.toLowerCase() === 'email');
             <div class="mt-3 flex flex-col gap-2.5">
               {data.whatIDo.map((item, i) => (
                 <div class="flex gap-2.5 items-baseline">
-                  <span class="font-mono font-medium text-xs text-indigo">{String(i + 1).padStart(2, '0')}</span>
+                  <span class="font-mono font-medium text-xs text-accent">{String(i + 1).padStart(2, '0')}</span>
                   <span class="font-heading text-sm text-ink">{item}</span>
                 </div>
               ))}
@@ -101,16 +101,16 @@ const emailLink = data?.socials.find(s => s.label.toLowerCase() === 'email');
             <div class="mt-6 section-label">tech</div>
             <div class="mt-2.5 flex flex-wrap gap-1.5">
               {data.tech.map(t => (
-                <span class="font-mono text-[11px] text-meta border border-border-light rounded-[3px] py-[3px] px-2">{t}</span>
+                <span class="font-mono text-[11px] text-meta border border-border-light rounded-none py-[3px] px-2">{t}</span>
               ))}
             </div>
           </>
         )}
 
         {data.cta && emailLink && (
-          <div class="mt-6 bg-ink rounded-md p-[16px_20px] flex items-center gap-4 max-sm:flex-col max-sm:text-center max-sm:gap-3 max-sm:p-4">
+          <div class="mt-6 bg-ink rounded-none p-[16px_20px] flex items-center gap-4 max-sm:flex-col max-sm:text-center max-sm:gap-3 max-sm:p-4">
             <div class="font-heading text-[15px] text-surface">{data.cta}</div>
-            <a href={`mailto:${emailLink.url}`} class="ml-auto bg-[#4f56e8] rounded-[5px] py-[9px] px-4 font-mono font-medium text-[11px] text-white no-underline whitespace-nowrap hover:bg-periwinkle max-sm:ml-0 max-sm:w-full max-sm:text-center max-sm:py-3">get in touch →</a>
+            <a href={`mailto:${emailLink.url}`} class="ml-auto bg-accent rounded-none py-[9px] px-4 font-mono font-medium text-[11px] text-on-accent no-underline whitespace-nowrap hover:bg-accent-soft max-sm:ml-0 max-sm:w-full max-sm:text-center max-sm:py-3">get in touch →</a>
           </div>
         )}
       </div>

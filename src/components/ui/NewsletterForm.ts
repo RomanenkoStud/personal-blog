@@ -80,19 +80,19 @@ export class NewsletterForm extends LitElement {
             ?disabled=${isLoading}
             required
             aria-label="Email address"
-            class="flex-1 h-[30px] border border-border bg-surface rounded-[5px] px-3 font-mono text-[10px] text-ink outline-none focus:border-indigo placeholder:text-placeholder disabled:opacity-50 transition-colors"
+            class="flex-1 h-[30px] border border-border bg-surface rounded-none px-3 font-mono text-[10px] text-ink outline-none focus:border-accent placeholder:text-placeholder disabled:opacity-50 transition-colors"
           />
           <button
             type="submit"
             ?disabled=${isLoading}
-            class="h-[30px] bg-indigo rounded-[5px] px-3.5 font-mono text-[10px] font-medium text-white cursor-pointer hover:bg-periwinkle transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            class="h-[30px] bg-accent rounded-none px-3.5 font-mono text-[10px] font-medium text-on-accent cursor-pointer hover:bg-accent-soft transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             ${isLoading ? 'joining...' : 'join'}
           </button>
         </form>
 
         ${this._state === 'success'
-          ? html`<p class="mt-2 text-[11px] font-mono text-indigo">Almost there — check your inbox to confirm.</p>`
+          ? html`<p class="mt-2 text-[11px] font-mono text-accent">Almost there — check your inbox to confirm.</p>`
           : nothing}
 
         ${this._state === 'error' && this._errorMessage

@@ -32,15 +32,15 @@ const isArchived = post.status === POST_STATUS.ARCHIVED;
 
     <!-- Draft preview banner -->
     <div class="mx-[92px] mt-8 mb-0 max-sm:mx-4 max-sm:mt-5">
-      <div class="flex items-center justify-between gap-2 py-2.5 px-4 rounded-md border border-dashed border-indigo/40 bg-indigo/5">
+      <div class="flex items-center justify-between gap-2 py-2.5 px-4 rounded-md border border-dashed border-accent/40 bg-accent/5">
         <div class="flex items-center gap-2">
-          <span class="font-mono text-[10px] font-medium tracking-[.1em] text-indigo uppercase">{post.status} preview</span>
+          <span class="font-mono text-[10px] font-medium tracking-[.1em] text-accent uppercase">{post.status} preview</span>
           <span class="font-heading text-[12px] text-dim">This is how the article will look once published. Not visible to the public.</span>
         </div>
         <a
           href={`/admin/posts/${post.id}`}
           id="back-to-editor"
-          class="font-mono text-[10px] text-indigo no-underline hover:text-periwinkle shrink-0"
+          class="font-mono text-[10px] text-accent no-underline hover:text-accent-soft shrink-0"
         >
           ← Back to editor
         </a>

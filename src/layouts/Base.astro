@@ -34,7 +34,7 @@ const currentPath = Astro.url.pathname;
       <!-- Logo -->
       <a href="/" class="group/logo flex items-center gap-2.5 no-underline text-inherit hover:text-inherit shrink-0">
         <svg class="group-hover/logo:animate-logo-bounce" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="24" height="24" aria-hidden="true">
-          <rect width="32" height="32" rx="8" fill="#4f56e8"/>
+          <rect width="32" height="32" rx="8" fill="#3a7d6c"/>
           <g fill="#fff">
             <path fill-rule="evenodd" d="M5.5 21V11h4c3 0 4.5 1.6 4.5 3.5S12.5 18 9.5 18H7.7V21ZM7.7 13v3h2c1.4 0 2.2-.6 2.2-1.5S11.1 13 9.7 13Z"/>
             <path fill-rule="evenodd" d="M15.5 21V11h4c3 0 4.5 1.5 4.5 3.3 0 1.4-1 2.6-2.5 3L24 21h-2.5l-2.2-3H17.7V21ZM17.7 13v2.8h2c1.4 0 2.2-.6 2.2-1.4s-.8-1.4-2.2-1.4Z"/>
@@ -50,7 +50,7 @@ const currentPath = Astro.url.pathname;
           <a
             href={link.href}
             class:list={[
-              'font-mono text-xs no-underline hover:text-indigo',
+              'font-mono text-xs no-underline hover:text-accent',
               currentPath.startsWith(link.href) ? 'text-ink' : 'text-meta'
             ]}
           >
@@ -68,7 +68,7 @@ const currentPath = Astro.url.pathname;
         </button>
         <search-modal></search-modal>
         <ThemeToggle />
-        <button id="menu-toggle" class="hidden max-sm:flex size-8 items-center justify-center border-none bg-transparent text-ink cursor-pointer rounded-md p-0 hover:bg-mist group" aria-label="Open menu" aria-expanded="false">
+        <button id="menu-toggle" class="hidden max-sm:flex size-8 items-center justify-center border-none bg-transparent text-ink cursor-pointer rounded-none p-0 hover:bg-mist group" aria-label="Open menu" aria-expanded="false">
           <svg class="group-aria-expanded:hidden" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
           <svg class="hidden group-aria-expanded:block" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
@@ -81,7 +81,7 @@ const currentPath = Astro.url.pathname;
         <a
           href={link.href}
           class:list={[
-            'flex items-center justify-between py-3.5 px-1 font-heading text-sm no-underline border-b border-border-light last:border-0 hover:text-indigo',
+            'flex items-center justify-between py-3.5 px-1 font-heading text-sm no-underline border-b border-border-light last:border-0 hover:text-accent',
             currentPath.startsWith(link.href) ? 'text-ink font-medium' : 'text-meta'
           ]}
         >
@@ -101,11 +101,11 @@ const currentPath = Astro.url.pathname;
   <footer class="border-t border-border-light mt-[60px] max-sm:mt-10">
     <div class="page-container flex items-center justify-between px-[26px] py-6 max-sm:flex-col max-sm:gap-2 max-sm:px-4 max-sm:py-5">
       <div class="inline-flex items-center font-mono font-medium text-[13px] max-sm:text-[11px]">
-        <span class="text-periwinkle">pavlo@romanenko.com</span><span class="text-dim">:~$</span>
-        <span class="inline-block w-2 h-[17px] bg-indigo rounded-[1px] ml-1 animate-blink"></span>
+        <span class="text-accent-soft">pavlo@romanenko.com</span><span class="text-dim">:~$</span>
+        <span class="inline-block w-2 h-[17px] bg-accent rounded-[1px] ml-1 animate-blink"></span>
       </div>
-      <span class="font-mono text-[11px] text-dim">
-        &copy; {new Date().getFullYear()} {SITE_TITLE}
+      <span class="font-mono text-[11px] text-dim" title={__LAST_TENDED__.hash ? `commit ${__LAST_TENDED__.hash}` : undefined}>
+        &copy; {new Date().getFullYear()} {SITE_TITLE} &middot; last tended {__LAST_TENDED__.date}
       </span>
     </div>
   </footer>

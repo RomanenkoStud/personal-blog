@@ -1,5 +1,7 @@
 /// <reference types="astro/client" />
 
+declare const __LAST_TENDED__: { date: string; hash: string };
+
 interface Env {
   DB: D1Database;
   CF_ACCESS_TEAM_NAME: string;

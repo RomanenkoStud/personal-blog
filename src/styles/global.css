@@ -2,8 +2,9 @@
 
 @theme {
   --color-ink: #1a1c2e;
-  --color-indigo: #4f56e8;
-  --color-periwinkle: #7c81f2;
+  --color-accent: #3a7d6c;
+  --color-accent-soft: #5a9b8a;
+  --color-on-accent: #ffffff;
   --color-mist: #eaecf1;
   --color-body: #44475a;
   --color-meta: #6b6e7e;
@@ -13,13 +14,14 @@
   --color-border-light: #eef0f4;
   --color-surface: #ffffff;
   --color-surface-alt: #fbfbfd;
-  --color-newsletter-bg: #eef0fb;
-  --color-newsletter-border: #d9dcfb;
+  --color-newsletter-bg: #ecf4f1;
+  --color-newsletter-border: #cfe3dc;
   --color-dark-surface: #14151f;
   --color-error: #dc2626;
   --color-skeleton: #e6e1d4;
 
   --font-heading: 'Space Grotesk', sans-serif;
+  --font-display: 'Young Serif', 'Iowan Old Style', Georgia, serif;
   --font-mono: 'IBM Plex Mono', monospace;
 
   --animate-cursor-blink: cursor-blink 1.1s step-end infinite;
@@ -30,6 +32,9 @@
 
 [data-theme="dark"] {
   --color-ink: #e8e9f0;
+  --color-accent: #79bbaa;
+  --color-accent-soft: #8fc9ba;
+  --color-on-accent: #0d0e15;
   --color-body: #b8bac8;
   --color-meta: #8b8ea0;
   --color-dim: #6a6d7e;
@@ -39,8 +44,8 @@
   --color-surface: #14151f;
   --color-surface-alt: #1a1b28;
   --color-mist: #252738;
-  --color-newsletter-bg: #1e1f32;
-  --color-newsletter-border: #2d2f4a;
+  --color-newsletter-bg: #1b2622;
+  --color-newsletter-border: #2d4038;
   --color-dark-surface: #0d0e15;
   --color-error: #f87171;
   --color-skeleton: #2d2f40;
@@ -80,7 +85,7 @@
     transition: background-color 0.2s, color 0.2s;
   }
   a { color: inherit; text-decoration: none; }
-  a:hover { color: var(--color-indigo); }
+  a:hover { color: var(--color-accent); }
   img { max-width: 100%; display: block; }
 }
 
@@ -94,15 +99,15 @@
   }
 
   .search-trigger {
-    @apply flex items-center gap-2 h-8 border border-border bg-surface-alt rounded-[7px] px-[11px] cursor-pointer font-mono text-xs text-placeholder transition-[border-color] duration-150 hover:border-indigo max-sm:px-2;
+    @apply flex items-center gap-2 h-8 border border-border bg-surface-alt rounded-none px-[11px] cursor-pointer font-mono text-xs text-placeholder transition-[border-color] duration-150 hover:border-accent max-sm:px-2;
   }
 
   .search-trigger kbd {
-    @apply font-mono text-[10px] text-border border border-border-light rounded px-[5px] py-px leading-none max-sm:hidden;
+    @apply font-mono text-[10px] text-border border border-border-light rounded-none px-[5px] py-px leading-none max-sm:hidden;
   }
 
   .chip {
-    @apply inline-flex items-center gap-1.5 border border-border rounded-[20px] py-1.5 px-[13px] font-mono text-[11px] text-meta bg-transparent no-underline cursor-pointer transition-all duration-200 hover:border-indigo hover:text-indigo hover:-translate-y-px;
+    @apply inline-flex items-center gap-1.5 border border-border rounded-[20px] py-1.5 px-[13px] font-mono text-[11px] text-meta bg-transparent no-underline cursor-pointer transition-all duration-200 hover:border-accent hover:text-accent hover:-translate-y-px;
   }
 
   .chip.active {
@@ -114,11 +119,11 @@
   }
 
   .page-link {
-    @apply inline-flex items-center justify-center min-w-8 h-8 px-2.5 border border-border rounded-md font-mono text-[11px] text-meta no-underline transition-all duration-150;
+    @apply inline-flex items-center justify-center min-w-8 h-8 px-2.5 border border-border rounded-none font-mono text-[11px] text-meta no-underline transition-all duration-150;
   }
 
   .page-link:hover:not(.disabled):not(.current) {
-    @apply border-indigo text-indigo;
+    @apply border-accent text-accent;
   }
 
   .page-link.current {
@@ -139,8 +144,8 @@
   }
 
   .post-body h1 {
-    font-family: var(--font-heading);
-    font-weight: 700;
+    font-family: var(--font-display);
+    font-weight: 400;
     font-size: 1.5rem;
     color: var(--color-ink);
     margin-top: 2rem;
@@ -149,8 +154,8 @@
   }
 
   .post-body h2 {
-    font-family: var(--font-heading);
-    font-weight: 600;
+    font-family: var(--font-display);
+    font-weight: 400;
     font-size: 1.25rem;
     color: var(--color-ink);
     margin-top: 2rem;
@@ -206,7 +211,7 @@
     font-size: 0.875em;
     background-color: var(--color-surface-alt);
     border: 1px solid var(--color-border-light);
-    border-radius: 4px;
+    border-radius: 0;
     padding: 0.1em 0.375em;
     color: var(--color-body);
   }
@@ -215,7 +220,7 @@
   .post-body pre {
     background-color: var(--color-surface-alt);
     border: 1px solid var(--color-border);
-    border-radius: 8px;
+    border-radius: 0;
     padding: 1rem 1.25rem;
     overflow-x: auto;
     margin-bottom: 1.25rem;
@@ -268,15 +273,15 @@
 
   /* Links */
   .post-body a {
-    color: var(--color-indigo);
+    color: var(--color-accent);
     text-decoration: underline;
-    text-decoration-color: color-mix(in srgb, var(--color-indigo) 30%, transparent);
+    text-decoration-color: color-mix(in srgb, var(--color-accent) 30%, transparent);
     text-underline-offset: 2px;
   }
 
   .post-body a:hover {
-    color: var(--color-periwinkle);
-    text-decoration-color: color-mix(in srgb, var(--color-periwinkle) 40%, transparent);
+    color: var(--color-accent-soft);
+    text-decoration-color: color-mix(in srgb, var(--color-accent-soft) 40%, transparent);
   }
 
   /* Horizontal rule */
@@ -311,7 +316,7 @@
 
   /* Images */
   .post-body img {
-    border-radius: 8px;
+    border-radius: 0;
     margin: 1.25rem 0;
   }
 
