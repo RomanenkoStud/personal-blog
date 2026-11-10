@@ -1,0 +1,40 @@
+# Repo overlay for the self-heal kit (tools/self-heal). Merged over tools/self-heal/defaults.yml.
+# Loaded from the DEFAULT BRANCH at run time: edits take effect once merged.
+
+agent:
+  context_files:
+    - .github/self-heal/context.md
+  # Strategy swap example (no workflow edits):
+  #   plugins: [superpowers@claude-plugins-official]
+  #   method_skills: [superpowers:systematic-debugging, superpowers:verification-before-completion]
+
+runtime:
+  node: "22"
+  setup:
+    - npm ci
+    - node scripts/ci/install-native-binaries.cjs
+
+tests:
+  commands:
+    - npm run test --if-present
+    - npm run typecheck --if-present
+  allowed_tools:
+    - Bash(npm run test:*)
+    - Bash(npm test:*)
+    - Bash(npx vitest:*)
+    - Bash(node --test:*)
+    - Bash(npm run typecheck:*)
+    - Bash(npx tsc:*)
+  protected_paths:          # appended to the kit's safety floor
+    - '^migrations/'
+    - '(^|/)wrangler\.toml$'
+    - '^scripts/ci/'
+
+migrations:
+  enabled: true
+  adapter: d1
+  dir: migrations
+  allowed_tools:
+    - Bash(npx wrangler d1 execute blog-db --local:*)
+  d1:
+    database: blog-db
