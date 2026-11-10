@@ -37,3 +37,6 @@ AGENTS.md
 .agents/
 .claude/
 
+# self-healing CI scratch
+.heal/
+

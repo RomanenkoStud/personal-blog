@@ -1,0 +1,209 @@
+# Reusable: heal failing tests on a pull request. Generic — all repo specifics come from
+# <policy_dir>/config.yml (merged over tools/self-heal/defaults.yml).
+#
+# Trust model: policy (kit scripts, skills, config) is loaded from `policy_ref`
+# (default: the repo's default branch); only the code under repair comes from the PR.
+name: self-heal-tests
+
+on:
+  workflow_call:
+    inputs:
+      policy_dir:
+        description: Directory holding config.yml and context files
+        type: string
+        default: .github/self-heal
+      kit_path:
+        description: Path of the self-heal kit inside the policy checkout
+        type: string
+        default: tools/self-heal
+      policy_ref:
+        description: Ref to load policy from (default = default branch). Override only to bootstrap/test.
+        type: string
+        default: ''
+
+jobs:
+  heal:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      PR: ${{ github.event.pull_request.number }}
+      PR_TITLE: ${{ github.event.pull_request.title }}
+      HEAD_REF: ${{ github.head_ref }}
+      BASE_REF: ${{ github.base_ref }}
+      KIT: ${{ github.workspace }}/.self-heal-policy/${{ inputs.kit_path }}
+      SELF_HEAL_BASELINE: .heal/baseline.z
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Checkout PR head (code under repair)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+          persist-credentials: false   # no push token on disk while the agent runs
+
+      - name: Checkout policy (trusted ref)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.policy_ref || github.event.repository.default_branch }}
+          path: .self-heal-policy
+          sparse-checkout: |
+            ${{ inputs.kit_path }}
+            ${{ inputs.policy_dir }}
+          persist-credentials: false
+
+      - name: Resolve config
+        id: cfg
+        run: |
+          printf '.heal/\n.self-heal-policy/\n.claude-pr/\n' >> .git/info/exclude
+          mkdir -p .heal
+          # Context files are read from the policy checkout so a PR can't rewrite them.
+          node "$KIT/bin/load-config.mjs" "$KIT/defaults.yml" ".self-heal-policy/${{ inputs.policy_dir }}/config.yml" > .heal/config.json
+          echo "json=$(cat .heal/config.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Gate
+        id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+        run: |
+          cfg=.heal/config.json
+          skip() { echo "::notice::self-heal skipped: $1"; [ "${2:-}" = comment ] && gh pr comment "$PR" --body "🩹 Self-heal skipped: $1"; exit 0; }
+          [ "$(jq -r .tests.enabled $cfg)" = true ] || skip "tests healing disabled in config"
+          label=$(jq -r .tests.opt_out_label $cfg)
+          echo "$LABELS" | jq -e --arg l "$label" 'index($l) != null' > /dev/null && skip "opt-out label '$label'"
+          eval "$(bash "$KIT/bin/attempt-budget.sh" "$BASE_REF" "$(jq -r .tests.max_attempts $cfg)")"
+          [ "$exhausted" = true ] && skip "$used attempt(s) already used on this branch — needs a human" comment
+          echo "used=$used" >> "$GITHUB_OUTPUT"
+          echo "go=true" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.go && fromJSON(steps.cfg.outputs.json).runtime.node != ''
+        with:
+          node-version: ${{ fromJSON(steps.cfg.outputs.json).runtime.node }}
+          cache: ${{ fromJSON(steps.cfg.outputs.json).runtime.node_cache }}
+
+      - name: Runtime setup
+        if: steps.gate.outputs.go
+        run: |
+          mapfile -t cmds < <(jq -r '.runtime.setup[]' .heal/config.json)
+          for c in "${cmds[@]}"; do echo "\$ $c"; bash -c "$c"; done
+
+      - name: Reproduce
+        id: repro
+        if: steps.gate.outputs.go
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if bash "$KIT/bin/run-commands.sh" .heal/config.json tests .heal/failure.log; then
+            gh pr comment "$PR" --body "🩹 Tests failed in CI but pass on re-run — likely flaky. Not auto-fixing. ([run]($RUN_URL))"
+            exit 0
+          fi
+          git status --porcelain=v1 -z --untracked-files=all | tr '\0' '\n' | cut -c4- | tr '\n' '\0' > "$SELF_HEAL_BASELINE"
+          jq -n --slurpfile c .heal/config.json \
+            --arg pr "$PR" --arg title "$PR_TITLE" --arg base "$BASE_REF" --arg head "$HEAD_REF" '
+            { pr: ($pr|tonumber), title: $title, base: $base, head: $head,
+              diff_command: "git diff origin/\($base)...HEAD",
+              commands: $c[0].tests.commands,
+              method_skills: $c[0].agent.method_skills,
+              context_files: [$c[0].agent.context_files[] | ".self-heal-policy/\(.)"] }' > .heal/context.json
+          echo "go=true" >> "$GITHUB_OUTPUT"
+
+      - name: Fix (self-heal:heal-tests)
+        if: steps.repro.outputs.go
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ github.token }}
+          plugin_marketplaces: ${{ fromJSON(steps.cfg.outputs.json).computed.marketplaces }}
+          plugins: ${{ fromJSON(steps.cfg.outputs.json).computed.plugins }}
+          prompt: |
+            Invoke the `self-heal:heal-tests` skill and follow it exactly.
+            Inputs are in .heal/ — start with .heal/context.json and .heal/failure.log.
+          claude_args: >-
+            --plugin-dir ${{ env.KIT }}/plugin/self-heal
+            --model ${{ fromJSON(steps.cfg.outputs.json).agent.model }}
+            --max-turns ${{ fromJSON(steps.cfg.outputs.json).agent.max_turns }}
+            --allowedTools "${{ fromJSON(steps.cfg.outputs.json).computed.tests_tools }}"
+
+      - name: Guard
+        id: guard
+        if: steps.repro.outputs.go
+        run: |
+          # claude-code-action restores .claude/ from the base branch for untrusted PR heads; undo it.
+          git checkout HEAD -- .claude 2>/dev/null || true
+          git clean -fdq -- .claude 2>/dev/null || true
+          node "$KIT/bin/guard.mjs" tests .heal/config.json > .heal/changed.txt
+          echo "changed:"; cat .heal/changed.txt
+          bash "$KIT/bin/run-commands.sh" .heal/config.json tests .heal/verify.log
+          { git diff; git ls-files -o --exclude-standard -z | xargs -0r sha256sum; } | sha256sum > .heal/fingerprint
+
+      - name: Review (self-heal:review-fix)
+        if: steps.guard.outcome == 'success' && fromJSON(steps.cfg.outputs.json).tests.review.enabled
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ github.token }}
+          prompt: |
+            Invoke the `self-heal:review-fix` skill. Mode: tests. PR base: origin/${{ github.base_ref }}.
+            Judge the uncommitted working-tree changes. Write only .heal/verdict.json.
+          claude_args: >-
+            --plugin-dir ${{ env.KIT }}/plugin/self-heal
+            --model ${{ fromJSON(steps.cfg.outputs.json).tests.review.model }}
+            --max-turns ${{ fromJSON(steps.cfg.outputs.json).tests.review.max_turns }}
+            --allowedTools "${{ fromJSON(steps.cfg.outputs.json).computed.review_tools }}"
+
+      - name: Enforce verdict
+        id: verdict
+        if: steps.guard.outcome == 'success'
+        run: |
+          if [ "${{ fromJSON(steps.cfg.outputs.json).tests.review.enabled }}" != true ]; then echo "review disabled"; exit 0; fi
+          git checkout HEAD -- .claude 2>/dev/null || true; git clean -fdq -- .claude 2>/dev/null || true
+          { git diff; git ls-files -o --exclude-standard -z | xargs -0r sha256sum; } | sha256sum | diff -q - .heal/fingerprint \
+            || { echo "::error::reviewer modified the working tree"; exit 1; }
+          jq . .heal/verdict.json
+          jq -e '.verdict == "approve"' .heal/verdict.json > /dev/null || { echo "::error::reviewer rejected the fix"; exit 1; }
+
+      - name: Publish fix
+        if: steps.verdict.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PUSH_TOKEN: ${{ secrets.SELF_HEAL_TOKEN || github.token }}
+          USED: ${{ steps.gate.outputs.used }}
+          MAX: ${{ fromJSON(steps.cfg.outputs.json).tests.max_attempts }}
+        run: |
+          git config user.name "self-heal[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          tr '\n' '\0' < .heal/changed.txt | xargs -0 git add -A --
+          {
+            echo "fix: self-heal $(jq -r '.classification // "failing tests"' .heal/result.json 2>/dev/null)"
+            echo
+            head -c 4000 .heal/summary.md 2>/dev/null || true
+            echo
+            echo "Self-Heal: tests"
+            echo "Run: $RUN_URL"
+          } > .heal/commit-msg
+          git commit -q -F .heal/commit-msg
+          git push "https://x-access-token:${PUSH_TOKEN}@github.com/${{ github.repository }}.git" "HEAD:$HEAD_REF"
+          {
+            echo "🩹 **Self-heal pushed a fix** (attempt $((USED + 1))/$MAX) — please review the commit."
+            echo; cat .heal/summary.md 2>/dev/null || true
+            if [ -f .heal/verdict.json ]; then
+              echo; echo "**Independent review:** $(jq -r '"\(.verdict) (\(.confidence))"' .heal/verdict.json)"
+              jq -r '.risks[]? | "- ⚠️ \(.)"' .heal/verdict.json
+            fi
+          } | gh pr comment "$PR" --body-file -
+
+      - name: Report diagnosis
+        if: always() && steps.repro.outputs.go && steps.verdict.outcome != 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "🩹 **Self-heal did not push a fix.** ([run]($RUN_URL))"
+            [ "${{ steps.guard.outcome }}" = failure ] && echo "Reason: guardrail or re-verification failed."
+            if [ -f .heal/verdict.json ]; then echo "Reason: independent review rejected the fix:"; jq -r '.reasons[]? | "- \(.)"' .heal/verdict.json; fi
+            echo; echo "**Diagnosis:**"; cat .heal/summary.md 2>/dev/null || echo "_none produced_"
+          } | gh pr comment "$PR" --body-file -

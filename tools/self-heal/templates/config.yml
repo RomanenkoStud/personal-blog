@@ -1,0 +1,27 @@
+# Repo overlay for the self-heal kit. Merged over tools/self-heal/defaults.yml
+# (see that file for every key). Loaded from the DEFAULT BRANCH at run time.
+
+agent:
+  context_files:
+    - .github/self-heal/context.md
+  # model: sonnet
+  # plugins / method_skills: swap the borrowed debugging strategy here.
+
+runtime:
+  node: "22"            # "" to skip actions/setup-node
+  setup:
+    - npm ci
+
+tests:
+  commands:             # exactly what your CI runs; all must pass
+    - npm test
+  allowed_tools:        # Bash patterns for those runners
+    - Bash(npm test:*)
+  protected_paths: []   # extra regexes on top of the kit's safety floor
+
+migrations:
+  enabled: false
+  # adapter: d1
+  # dir: migrations
+  # allowed_tools: ["Bash(npx wrangler d1 execute <db> --local:*)"]
+  # d1: { database: <db> }
