@@ -141,6 +141,8 @@ jobs:
         id: verify
         if: steps.guard.outputs.skip != 'true'
         run: |
+          git checkout HEAD -- .claude 2>/dev/null || true   # see ci.yml: undo the action's config restore
+          rm -rf .claude-pr
           changed=$(git status --porcelain --untracked-files=all | awk '{print $2}' | grep -v '^\.heal/' || true)
           if [ -z "$changed" ]; then echo "::error::Agent made no changes"; exit 1; fi
           echo "$changed"

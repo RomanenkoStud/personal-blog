@@ -102,6 +102,10 @@ jobs:
         id: verify
         if: steps.budget.outputs.exhausted != 'true' && steps.repro.outputs.flaky != 'true'
         run: |
+          # claude-code-action restores .claude/ etc. from main for untrusted PR heads;
+          # undo that so it isn't mistaken for (or pushed as) an agent change.
+          git checkout HEAD -- .claude 2>/dev/null || true
+          rm -rf .claude-pr
           changed=$(git status --porcelain --untracked-files=all | awk '{print $2}' | grep -v '^\.heal/' || true)
           if [ -z "$changed" ]; then echo "::error::Agent made no changes"; exit 1; fi
           echo "$changed"
