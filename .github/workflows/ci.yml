@@ -34,4 +34,6 @@ jobs:
       contents: write
       pull-requests: write
     uses: ./.github/workflows/self-heal-tests.yml
+    with:
+      policy_ref: feat/self-healing-ci   # TRIAL ONLY: main has no kit yet
     secrets: inherit
