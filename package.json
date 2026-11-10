@@ -14,7 +14,8 @@
     "db:migrate:remote": "wrangler d1 migrations apply blog-db --remote",
     "db:seed:local": "wrangler d1 execute blog-db --local --file=seed.sql",
     "db:seed:remote": "wrangler d1 execute blog-db --remote --file=seed.sql",
-    "astro": "astro"
+    "astro": "astro",
+    "test": "node --test 'src/**/*.test.mjs'"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.7.0",
