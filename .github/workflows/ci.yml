@@ -4,35 +4,146 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ci-${{ github.head_ref }}
+  cancel-in-progress: true
+
 jobs:
-  check:
+  unit-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: npm run test --if-present
+      - run: npm run typecheck --if-present
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - run: npm ci
-
-      - name: Install Linux glibc native binaries
-        run: |
-          node -e "
-          const { execSync } = require('child_process');
-          const { mkdirSync } = require('fs');
-          const lock = require('./package-lock.json');
-          const pkgs = Object.entries(lock.packages)
-            .filter(([k, v]) => v.optional && v.os?.includes('linux') && v.cpu?.includes('x64') &&
-                                (k.includes('gnu') || k.includes('@img/sharp')))
-            .map(([k, v]) => [k.replace('node_modules/', ''), v.version]);
-          for (const [name, version] of pkgs) {
-            const tarball = execSync('npm view ' + JSON.stringify(name + '@' + version) + ' dist.tarball').toString().trim();
-            mkdirSync('node_modules/' + name, { recursive: true });
-            execSync('curl -fsSL ' + JSON.stringify(tarball) + ' | tar -xz --strip-components=1 -C ' + JSON.stringify('node_modules/' + name));
-            console.log('Installed:', name, version);
-          }
-          "
-
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
       - run: npm run build
+
+  # Self-healing: when unit tests fail on a same-repo PR, the ci-test-fixer agent
+  # (.claude/agents/ci-test-fixer.md) attempts a fix and pushes it to the PR branch.
+  # Guardrails: max 2 attempts per branch, scope + anti-cheat checks on the diff,
+  # tests must pass again before anything is pushed. Opt out with the `no-self-heal` label.
+  heal-tests:
+    needs: unit-tests
+    if: >-
+      failure() &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      !contains(github.event.pull_request.labels.*.name, 'no-self-heal')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR: ${{ github.event.pull_request.number }}
+      MAX_ATTEMPTS: 2
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+          # The agent must not be able to read a push token out of .git/config.
+          persist-credentials: false
+
+      - name: Attempt budget
+        id: budget
+        run: |
+          used=$(git log --format=%B origin/main..HEAD | grep -c '^Self-Heal: unit-tests' || true)
+          echo "used=$used" >> "$GITHUB_OUTPUT"
+          if [ "$used" -ge "$MAX_ATTEMPTS" ]; then
+            gh pr comment "$PR" --body "🩹 Self-heal skipped: $used/$MAX_ATTEMPTS attempts already used on this branch. Needs a human."
+            echo "exhausted=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: ./.github/actions/setup
+        if: steps.budget.outputs.exhausted != 'true'
+
+      - name: Reproduce failure
+        id: repro
+        if: steps.budget.outputs.exhausted != 'true'
+        run: |
+          mkdir -p .heal
+          set +e
+          { npm run test --if-present && npm run typecheck --if-present; } > .heal/test-output.log 2>&1
+          code=$?
+          set -e
+          tail -n 200 .heal/test-output.log
+          if [ "$code" -eq 0 ]; then
+            gh pr comment "$PR" --body "🩹 Unit tests failed in CI but passed on re-run — likely flaky. Not auto-fixing."
+            echo "flaky=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run ci-test-fixer agent
+        if: steps.budget.outputs.exhausted != 'true' && steps.repro.outputs.flaky != 'true'
+        uses: anthropics/claude-code-action@v1
+        env:
+          GH_TOKEN: ""
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ github.token }}
+          prompt: |
+            Unit tests are failing on PR #${{ github.event.pull_request.number }}
+            ("${{ github.event.pull_request.title }}"), branch ${{ github.head_ref }}.
+            Failure log: .heal/test-output.log. Changes under review: `git diff origin/main...HEAD`.
+            Fix it following your instructions, then write .heal/summary.md.
+          claude_args: >-
+            --agent ci-test-fixer
+            --max-turns 40
+            --allowedTools "Read,Edit,Write,Glob,Grep,Bash(npm run test:*),Bash(npm test:*),Bash(npx vitest:*),Bash(npm run typecheck:*),Bash(git diff:*),Bash(git log:*),Bash(git status:*),Bash(git show:*)"
+
+      - name: Verify fix
+        id: verify
+        if: steps.budget.outputs.exhausted != 'true' && steps.repro.outputs.flaky != 'true'
+        run: |
+          changed=$(git status --porcelain --untracked-files=all | awk '{print $2}' | grep -v '^\.heal/' || true)
+          if [ -z "$changed" ]; then echo "::error::Agent made no changes"; exit 1; fi
+          echo "$changed"
+
+          # Scope: the agent fixes code/tests, never CI, deps, migrations or agent config.
+          if echo "$changed" | grep -E '^(\.github/|\.claude/|migrations/|package(-lock)?\.json$|wrangler\.toml$)'; then
+            echo "::error::Agent touched files outside its scope"; exit 1
+          fi
+          # Anti-cheat: no deleted test files, no skipped/focused tests.
+          if git diff --name-only --diff-filter=D | grep -E '\.(test|spec)\.[cm]?[jt]sx?$'; then
+            echo "::error::Agent deleted test files"; exit 1
+          fi
+          if git diff -U0 | grep -E '^\+' | grep -E '\b(it|test|describe)\.(skip|only|todo)\b|\bx(it|describe)\(|@ts-(ignore|nocheck)'; then
+            echo "::error::Agent skipped tests or suppressed type errors"; exit 1
+          fi
+
+          npm run test --if-present
+          npm run typecheck --if-present
+
+      - name: Push fix
+        if: steps.verify.outcome == 'success'
+        env:
+          PUSH_TOKEN: ${{ secrets.SELF_HEAL_TOKEN || github.token }}
+        run: |
+          git config user.name "self-heal[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- . ':!.heal'
+          git commit -F - <<EOF
+          fix(tests): self-heal failing unit tests
+
+          $(head -c 4000 .heal/summary.md 2>/dev/null || echo "See workflow run ${{ github.run_id }}.")
+
+          Self-Heal: unit-tests
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EOF
+          git push "https://x-access-token:${PUSH_TOKEN}@github.com/${{ github.repository }}.git" "HEAD:${{ github.head_ref }}"
+          {
+            echo "🩹 **Self-heal pushed a fix** (attempt $(( ${{ steps.budget.outputs.used }} + 1 ))/$MAX_ATTEMPTS) — please review the commit."
+            echo
+            cat .heal/summary.md 2>/dev/null || true
+          } | gh pr comment "$PR" --body-file -
+
+      - name: Report failure
+        if: failure() && steps.repro.outputs.flaky != 'true'
+        run: gh pr comment "$PR" --body "🩹 Self-heal could not produce a verified fix. See ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

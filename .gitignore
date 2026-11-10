@@ -35,5 +35,12 @@ tmp/
 CLAUDE.md
 AGENTS.md
 .agents/
-.claude/
+.claude/*
+# ...except the CI agents, which GitHub Actions needs (self-healing CI)
+!.claude/agents/
+.claude/agents/*
+!.claude/agents/ci-*.md
+
+# self-healing CI scratch
+.heal/
 

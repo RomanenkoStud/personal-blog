@@ -5,48 +5,39 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       deployments: write
+    outputs:
+      migrate: ${{ steps.migrate.outcome }}
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - run: npm ci
-
-      - name: Install Linux glibc native binaries
-        run: |
-          node -e "
-          const { execSync } = require('child_process');
-          const { mkdirSync } = require('fs');
-          const lock = require('./package-lock.json');
-          const pkgs = Object.entries(lock.packages)
-            .filter(([k, v]) => v.optional && v.os?.includes('linux') && v.cpu?.includes('x64') &&
-                                (k.includes('gnu') || k.includes('@img/sharp')))
-            .map(([k, v]) => [k.replace('node_modules/', ''), v.version]);
-          for (const [name, version] of pkgs) {
-            const tarball = execSync('npm view ' + JSON.stringify(name + '@' + version) + ' dist.tarball').toString().trim();
-            mkdirSync('node_modules/' + name, { recursive: true });
-            execSync('curl -fsSL ' + JSON.stringify(tarball) + ' | tar -xz --strip-components=1 -C ' + JSON.stringify('node_modules/' + name));
-            console.log('Installed:', name, version);
-          }
-          "
+      - uses: ./.github/actions/setup
 
       - run: npm run build
 
       - name: Run D1 migrations
-        uses: cloudflare/wrangler-action@v4
+        id: migrate
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -o pipefail
+          npx wrangler d1 migrations apply blog-db --remote 2>&1 | tee migrate.log
+
+      - name: Upload migration log
+        if: failure() && steps.migrate.outcome == 'failure'
+        uses: actions/upload-artifact@v4
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: d1 migrations apply blog-db --remote
+          name: migrate-log
+          path: migrate.log
 
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v4
@@ -60,3 +51,137 @@ jobs:
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           GH_PROFILE_TOKEN: ${{ secrets.GH_PROFILE_TOKEN }}
+
+  # Self-healing: when remote D1 migrations fail, the ci-migration-healer agent
+  # (.claude/agents/ci-migration-healer.md) reproduces the failure against a local
+  # copy of the remote *schema* (no data), fixes the pending migration(s) and opens
+  # a PR. It never touches the remote database — a human merges the PR, which
+  # re-runs this workflow. The Cloudflare token is only used by the snapshot step.
+  heal-migrations:
+    needs: deploy
+    if: failure() && needs.deploy.outputs.migrate == 'failure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      HEAL_BRANCH: self-heal/migrations-${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Skip if a heal PR is already open
+        id: guard
+        run: |
+          open=$(gh pr list --label self-heal-migrations --state open --json number --jq 'length')
+          if [ "$open" -gt 0 ]; then
+            echo "::notice::A migration self-heal PR is already open; not opening another."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: ./.github/actions/setup
+        if: steps.guard.outputs.skip != 'true'
+
+      - uses: actions/download-artifact@v4
+        if: steps.guard.outputs.skip != 'true'
+        with:
+          name: migrate-log
+          path: .heal
+
+      - name: Snapshot remote D1 (schema + applied list, read-only)
+        if: steps.guard.outputs.skip != 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npx wrangler d1 export blog-db --remote --no-data --output .heal/remote-schema.sql
+          npx wrangler d1 execute blog-db --remote --json \
+            --command "SELECT name FROM d1_migrations ORDER BY id" \
+            | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{for(const r of JSON.parse(s)[0].results)console.log(r.name)})' \
+            > .heal/applied-migrations.txt
+          echo "Applied remotely:"; cat .heal/applied-migrations.txt
+
+      - name: Confirm local reproduction
+        if: steps.guard.outputs.skip != 'true'
+        run: |
+          if bash scripts/ci/reproduce-remote-d1.sh .heal > .heal/repro.log 2>&1; then
+            echo "reproduced=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Pending migrations apply cleanly against the remote schema — failure is likely data-dependent or transient."
+          else
+            echo "reproduced=true" >> "$GITHUB_OUTPUT"
+          fi
+          tail -n 80 .heal/repro.log
+        id: repro
+
+      - name: Run ci-migration-healer agent
+        if: steps.guard.outputs.skip != 'true'
+        uses: anthropics/claude-code-action@v1
+        env:
+          GH_TOKEN: ""
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ github.token }}
+          prompt: |
+            Remote D1 migrations failed while deploying ${{ github.sha }}.
+            Remote error: .heal/migrate.log
+            Remote schema (no data): .heal/remote-schema.sql
+            Migrations already applied remotely: .heal/applied-migrations.txt
+            Local reproduction log: .heal/repro.log (reproduced locally: ${{ steps.repro.outputs.reproduced }})
+            Fix it following your instructions, then write .heal/summary.md.
+          claude_args: >-
+            --agent ci-migration-healer
+            --max-turns 40
+            --allowedTools "Read,Edit,Write,Glob,Grep,Bash(bash scripts/ci/reproduce-remote-d1.sh:*),Bash(npx wrangler d1 execute blog-db --local:*),Bash(git diff:*),Bash(git log:*),Bash(git status:*),Bash(git show:*),Bash(ls:*)"
+
+      - name: Verify fix
+        id: verify
+        if: steps.guard.outputs.skip != 'true'
+        run: |
+          changed=$(git status --porcelain --untracked-files=all | awk '{print $2}' | grep -v '^\.heal/' || true)
+          if [ -z "$changed" ]; then echo "::error::Agent made no changes"; exit 1; fi
+          echo "$changed"
+
+          if echo "$changed" | grep -v '^migrations/[^/]*\.sql$'; then
+            echo "::error::Agent touched files outside migrations/"; exit 1
+          fi
+          # Applied migrations are immutable: wrangler tracks by filename, editing them changes nothing remotely.
+          for f in $changed; do
+            if grep -qxF "$(basename "$f")" .heal/applied-migrations.txt; then
+              echo "::error::Agent modified already-applied migration $f"; exit 1
+            fi
+          done
+
+          bash scripts/ci/reproduce-remote-d1.sh .heal
+
+      - name: Open PR
+        if: steps.verify.outcome == 'success'
+        run: |
+          git config user.name "self-heal[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$HEAL_BRANCH"
+          git add -- migrations
+          git commit -F - <<EOF
+          fix(migrations): self-heal failed D1 migration
+
+          Self-Heal: migrations
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EOF
+          git push "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" "$HEAL_BRANCH"
+          gh label create self-heal-migrations --color B60205 --description "Auto-generated migration fix" --force
+          {
+            echo "Remote D1 migrations failed on deploy of ${{ github.sha }} ([run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}))."
+            echo "Reproduced against remote schema locally: **${{ steps.repro.outputs.reproduced }}**. Fix verified against the same snapshot."
+            echo
+            echo "> ⚠️ Verified against schema only, not production data. Review the SQL before merging — merging re-runs Deploy and applies it to prod."
+            echo
+            cat .heal/summary.md 2>/dev/null || true
+            echo
+            echo "🤖 Generated with [Claude Code](https://claude.com/claude-code)"
+          } > .heal/pr-body.md
+          gh pr create --base main --head "$HEAL_BRANCH" \
+            --title "fix(migrations): self-heal failed D1 migration" \
+            --label self-heal-migrations --body-file .heal/pr-body.md
