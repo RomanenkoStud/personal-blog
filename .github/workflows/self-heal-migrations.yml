@@ -1,0 +1,212 @@
+# Reusable: heal a failed production migration. Generic — the migration system is an
+# adapter (tools/self-heal/adapters/<name>/{snapshot,reproduce}.sh) chosen in config.
+# Never touches the remote database: the fix ships as a PR for a human to merge.
+#
+# Caller contract: the failing job uploads the migration output as artifact `log_artifact`.
+name: self-heal-migrations
+
+on:
+  workflow_call:
+    inputs:
+      policy_dir:
+        type: string
+        default: .github/self-heal
+      kit_path:
+        type: string
+        default: tools/self-heal
+      policy_ref:
+        type: string
+        default: ''
+      log_artifact:
+        description: Artifact containing migrate.log from the failed run
+        type: string
+        default: migrate-log
+
+jobs:
+  heal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      KIT: ${{ github.workspace }}/.self-heal-policy/${{ inputs.kit_path }}
+      BRANCH: self-heal/migrations-${{ github.run_id }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Checkout failed commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Checkout policy (trusted ref)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.policy_ref || github.event.repository.default_branch }}
+          path: .self-heal-policy
+          sparse-checkout: |
+            ${{ inputs.kit_path }}
+            ${{ inputs.policy_dir }}
+          persist-credentials: false
+
+      - name: Resolve config
+        id: cfg
+        run: |
+          printf '.heal/\n.self-heal-policy/\n.claude-pr/\n' >> .git/info/exclude
+          mkdir -p .heal/snapshot
+          node "$KIT/bin/load-config.mjs" "$KIT/defaults.yml" ".self-heal-policy/${{ inputs.policy_dir }}/config.yml" > .heal/config.json
+          echo "json=$(cat .heal/config.json)" >> "$GITHUB_OUTPUT"
+          adapter=$(jq -r .migrations.adapter .heal/config.json)
+          echo "adapter=$adapter" >> "$GITHUB_OUTPUT"
+          # Adapter settings → env (e.g. migrations.d1.database → SELF_HEAL_D1_DATABASE)
+          jq -r --arg a "$adapter" '.migrations[$a] // {} | to_entries[] | "SELF_HEAL_\($a|ascii_upcase)_\(.key|ascii_upcase)=\(.value)"' .heal/config.json >> "$GITHUB_ENV"
+
+      - name: Gate
+        id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ADAPTER: ${{ steps.cfg.outputs.adapter }}
+        run: |
+          cfg=.heal/config.json
+          [ "$(jq -r .migrations.enabled $cfg)" = true ] || { echo "::notice::migrations healing disabled"; exit 0; }
+          [ -d "$KIT/adapters/$ADAPTER" ] || { echo "::error::unknown adapter '$ADAPTER'"; exit 1; }
+          open=$(gh pr list --label "$(jq -r .migrations.pr_label $cfg)" --state open --json number --jq length)
+          [ "$open" -eq 0 ] || { echo "::notice::a self-heal migrations PR is already open"; exit 0; }
+          echo "go=true" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.go && fromJSON(steps.cfg.outputs.json).runtime.node != ''
+        with:
+          node-version: ${{ fromJSON(steps.cfg.outputs.json).runtime.node }}
+          cache: ${{ fromJSON(steps.cfg.outputs.json).runtime.node_cache }}
+
+      - name: Runtime setup
+        if: steps.gate.outputs.go
+        run: |
+          mapfile -t cmds < <(jq -r '.runtime.setup[]' .heal/config.json)
+          for c in "${cmds[@]}"; do echo "\$ $c"; bash -c "$c"; done
+
+      - uses: actions/download-artifact@v4
+        if: steps.gate.outputs.go
+        with:
+          name: ${{ inputs.log_artifact }}
+          path: .heal
+
+      - name: Snapshot remote (read-only, credentials scoped to this step)
+        if: steps.gate.outputs.go
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: bash "$KIT/adapters/${{ steps.cfg.outputs.adapter }}/snapshot.sh" .heal/snapshot
+
+      - name: Reproduce
+        id: repro
+        if: steps.gate.outputs.go
+        env:
+          ADAPTER: ${{ steps.cfg.outputs.adapter }}
+        run: |
+          verify="bash $KIT/adapters/$ADAPTER/reproduce.sh .heal/snapshot"
+          if $verify > .heal/repro.log 2>&1; then reproduced=false; else reproduced=true; fi
+          tail -n 60 .heal/repro.log
+          jq -n --slurpfile c .heal/config.json --arg adapter "$ADAPTER" --arg verify "$verify" \
+            --arg sha "$GITHUB_SHA" --argjson reproduced "$reproduced" '
+            { adapter: $adapter, migrations_dir: $c[0].migrations.dir, failed_sha: $sha,
+              reproduced: $reproduced, verify_command: $verify,
+              adapter_guide: "adapters/\($adapter).md (next to the heal-migrations skill)",
+              method_skills: $c[0].agent.method_skills,
+              context_files: [$c[0].agent.context_files[] | ".self-heal-policy/\(.)"] }' > .heal/context.json
+          echo "tools=$(jq -r .computed.migrations_tools .heal/config.json),Bash($verify:*)" >> "$GITHUB_OUTPUT"
+          echo "go=true" >> "$GITHUB_OUTPUT"
+
+      - name: Fix (self-heal:heal-migrations)
+        if: steps.repro.outputs.go
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ github.token }}
+          plugin_marketplaces: ${{ fromJSON(steps.cfg.outputs.json).computed.marketplaces }}
+          plugins: ${{ fromJSON(steps.cfg.outputs.json).computed.plugins }}
+          prompt: |
+            Invoke the `self-heal:heal-migrations` skill and follow it exactly.
+            Inputs are in .heal/ — start with .heal/context.json and .heal/migrate.log.
+          claude_args: >-
+            --plugin-dir ${{ env.KIT }}/plugin/self-heal
+            --model ${{ fromJSON(steps.cfg.outputs.json).agent.model }}
+            --max-turns ${{ fromJSON(steps.cfg.outputs.json).agent.max_turns }}
+            --allowedTools "${{ steps.repro.outputs.tools }}"
+
+      - name: Guard
+        id: guard
+        if: steps.repro.outputs.go
+        run: |
+          git checkout HEAD -- .claude 2>/dev/null || true; git clean -fdq -- .claude 2>/dev/null || true
+          rm -rf .wrangler/self-heal-state
+          node "$KIT/bin/guard.mjs" migrations .heal/config.json .heal/snapshot/applied.txt > .heal/changed.txt
+          echo "changed:"; cat .heal/changed.txt
+          $(jq -r .verify_command .heal/context.json)
+          rm -rf .wrangler/self-heal-state
+          { git diff; git ls-files -o --exclude-standard -z | xargs -0r sha256sum; } | sha256sum > .heal/fingerprint
+
+      - name: Review (self-heal:review-fix)
+        if: steps.guard.outcome == 'success' && fromJSON(steps.cfg.outputs.json).migrations.review.enabled
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ github.token }}
+          prompt: |
+            Invoke the `self-heal:review-fix` skill. Mode: migrations.
+            Judge the uncommitted working-tree changes. Write only .heal/verdict.json.
+          claude_args: >-
+            --plugin-dir ${{ env.KIT }}/plugin/self-heal
+            --model ${{ fromJSON(steps.cfg.outputs.json).migrations.review.model }}
+            --max-turns ${{ fromJSON(steps.cfg.outputs.json).migrations.review.max_turns }}
+            --allowedTools "${{ fromJSON(steps.cfg.outputs.json).computed.review_tools }}"
+
+      - name: Enforce verdict
+        id: verdict
+        if: steps.guard.outcome == 'success'
+        run: |
+          if [ "${{ fromJSON(steps.cfg.outputs.json).migrations.review.enabled }}" != true ]; then exit 0; fi
+          git checkout HEAD -- .claude 2>/dev/null || true; git clean -fdq -- .claude 2>/dev/null || true
+          { git diff; git ls-files -o --exclude-standard -z | xargs -0r sha256sum; } | sha256sum | diff -q - .heal/fingerprint \
+            || { echo "::error::reviewer modified the working tree"; exit 1; }
+          jq . .heal/verdict.json
+          jq -e '.verdict == "approve"' .heal/verdict.json > /dev/null || { echo "::error::reviewer rejected the fix"; exit 1; }
+
+      - name: Open PR
+        if: steps.verdict.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LABEL: ${{ fromJSON(steps.cfg.outputs.json).migrations.pr_label }}
+        run: |
+          git config user.name "self-heal[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          tr '\n' '\0' < .heal/changed.txt | xargs -0 git add -A --
+          printf 'fix(migrations): self-heal failed migration\n\nSelf-Heal: migrations\nRun: %s\n' "$RUN_URL" > .heal/commit-msg
+          git commit -q -F .heal/commit-msg
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" "$BRANCH"
+          gh label create "$LABEL" --color B60205 --description "Auto-generated migration fix" --force
+          {
+            echo "Migrations failed while deploying $GITHUB_SHA ([run]($RUN_URL))."
+            echo "Reproduced against the remote snapshot: **$(jq -r .reproduced .heal/context.json)**; fix verified against the same snapshot."
+            echo
+            echo "> ⚠️ Verified against schema only, not production data. Merging re-runs the deploy and applies this to production."
+            echo; cat .heal/summary.md 2>/dev/null || true
+            if [ -f .heal/verdict.json ]; then
+              echo; echo "**Independent review:** $(jq -r '"\(.verdict) (\(.confidence))"' .heal/verdict.json)"
+              jq -r '.risks[]? | "- ⚠️ \(.)"' .heal/verdict.json
+            fi
+            echo; echo "🤖 Generated with [Claude Code](https://claude.com/claude-code)"
+          } > .heal/pr-body.md
+          gh pr create --base "${{ github.event.repository.default_branch }}" --head "$BRANCH" \
+            --title "fix(migrations): self-heal failed migration" --label "$LABEL" --body-file .heal/pr-body.md
+
+      - name: Report diagnosis
+        if: always() && steps.repro.outputs.go && steps.verdict.outcome != 'success'
+        run: |
+          {
+            echo "## 🩹 Self-heal did not produce a migration fix"
+            [ -f .heal/verdict.json ] && { echo "Review rejected:"; jq -r '.reasons[]? | "- \(.)"' .heal/verdict.json; }
+            echo; cat .heal/summary.md 2>/dev/null || echo "_no diagnosis produced_"
+          } >> "$GITHUB_STEP_SUMMARY"

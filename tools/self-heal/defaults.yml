@@ -1,0 +1,75 @@
+# self-heal core defaults. Repo overlays (.github/self-heal/config.yml) are deep-merged on top.
+# Merge rules (bin/load-config.mjs):
+#   - objects merge recursively, scalars and most arrays are REPLACED by the overlay
+#   - "safety floor" arrays are APPENDED (an overlay can add guardrails, never remove them):
+#       tests.protected_paths, tests.forbidden_patterns, migrations.protected_paths
+version: 1
+
+agent:
+  model: sonnet
+  max_turns: 30
+  # Borrowed strategy: community-maintained skill packs, installed per run.
+  # Swap or add packs here; no workflow edits needed. Plugin ids are <plugin>@<marketplace>.
+  marketplaces:
+    - https://github.com/anthropics/claude-plugins-official.git
+  plugins:
+    - mattpocock-skills@claude-plugins-official
+  # Skills the healer must load before working (namespaced <plugin>:<skill>).
+  method_skills:
+    - mattpocock-skills:diagnosing-bugs
+  # Repo-specific knowledge files the agents read first. Repo-relative paths that must live
+  # under the policy dir (.github/self-heal/) — they are read from the trusted default branch.
+  context_files: []
+  # Tools every self-heal agent gets. Bash is allowlisted per pattern only.
+  base_tools:
+    - Read
+    - Glob
+    - Grep
+    - Skill
+    - Bash(git diff:*)
+    - Bash(git log:*)
+    - Bash(git show:*)
+    - Bash(git status:*)
+    - Bash(ls:*)
+
+runtime:
+  node: ""            # e.g. "22" → actions/setup-node
+  node_cache: npm     # npm | pnpm | yarn | "" (setup-node cache)
+  setup: []           # shell commands run after checkout (install deps etc.)
+
+tests:
+  enabled: true
+  commands: []        # all must pass, in order. Example: ["npm test", "npm run typecheck"]
+  max_attempts: 2     # heal commits per branch (counted by the Self-Heal trailer)
+  opt_out_label: no-self-heal
+  allowed_tools: []   # extra tools for the fixer, e.g. "Bash(npx vitest:*)"
+  test_file_pattern: '\.(test|spec)\.[cm]?[jt]sx?$|(^|/)tests?/'
+  protected_paths:    # regex on repo-relative paths the fixer must not touch
+    - '^\.github/'
+    - '^\.claude/'
+    - '^tools/self-heal/'
+    - '(^|/)package(-lock)?\.json$'
+    - '(^|/)(pnpm-lock\.yaml|yarn\.lock|bun\.lockb?)$'
+  forbidden_patterns: # regex on ADDED lines: ways to fake a green suite
+    - '\b(it|test|describe)\.(skip|only|todo)\b'
+    - '\bx(it|describe|test)\('
+    - '@ts-(ignore|nocheck|expect-error)'
+    - 'eslint-disable'
+  review:
+    enabled: true     # independent read-only judge must approve before push
+    model: sonnet
+    max_turns: 15
+
+migrations:
+  enabled: false
+  adapter: ""         # one of tools/self-heal/adapters/* (e.g. d1)
+  dir: migrations
+  allowed_tools: []
+  protected_paths: []
+  review:
+    enabled: true
+    model: sonnet
+    max_turns: 15
+  pr_label: self-heal-migrations
+  d1:
+    database: ""

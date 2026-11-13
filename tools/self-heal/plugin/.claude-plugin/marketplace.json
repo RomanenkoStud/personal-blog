@@ -1,0 +1,12 @@
+{
+  "name": "self-heal-kit",
+  "description": "Self-healing CI: Claude skills that repair failing tests and migrations under deterministic guardrails.",
+  "owner": { "name": "Pavlo Romanenko" },
+  "plugins": [
+    {
+      "name": "self-heal",
+      "source": "./self-heal",
+      "description": "heal-tests, heal-migrations, review-fix and init skills for self-healing CI."
+    }
+  ]
+}
