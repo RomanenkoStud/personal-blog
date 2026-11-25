@@ -2,7 +2,8 @@
 // Deterministic guardrails applied to the agent's working-tree changes.
 // The agent never decides these; a violation rejects the fix.
 //
-// usage: guard.mjs <tests|migrations> <config.json> [applied-migrations.txt]
+// usage: guard.mjs <route|migrations> <config.json> [applied-migrations.txt]
+//   <route> is any key of config.routes (tests, build, …): the shared guard floor applies to all.
 // prints violations, exits 1 if any; prints changed files to stdout on success.
 import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
@@ -43,31 +44,38 @@ export function addedLines(files) {
 export function check(mode, cfg, files, added, applied = []) {
   const v = [];
   if (files.length === 0) v.push('agent made no changes');
-  const section = cfg[mode];
-  const protectedRe = (section.protected_paths ?? []).map((p) => new RegExp(p));
+  if (mode === 'migrations') return [...v, ...checkMigrations(cfg, files, applied)];
+
+  const route = cfg.routes?.[mode];
+  if (!route) return [...v, `unknown route '${mode}'`];
+  const protectedRe = [...cfg.guard.protected_paths, ...(route.protected_paths ?? [])].map((p) => new RegExp(p));
   for (const { path } of files) {
     const hit = protectedRe.find((re) => re.test(path));
     if (hit) v.push(`touched protected path ${path} (${hit})`);
   }
-  if (mode === 'tests') {
-    const testRe = new RegExp(cfg.tests.test_file_pattern);
-    for (const { status, path } of files) {
-      if (status.includes('D') && testRe.test(path)) v.push(`deleted test file ${path}`);
-    }
-    for (const pat of cfg.tests.forbidden_patterns) {
-      const re = new RegExp(pat);
-      const line = added.find((l) => re.test(l));
-      if (line) v.push(`forbidden pattern /${pat}/ in added line: ${line.slice(0, 120)}`);
-    }
+  const testRe = cfg.guard.test_file_patterns.map((p) => new RegExp(p));
+  for (const { status, path } of files) {
+    if (status.includes('D') && testRe.some((re) => re.test(path))) v.push(`deleted test file ${path}`);
   }
-  if (mode === 'migrations') {
-    const dir = cfg.migrations.dir.replace(/\/$/, '');
-    for (const { status, path } of files) {
-      if (!path.startsWith(`${dir}/`)) v.push(`touched ${path} outside ${dir}/`);
-      const name = path.split('/').pop();
-      if (applied.includes(name)) v.push(`modified already-applied migration ${name}`);
-      if (status.includes('D')) v.push(`deleted migration ${path}`);
-    }
+  for (const pat of cfg.guard.forbidden_patterns) {
+    const re = new RegExp(pat);
+    const line = added.find((l) => re.test(l));
+    if (line) v.push(`forbidden pattern /${pat}/ in added line: ${line.slice(0, 120)}`);
+  }
+  return v;
+}
+
+function checkMigrations(cfg, files, applied) {
+  const v = [];
+  const protectedRe = (cfg.migrations.protected_paths ?? []).map((p) => new RegExp(p));
+  const dir = cfg.migrations.dir.replace(/\/$/, '');
+  for (const { status, path } of files) {
+    const hit = protectedRe.find((re) => re.test(path));
+    if (hit) v.push(`touched protected path ${path} (${hit})`);
+    if (!path.startsWith(`${dir}/`)) v.push(`touched ${path} outside ${dir}/`);
+    const name = path.split('/').pop();
+    if (applied.includes(name)) v.push(`modified already-applied migration ${name}`);
+    if (status.includes('D')) v.push(`deleted migration ${path}`);
   }
   return v;
 }

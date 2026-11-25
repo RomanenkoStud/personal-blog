@@ -12,12 +12,23 @@ runtime:
   setup:
     - npm ci
 
-tests:
-  commands:             # exactly what your CI runs; all must pass
-    - npm test
-  allowed_tools:        # Bash patterns for those runners
-    - Bash(npm test:*)
-  protected_paths: []   # extra regexes on top of the kit's safety floor
+guard:
+  protected_paths: []   # extra regexes on top of the kit's safety floor (every route)
+
+routes:                 # one per CI job to heal; `jobs` are the job ids passed in `needs`
+  tests:
+    jobs: [unit-tests]
+    commands:           # exactly what that job runs; all must pass
+      - npm test
+    allowed_tools:      # Bash patterns for those runners
+      - Bash(npm test:*)
+    # apply: propose    # propose (default) | auto (commit if auto_apply rules match) | diagnose
+  build:
+    jobs: [build]
+    commands:
+      - npm run build
+    allowed_tools:
+      - Bash(npm run build:*)
 
 migrations:
   enabled: false

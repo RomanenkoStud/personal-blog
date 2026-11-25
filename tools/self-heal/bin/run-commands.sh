@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Run every command in <config.json>.<section>.commands, stop at the first failure.
-# usage: run-commands.sh <config.json> <section> [log-file]
+# Run every command in <config.json> at <jq-path>.commands, stop at the first failure.
+# usage: run-commands.sh <config.json> <jq-path> [log-file]     e.g. run-commands.sh cfg.json .routes.build
 set -uo pipefail
-cfg="$1"; section="$2"; log="${3:-/dev/null}"
+cfg="$1"; path="$2"; log="${3:-/dev/null}"
 : > "$log"
-mapfile -t cmds < <(jq -r --arg s "$section" '.[$s].commands[]' "$cfg")
-if [ "${#cmds[@]}" -eq 0 ]; then echo "self-heal: no $section.commands configured" | tee -a "$log"; exit 0; fi
+mapfile -t cmds < <(jq -r "${path}.commands[]?" "$cfg")
+if [ "${#cmds[@]}" -eq 0 ]; then echo "self-heal: no commands configured at $path" | tee -a "$log"; exit 0; fi
 for c in "${cmds[@]}"; do
   echo "\$ $c" | tee -a "$log"
   bash -c "$c" 2>&1 | tee -a "$log"

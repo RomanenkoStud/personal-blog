@@ -13,7 +13,9 @@ copy() { # copy <from> <to> without clobbering
 }
 
 copy "$src_kit"                                             "$dst/tools/self-heal"
-copy "$src_root/.github/workflows/self-heal-tests.yml"      "$dst/.github/workflows/self-heal-tests.yml"
+copy "$src_root/.github/workflows/self-heal.yml"            "$dst/.github/workflows/self-heal.yml"
+copy "$src_root/.github/workflows/self-heal-apply.yml"      "$dst/.github/workflows/self-heal-apply.yml"
+copy "$src_root/.github/workflows/self-heal-commands.yml"   "$dst/.github/workflows/self-heal-commands.yml"
 copy "$src_root/.github/workflows/self-heal-migrations.yml" "$dst/.github/workflows/self-heal-migrations.yml"
 copy "$src_kit/templates/config.yml"                        "$dst/.github/self-heal/config.yml"
 copy "$src_kit/templates/context.md"                        "$dst/.github/self-heal/context.md"
@@ -22,7 +24,7 @@ grep -qxF '.heal/' "$dst/.gitignore" 2>/dev/null || { echo '.heal/' >> "$dst/.gi
 cat <<EOF
 
 Next:
-  1. Edit .github/self-heal/config.yml (commands, tools, migrations adapter) and context.md.
+  1. Edit .github/self-heal/config.yml (routes: jobs/commands/tools/apply, migrations adapter) and context.md.
   2. Wire the callers into your workflows: tools/self-heal/templates/callers.md
      (or in Claude Code: claude --plugin-dir tools/self-heal/plugin/self-heal, then /self-heal:init)
   3. Add secrets, merge to the default branch — policy is read from there.

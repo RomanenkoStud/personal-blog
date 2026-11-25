@@ -1,0 +1,22 @@
+# PR comment commands for self-heal. issue_comment workflows always run from the default
+# branch, so a PR cannot change what these commands do.
+#   /heal apply [run-id]   commit the latest (or given) self-heal proposal to the PR branch
+name: Self-heal commands
+
+on:
+  issue_comment:
+    types: [created]
+
+concurrency:
+  group: self-heal-apply-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: github.event.issue.pull_request && startsWith(github.event.comment.body, '/heal apply')
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+    uses: ./.github/workflows/self-heal-apply.yml
+    secrets: inherit

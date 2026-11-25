@@ -1,16 +1,24 @@
 # Wiring the reusable workflows into a repo
 
-## Tests (in the PR CI workflow)
+## PR healing (in the PR CI workflow)
+One job covers every CI job that has a route in config (`routes.<name>.jobs`):
 ```yaml
-  heal-tests:
-    needs: unit-tests            # your job that runs tests.commands
+  heal:
+    needs: [unit-tests, build]   # every job a route covers
     if: failure() && github.event.pull_request.head.repo.full_name == github.repository
     permissions:
       contents: write
       pull-requests: write
-    uses: ./.github/workflows/self-heal-tests.yml
+      actions: read
+    uses: ./.github/workflows/self-heal.yml
+    with:
+      needs: ${{ toJSON(needs) }}
     secrets: inherit
 ```
+
+## `/heal apply` (comment command)
+Copy `.github/workflows/self-heal-commands.yml` as is: it runs on `issue_comment` (always from
+the default branch) and calls `self-heal-apply.yml`.
 
 ## Migrations (in the deploy workflow)
 The deploy job must expose the migrate step's outcome and upload its log:
@@ -41,6 +49,8 @@ The deploy job must expose the migrate step's outcome and upload its log:
 
 ## Secrets
 - `CLAUDE_CODE_OAUTH_TOKEN` (`claude setup-token`, Pro/Max) **or** `ANTHROPIC_API_KEY`
-- optional `SELF_HEAL_TOKEN` (PAT/App token) so heal pushes re-trigger CI
+- push identity so heal pushes re-trigger CI (pushes with `GITHUB_TOKEN` don't): a GitHub App with
+  contents + pull-requests write, as `vars.SELF_HEAL_APP_ID` + `secrets.SELF_HEAL_APP_PRIVATE_KEY`
+  (preferred), or a `SELF_HEAL_TOKEN` PAT
 - migrations: adapter credentials (d1: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`) and
   Settings → Actions → "Allow GitHub Actions to create and approve pull requests"

@@ -1,7 +1,7 @@
 {
   "name": "self-heal",
-  "version": "0.2.0",
-  "description": "Self-healing CI skills: heal-tests, heal-migrations, review-fix (independent judge) and init (bootstrap a repo).",
+  "version": "0.3.0",
+  "description": "Self-healing CI skills: heal-tests, heal-build, heal-migrations, review-fix (independent judge) and init (bootstrap a repo).",
   "author": { "name": "Pavlo Romanenko" },
   "license": "MIT",
   "keywords": ["ci", "self-healing", "tests", "migrations", "github-actions"]
