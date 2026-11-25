@@ -2,8 +2,11 @@
 # Merge rules (bin/load-config.mjs):
 #   - objects merge recursively, scalars and most arrays are REPLACED by the overlay
 #   - "safety floor" arrays are APPENDED (an overlay can add guardrails, never remove them):
-#       tests.protected_paths, tests.forbidden_patterns, migrations.protected_paths
-version: 1
+#       guard.protected_paths, guard.forbidden_patterns, guard.test_file_patterns,
+#       migrations.protected_paths
+#   - every entry under `routes` is merged over `route_defaults`, so an overlay can add a
+#     new route (e.g. lint) with only the keys that differ.
+version: 2
 
 agent:
   model: sonnet
@@ -37,28 +40,61 @@ runtime:
   node_cache: npm     # npm | pnpm | yarn | "" (setup-node cache)
   setup: []           # shell commands run after checkout (install deps etc.)
 
-tests:
-  enabled: true
-  commands: []        # all must pass, in order. Example: ["npm test", "npm run typecheck"]
-  max_attempts: 2     # heal commits per branch (counted by the Self-Heal trailer)
+# PR healing: one entry point (workflows/self-heal.yml) for every failing CI job.
+heal:
+  # Deterministic router: the caller passes toJSON(needs); a failed job is mapped to the
+  # route whose `jobs` list contains it. One route is healed per run, first in this order;
+  # the rest are healed on the next CI run (after the fix lands) or reported.
+  priority: [tests, build]
   opt_out_label: no-self-heal
-  allowed_tools: []   # extra tools for the fixer, e.g. "Bash(npx vitest:*)"
-  test_file_pattern: '\.(test|spec)\.[cm]?[jt]sx?$|(^|/)tests?/'
-  protected_paths:    # regex on repo-relative paths the fixer must not touch
+  max_attempts: 2     # fix commits per branch (auto-applied + /heal apply), counted by the Self-Heal trailer
+  max_runs: 5         # agent runs per PR (counted by self-heal comment markers)
+
+# Safety floor for every code route. A violation discards the fix.
+guard:
+  test_file_patterns: # regex on paths that are tests (deleting one is a violation)
+    - '\.(test|spec)\.[cm]?[jt]sx?$'
+    - '(^|/)(__)?tests?(__)?/'
+  protected_paths:    # regex on repo-relative paths a fixer must not touch
     - '^\.github/'
     - '^\.claude/'
     - '^tools/self-heal/'
     - '(^|/)package(-lock)?\.json$'
     - '(^|/)(pnpm-lock\.yaml|yarn\.lock|bun\.lockb?)$'
-  forbidden_patterns: # regex on ADDED lines: ways to fake a green suite
+  forbidden_patterns: # regex on ADDED lines: ways to fake a green check
     - '\b(it|test|describe)\.(skip|only|todo)\b'
     - '\bx(it|describe|test)\('
     - '@ts-(ignore|nocheck|expect-error)'
     - 'eslint-disable'
+
+# Keys every route gets unless it overrides them.
+route_defaults:
+  enabled: true
+  jobs: []            # CI job ids (keys of `needs`) this route heals
+  skill: ""           # contract skill the fixer follows, e.g. self-heal:heal-tests
+  commands: []        # all must pass, in order — the route's red/green signal
+  allowed_tools: []   # extra tools for the fixer, e.g. "Bash(npx vitest:*)"
+  protected_paths: [] # extra regexes on top of guard.protected_paths
+  # What happens to a fix that passed guard + re-verification + review:
+  #   propose  — PR comment with diff + `/heal apply` (default; a human decides)
+  #   auto     — commit to the PR branch IF auto_apply rules match, otherwise propose
+  #   diagnose — never offer a patch, only the diagnosis
+  apply: propose
+  auto_apply:
+    classifications: [code-regression]
+    min_confidence: high   # both the fixer's and the judge's confidence must reach this
   review:
-    enabled: true     # independent read-only judge must approve before push
+    enabled: true     # independent read-only judge; auto-apply is impossible without it
     model: sonnet
     max_turns: 15
+
+routes:
+  tests:
+    jobs: [unit-tests]
+    skill: self-heal:heal-tests
+  build:
+    jobs: [build]
+    skill: self-heal:heal-build
 
 migrations:
   enabled: false

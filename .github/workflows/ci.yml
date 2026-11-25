@@ -26,12 +26,16 @@ jobs:
       - uses: ./.github/actions/setup
       - run: npm run build
 
-  # Self-healing (tools/self-heal): config in .github/self-heal/config.yml.
-  heal-tests:
-    needs: unit-tests
+  # Self-healing (tools/self-heal): one entry point for every job above; config in
+  # .github/self-heal/config.yml routes each failed job to its healer.
+  heal:
+    needs: [unit-tests, build]
     if: failure() && github.event.pull_request.head.repo.full_name == github.repository
     permissions:
       contents: write
       pull-requests: write
-    uses: ./.github/workflows/self-heal-tests.yml
+      actions: read
+    uses: ./.github/workflows/self-heal.yml
+    with:
+      needs: ${{ toJSON(needs) }}
     secrets: inherit

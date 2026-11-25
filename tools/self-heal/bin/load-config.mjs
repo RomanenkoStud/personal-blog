@@ -8,7 +8,12 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 
-const SAFETY_FLOOR = ['tests.protected_paths', 'tests.forbidden_patterns', 'migrations.protected_paths'];
+const SAFETY_FLOOR = [
+  'guard.protected_paths',
+  'guard.forbidden_patterns',
+  'guard.test_file_patterns',
+  'migrations.protected_paths',
+];
 
 export function parseYaml(file) {
   try {
@@ -41,14 +46,17 @@ export function resolve(defaults, overlay = {}) {
   for (const path of SAFETY_FLOOR) {
     set(cfg, path, [...new Set([...(get(defaults, path) ?? []), ...(get(overlay, path) ?? [])])]);
   }
+  // Every route inherits route_defaults; a route an overlay adds needs only what differs.
+  cfg.routes = Object.fromEntries(
+    Object.entries(cfg.routes ?? {}).map(([name, r]) => [name, deepMerge(structuredClone(cfg.route_defaults), r ?? {})]),
+  );
   const tools = (extra) => [...new Set([...cfg.agent.base_tools, 'Edit', 'Write', ...extra])].join(',');
-  const reviewTools = [...new Set([...cfg.agent.base_tools, 'Write'])].join(',');
   cfg.computed = {
     plugins: cfg.agent.plugins.join('\n'),
     marketplaces: cfg.agent.marketplaces.join('\n'),
-    tests_tools: tools(cfg.tests.allowed_tools),
+    route_tools: Object.fromEntries(Object.entries(cfg.routes).map(([n, r]) => [n, tools(r.allowed_tools)])),
     migrations_tools: tools(cfg.migrations.allowed_tools),
-    review_tools: reviewTools,
+    review_tools: [...new Set([...cfg.agent.base_tools, 'Write'])].join(','),
   };
   return cfg;
 }

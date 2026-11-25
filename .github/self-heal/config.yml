@@ -14,21 +14,37 @@ runtime:
     - npm ci
     - node scripts/ci/install-native-binaries.cjs
 
-tests:
-  commands:
-    - npm run test --if-present
-    - npm run typecheck --if-present
-  allowed_tools:
-    - Bash(npm run test:*)
-    - Bash(npm test:*)
-    - Bash(npx vitest:*)
-    - Bash(node --test:*)
-    - Bash(npm run typecheck:*)
-    - Bash(npx tsc:*)
-  protected_paths:          # appended to the kit's safety floor
+guard:
+  protected_paths:          # appended to the kit's safety floor, for every route
     - '^migrations/'
     - '(^|/)wrangler\.toml$'
     - '^scripts/ci/'
+
+routes:
+  tests:
+    # Inert until the repo has test/typecheck scripts (--if-present makes them no-ops).
+    commands:
+      - npm run test --if-present
+      - npm run typecheck --if-present
+    allowed_tools:
+      - Bash(npm run test:*)
+      - Bash(npm test:*)
+      - Bash(npx vitest:*)
+      - Bash(node --test:*)
+      - Bash(npm run typecheck:*)
+      - Bash(npx tsc:*)
+    # A real regression with a confident fixer AND judge is committed; anything else is proposed.
+    apply: auto
+  build:
+    commands:
+      - npm run build
+    allowed_tools:
+      - Bash(npm run build:*)
+      - Bash(npx astro build:*)
+    protected_paths:        # build config is a human decision (heal-build classifies it `environment`)
+      - '(^|/)astro\.config\.[cm]?[jt]s$'
+      - '(^|/)tsconfig[^/]*\.json$'
+    apply: propose
 
 migrations:
   enabled: true

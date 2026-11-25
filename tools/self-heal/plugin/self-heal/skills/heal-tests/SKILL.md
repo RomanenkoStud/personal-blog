@@ -8,7 +8,7 @@ description: Repair a failing test/typecheck suite unattended in CI. Use when a 
 You are running headless in CI. **Nobody can answer questions.** Wherever a method skill says "ask the user" or "show the user", record it in the summary instead and continue — or stop if the skill says you must not proceed without an answer.
 
 ## Inputs (`.heal/`)
-- `context.json` — PR number/title, base and head refs, the configured `commands`, `method_skills`, `context_files`.
+- `context.json` — route, PR number/title, base and head refs, the configured `commands`, `method_skills`, `context_files`.
 - `failure.log` — output of the failing run (commands are run in order, first failure stops).
 
 ## Procedure
@@ -35,4 +35,5 @@ You are running headless in CI. **Nobody can answer questions.** Wherever a meth
 - Never skip, focus, delete, or comment out tests; never add `@ts-ignore`/`@ts-expect-error`/`eslint-disable`; never weaken assertions to force green.
 - Never edit protected paths: CI config, agent config, lockfiles/manifests, the self-heal kit. If the real fix needs one of those, classify `environment` and explain.
 - Never commit, push, checkout, reset or stash. The workflow handles git.
+- `confidence: high` only when the failure went red in your loop, the hypothesis that held is the only one consistent with the evidence, and every command passes. High-confidence fixes may be committed without a human.
 - An honest "could not fix" is a success. A green suite that no longer tests the behaviour is the worst outcome.

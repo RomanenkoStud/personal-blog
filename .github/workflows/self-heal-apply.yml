@@ -1,0 +1,140 @@
+# Reusable: `/heal apply` — commit a fix that self-heal proposed on a PR.
+# Called from an issue_comment workflow (which GitHub runs from the default branch).
+#
+# This is a privileged entry point, so it never runs PR code and never asks an agent:
+#   - the commenter must have write access; the PR must be open and from this repo
+#   - only markers in the bot's own comments are trusted; the patch is the exact artifact
+#     the proposing run uploaded, and that run must be a pull_request run for this PR head
+#   - the PR head must not have moved since the proposal (otherwise: re-run CI)
+#   - the guard re-checks the patch with the default branch's policy before commit
+name: self-heal-apply
+
+on:
+  workflow_call:
+    inputs:
+      policy_dir:
+        type: string
+        default: .github/self-heal
+      kit_path:
+        type: string
+        default: tools/self-heal
+
+jobs:
+  apply:
+    if: github.event.issue.pull_request && startsWith(github.event.comment.body, '/heal apply')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}   # gh needs it before any checkout
+      REPO: ${{ github.repository }}
+      PR: ${{ github.event.issue.number }}
+      ACTOR: ${{ github.event.comment.user.login }}
+      COMMENT_ID: ${{ github.event.comment.id }}
+      COMMENT_BODY: ${{ github.event.comment.body }}
+      KIT: ${{ github.workspace }}/.self-heal-policy/${{ inputs.kit_path }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Authorize and locate proposal
+        id: find
+        run: |
+          fail() { gh pr comment "$PR" --body "🩹 \`/heal apply\` refused: $1"; echo "::error::$1"; exit 1; }
+          gh api -X POST "repos/$REPO/issues/comments/$COMMENT_ID/reactions" -f content=eyes > /dev/null || true
+          perm=$(gh api "repos/$REPO/collaborators/$ACTOR/permission" --jq .permission)
+          case "$perm" in admin|maintain|write) ;; *) fail "@$ACTOR needs write access (has: $perm)";; esac
+          gh pr view "$PR" -R "$REPO" --json state,isCrossRepository,headRefName,headRefOid > pr.json
+          [ "$(jq -r .state pr.json)" = OPEN ] || fail "PR is not open"
+          [ "$(jq -r .isCrossRepository pr.json)" = false ] || fail "PRs from forks are not supported"
+          head_sha=$(jq -r .headRefOid pr.json)
+          gh api "repos/$REPO/issues/$PR/comments" --paginate --slurp > comments.json
+          # Latest proposal from the bot (optional: `/heal apply <run-id>` picks a specific one).
+          # Only the LAST marker of a comment counts (the workflow appends it after agent text).
+          want=$(printf '%s\n' "$COMMENT_BODY" | head -1 | awk '{print $3}' | tr -cd '0-9')
+          jq -c --arg want "$want" '
+            [ .[][] | select(.user.login == "github-actions[bot]")
+              | [.body | scan("<!-- self-heal:run ([^>]*?) -->")] | last // empty | .[0]
+              | [split(" ")[] | split("=") | {(.[0]): .[1]}] | add
+              | select(.action == "propose") | select($want == "" or .run == $want) ]
+            | last // empty' comments.json > proposal.json
+          [ -s proposal.json ] || fail "no self-heal proposal found on this PR"
+          route=$(jq -r .route proposal.json); run=$(jq -r .run proposal.json); head=$(jq -r .head proposal.json)
+          [[ "$route" =~ ^[a-z0-9_-]+$ && "$run" =~ ^[0-9]+$ && "$head" =~ ^[0-9a-f]{40}$ ]] || fail "malformed proposal marker"
+          [ "$head" = "$head_sha" ] || fail "the branch moved since this proposal (proposed on ${head:0:7}, now ${head_sha:0:7}). Push or re-run CI for a fresh one, or apply it locally."
+          gh api "repos/$REPO/actions/runs/$run" > run.json
+          [ "$(jq -r .event run.json)" = pull_request ] && [ "$(jq -r .head_sha run.json)" = "$head_sha" ] \
+            || fail "run $run is not a CI run for this PR head"
+          { echo "route=$route"; echo "run=$run"; echo "head=$head_sha"; echo "ref=$(jq -r .headRefName pr.json)"; } >> "$GITHUB_OUTPUT"
+
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.find.outputs.head }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Checkout policy (default branch)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: .self-heal-policy
+          sparse-checkout: |
+            ${{ inputs.kit_path }}
+            ${{ inputs.policy_dir }}
+          persist-credentials: false
+
+      - name: Download proposed patch
+        env:
+          RUN: ${{ steps.find.outputs.run }}
+        run: |
+          printf '.heal/\n.self-heal-policy/\n' >> .git/info/exclude
+          mkdir -p .heal
+          gh run download "$RUN" -R "$REPO" -n self-heal-patch -D .heal/proposal
+          [ "$(jq -r .head .heal/proposal/meta.json)" = "${{ steps.find.outputs.head }}" ] \
+            && [ "$(jq -r .route .heal/proposal/meta.json)" = "${{ steps.find.outputs.route }}" ] \
+            && [ "$(jq -r .pr .heal/proposal/meta.json)" = "$PR" ] \
+            || { gh pr comment "$PR" --body "🩹 \`/heal apply\` refused: patch metadata does not match the proposal"; exit 1; }
+
+      - name: Apply and guard
+        id: guard
+        env:
+          ROUTE: ${{ steps.find.outputs.route }}
+        run: |
+          node "$KIT/bin/load-config.mjs" "$KIT/defaults.yml" ".self-heal-policy/${{ inputs.policy_dir }}/config.yml" > .heal/config.json
+          git apply --index .heal/proposal/fix.patch
+          git reset -q   # guard inspects the working tree, as in the healing run
+          node "$KIT/bin/guard.mjs" "$ROUTE" .heal/config.json > .heal/changed.txt
+          git log --format=%B "origin/${{ github.event.repository.default_branch }}..HEAD" > .heal/commits.txt
+          used=$(grep -E '^Self-Heal: ' .heal/commits.txt | grep -cv '^Self-Heal: migrations' || true)
+          max=$(jq -r .heal.max_attempts .heal/config.json)
+          [ "$used" -lt "$max" ] || { gh pr comment "$PR" --body "🩹 \`/heal apply\` refused: $used fix commit(s) already on this branch (max_attempts)."; exit 1; }
+
+      - name: Push token
+        id: app
+        if: vars.SELF_HEAL_APP_ID != ''
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.SELF_HEAL_APP_ID }}
+          private-key: ${{ secrets.SELF_HEAL_APP_PRIVATE_KEY }}
+
+      - name: Commit and push
+        env:
+          PUSH_TOKEN: ${{ steps.app.outputs.token || secrets.SELF_HEAL_TOKEN || github.token }}
+          REF: ${{ steps.find.outputs.ref }}
+          ROUTE: ${{ steps.find.outputs.route }}
+        run: |
+          git config user.name "self-heal[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          tr '\n' '\0' < .heal/changed.txt | xargs -0 git add -A --
+          { cat .heal/proposal/commit-msg; echo "Applied-By: @$ACTOR"; } > .heal/commit-msg
+          git commit -q -F .heal/commit-msg
+          git push "https://x-access-token:${PUSH_TOKEN}@github.com/$REPO.git" "HEAD:$REF"
+          gh api -X POST "repos/$REPO/issues/comments/$COMMENT_ID/reactions" -f content=rocket > /dev/null || true
+          {
+            echo "🩹 Applied the \`$ROUTE\` fix from run ${{ steps.find.outputs.run }} as $(git rev-parse --short HEAD), requested by @$ACTOR. ([apply run]($RUN_URL))"
+            [ "${{ steps.app.outputs.token != '' || secrets.SELF_HEAL_TOKEN != '' }}" = true ] \
+              || echo "_CI will not re-run on this push (pushed with GITHUB_TOKEN). Configure a self-heal GitHub App or \`SELF_HEAL_TOKEN\`._"
+          } | gh pr comment "$PR" --body-file -
