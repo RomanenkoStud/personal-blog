@@ -2,7 +2,7 @@
 # Merge rules (bin/load-config.mjs):
 #   - objects merge recursively, scalars and most arrays are REPLACED by the overlay
 #   - "safety floor" arrays are APPENDED (an overlay can add guardrails, never remove them):
-#       guard.protected_paths, guard.forbidden_patterns, guard.test_file_patterns,
+#       guard.protected_paths, guard.forbidden_patterns, guard.test_file_patterns, heal.protected_branches,
 #       migrations.protected_paths
 #   - every entry under `routes` is merged over `route_defaults`, so an overlay can add a
 #     new route (e.g. lint) with only the keys that differ.
@@ -49,6 +49,11 @@ heal:
   opt_out_label: no-self-heal
   max_attempts: 2     # fix commits per branch (auto-applied + /heal apply), counted by the Self-Heal trailer
   max_runs: 5         # agent runs per PR (counted by self-heal comment markers)
+  drafts: heal        # draft PRs: heal | diagnose (never offer a patch) | skip
+  protected_branches: # never heal a PR whose HEAD branch matches (regex)
+    - '^(main|master|trunk|develop|dev|stable|canary)$'
+    - '^release/'
+  diagnose_only_paths: [] # regex: if the PR itself touches a match, fixes are never offered (e.g. '^migrations/')
 
 # Safety floor for every code route. A violation discards the fix.
 guard:
@@ -71,7 +76,7 @@ guard:
 route_defaults:
   enabled: true
   jobs: []            # CI job ids (keys of `needs`) this route heals
-  skill: ""           # contract skill the fixer follows, e.g. self-heal:heal-tests
+  skill: ""           # contract skill the fixer follows, e.g. self-heal:heal-tests ("" = autofix-only route, no agent)
   commands: []        # all must pass, in order — the route's red/green signal
   allowed_tools: []   # extra tools for the fixer, e.g. "Bash(npx vitest:*)"
   protected_paths: [] # extra regexes on top of guard.protected_paths
@@ -80,6 +85,11 @@ route_defaults:
   #   auto     — commit to the PR branch IF auto_apply rules match, otherwise propose
   #   diagnose — never offer a patch, only the diagnosis
   apply: propose
+  # Deterministic fixers run BEFORE any agent (Nx: format/sync/conformance preset), e.g.
+  # ["npx eslint . --fix", "npx prettier --write ."]. If `commands` then pass, the agent is
+  # skipped entirely; otherwise the agent starts from the autofixed tree.
+  autofix: []
+  autofix_apply: auto # what a successful autofix gets: auto | propose | diagnose (guard still applies)
   auto_apply:
     classifications: [code-regression]
     min_confidence: high   # both the fixer's and the judge's confidence must reach this

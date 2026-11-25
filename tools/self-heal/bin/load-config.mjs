@@ -12,6 +12,7 @@ const SAFETY_FLOOR = [
   'guard.protected_paths',
   'guard.forbidden_patterns',
   'guard.test_file_patterns',
+  'heal.protected_branches',
   'migrations.protected_paths',
 ];
 

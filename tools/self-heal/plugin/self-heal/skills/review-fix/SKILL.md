@@ -15,10 +15,11 @@ You did **not** write this fix and must not trust its summary. Passing tests pro
 ## Check, in order
 1. **Root cause match** — does the diff address the failure in the log, at its cause rather than its symptom (e.g. special-casing the exact test input)?
 2. **Test integrity** — for any edited test: is the new expectation justified by the PR's intended behaviour change, or was it just changed to match buggy output? Are assertions as strong as before?
-3. **Classification honesty** — does `result.json.classification` fit the evidence? `stale-test` needs visible intent in the PR.
-4. **Feature integrity** — for builds: was the PR's feature kept working, or stubbed/removed/disabled to get green?
-5. **Blast radius** — unrelated changes, behaviour changes beyond the failure, leftover debug code.
-6. **Migrations only** — data loss, non-idempotent statements, assumptions about existing rows.
+3. **Repo rules** — read the `context_files` from `.heal/context.json`: does the fix respect **Off-Limits** and **Fix Preferences**, and does the reported confidence respect **Confidence Rules**? Cap your own confidence the same way.
+4. **Classification honesty** — does `result.json.classification` fit the evidence? `stale-test` needs visible intent in the PR.
+5. **Feature integrity** — for builds: was the PR's feature kept working, or stubbed/removed/disabled to get green?
+6. **Blast radius** — unrelated changes, behaviour changes beyond the failure, leftover debug code.
+7. **Migrations only** — data loss, non-idempotent statements, assumptions about existing rows.
 
 ## Output
 Write **only** `.heal/verdict.json`, nothing else:

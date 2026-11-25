@@ -43,7 +43,6 @@ jobs:
       HEAD_REF: ${{ github.head_ref }}
       BASE_REF: ${{ github.base_ref }}
       KIT: ${{ github.workspace }}/.self-heal-policy/${{ inputs.kit_path }}
-      SELF_HEAL_BASELINE: .heal/baseline.z
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       # No GH_TOKEN at job level: setup, reproduce, fix and verify run PR/agent code without it.
     steps:
@@ -83,7 +82,7 @@ jobs:
           . .heal/route.env
           [ -n "$unmapped" ] && echo "::notice::no self-heal route for failed job(s): $unmapped"
           if [ -z "$route" ]; then echo "::notice::nothing to heal"; exit 0; fi
-          jq -r --arg r "$route" '.routes[$r] | "skill=\(.skill)\nreview=\(.review.enabled)\nreview_model=\(.review.model)\nreview_turns=\(.review.max_turns)"' .heal/config.json >> "$GITHUB_OUTPUT"
+          jq -r --arg r "$route" '.routes[$r] | "skill=\(.skill)\nautofix=\(.autofix | length)\nreview=\(.review.enabled)\nreview_model=\(.review.model)\nreview_turns=\(.review.max_turns)"' .heal/config.json >> "$GITHUB_OUTPUT"
           echo "tools=$(jq -r --arg r "$route" '.computed.route_tools[$r]' .heal/config.json)" >> "$GITHUB_OUTPUT"
           echo "head=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
@@ -95,11 +94,20 @@ jobs:
           HEAD_SHA: ${{ steps.route.outputs.head }}
           GH_TOKEN: ${{ github.token }}
           LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+          DRAFT: ${{ github.event.pull_request.draft }}
         run: |
           cfg=.heal/config.json
           label=$(jq -r .heal.opt_out_label $cfg)
           if echo "$LABELS" | jq -e --arg l "$label" 'index($l) != null' > /dev/null; then
             echo "::notice::self-heal skipped: opt-out label '$label'"; exit 0
+          fi
+          # PR policy: drafts, protected head branches, diagnose-only paths → go + outcome ceiling.
+          git diff --name-only "origin/${BASE_REF}...HEAD" | jq -R . | jq -s . > .heal/pr-files.json
+          export PR_INFO=$(jq -n --argjson draft "${DRAFT:-false}" --arg headRef "$HEAD_REF" --slurpfile f .heal/pr-files.json \
+            '{draft: $draft, headRef: $headRef, files: $f[0]}')
+          node "$KIT/bin/heal.mjs" policy $cfg > .heal/policy.json
+          if [ "$(jq -r .go .heal/policy.json)" != true ]; then
+            echo "::notice::self-heal skipped: $(jq -r .reason .heal/policy.json)"; exit 0
           fi
           if [ "$(jq -r --arg r "$ROUTE" '.routes[$r].commands | length' $cfg)" = 0 ]; then
             echo "::warning::route '$ROUTE' has no commands configured"; exit 0
@@ -114,6 +122,7 @@ jobs:
             exit 0
           fi
           echo "pushes=$(jq -r .pushes .heal/budget.json)" >> "$GITHUB_OUTPUT"
+          echo "ceiling=$(jq -r .ceiling .heal/policy.json),$(jq -r .ceiling .heal/budget.json)" >> "$GITHUB_OUTPUT"
           echo "go=true" >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-node@v4
@@ -132,6 +141,9 @@ jobs:
         id: repro
         if: steps.gate.outputs.go
         env:
+          # Outside the workspace: agents can only write inside it.
+          SELF_HEAL_BASELINE: ${{ runner.temp }}/self-heal-baseline.z
+          FINGERPRINT: ${{ runner.temp }}/self-heal-fingerprint
           ROUTE: ${{ steps.route.outputs.route }}
         run: |
           if bash "$KIT/bin/run-commands.sh" .heal/config.json ".routes.$ROUTE" .heal/failure.log; then
@@ -158,8 +170,24 @@ jobs:
           gh pr comment "$PR" --body "🩹 \`$ROUTE\` failed in CI but passes on re-run — likely flaky or a transient environment issue. Not auto-fixing. ([run]($RUN_URL))
           $MARKER"
 
+      - name: Autofix (deterministic, no agent)
+        id: autofix
+        if: steps.repro.outputs.go && steps.route.outputs.autofix != '0'
+        env:
+          ROUTE: ${{ steps.route.outputs.route }}
+        run: |
+          mapfile -t cmds < <(jq -r --arg r "$ROUTE" '.routes[$r].autofix[]' .heal/config.json)
+          for c in "${cmds[@]}"; do echo "\$ $c"; bash -c "$c" || echo "::warning::autofix '$c' exited $?"; done
+          if bash "$KIT/bin/run-commands.sh" .heal/config.json ".routes.$ROUTE" .heal/autofix-verify.log; then
+            echo "fixed=true" >> "$GITHUB_OUTPUT"
+            jq -n '{classification: "autofix", fixed: true, confidence: "high", root_cause: "fixed by the deterministic autofix commands of this route"}' > .heal/result.json
+            { echo "**Classification:** autofix (deterministic, no agent)"; echo; echo "Ran:"; printf -- '- `%s`\n' "${cmds[@]}"; } > .heal/summary.md
+          else
+            echo "::notice::autofix did not make $ROUTE green; the agent starts from the autofixed tree"
+          fi
+
       - name: Fix (${{ steps.route.outputs.skill }})
-        if: steps.repro.outputs.go
+        if: steps.repro.outputs.go && steps.autofix.outputs.fixed != 'true' && steps.route.outputs.skill != ''
         continue-on-error: true
         uses: anthropics/claude-code-action@v1
         with:
@@ -182,20 +210,30 @@ jobs:
         if: steps.repro.outputs.go
         continue-on-error: true
         env:
+          # Outside the workspace: agents can only write inside it.
+          SELF_HEAL_BASELINE: ${{ runner.temp }}/self-heal-baseline.z
+          FINGERPRINT: ${{ runner.temp }}/self-heal-fingerprint
           ROUTE: ${{ steps.route.outputs.route }}
+          CONFIG_JSON: ${{ steps.cfg.outputs.json }}
         run: |
+          # The fixer can write anywhere in the workspace: re-establish everything this step trusts.
+          printf '%s' "$CONFIG_JSON" > .heal/config.json
+          if [ -n "$(git -C .self-heal-policy status --porcelain --untracked-files=all)" ]; then
+            git -C .self-heal-policy reset -q --hard && git -C .self-heal-policy clean -fdxq
+            echo "::error::self-heal guard: the agent modified the policy checkout"; exit 1
+          fi
           # claude-code-action restores .claude/ from the base branch for untrusted PR heads; undo it.
           git checkout HEAD -- .claude 2>/dev/null || true
           git clean -fdq -- .claude 2>/dev/null || true
           node "$KIT/bin/guard.mjs" "$ROUTE" .heal/config.json > .heal/changed.txt
           echo "changed:"; cat .heal/changed.txt
           bash "$KIT/bin/run-commands.sh" .heal/config.json ".routes.$ROUTE" .heal/verify.log
-          { git diff; git ls-files -o --exclude-standard -z | xargs -0r sha256sum; } | sha256sum > .heal/fingerprint
+          { git diff; git ls-files -o --exclude-standard -z | xargs -0r sha256sum; } | sha256sum > "$FINGERPRINT"
           rm -f .heal/verdict.json .heal/decision.json   # only the judge may write a verdict, and only after this
 
       - name: Review (self-heal:review-fix)
         id: review
-        if: steps.guard.outcome == 'success' && steps.route.outputs.review == 'true'
+        if: steps.guard.outcome == 'success' && steps.route.outputs.review == 'true' && steps.autofix.outputs.fixed != 'true'
         continue-on-error: true
         uses: anthropics/claude-code-action@v1
         with:
@@ -215,14 +253,26 @@ jobs:
         id: decide
         if: steps.repro.outputs.go
         env:
+          # Outside the workspace: agents can only write inside it.
+          SELF_HEAL_BASELINE: ${{ runner.temp }}/self-heal-baseline.z
+          FINGERPRINT: ${{ runner.temp }}/self-heal-fingerprint
           ROUTE: ${{ steps.route.outputs.route }}
           GUARD_OK: ${{ steps.guard.outcome == 'success' }}
           REVIEW_OK: ${{ steps.review.outcome == 'success' }}
+          CEILING: ${{ steps.gate.outputs.ceiling }}
+          AUTOFIXED: ${{ steps.autofix.outputs.fixed == 'true' }}
+          CONFIG_JSON: ${{ steps.cfg.outputs.json }}
         run: |
+          printf '%s' "$CONFIG_JSON" > .heal/config.json
+          POLICY_CLEAN=true
+          if [ -n "$(git -C .self-heal-policy status --porcelain --untracked-files=all)" ]; then
+            POLICY_CLEAN=false
+            git -C .self-heal-policy reset -q --hard && git -C .self-heal-policy clean -fdxq
+          fi
           [ "$REVIEW_OK" = true ] || rm -f .heal/verdict.json   # a crashed judge never counts as approval
           git checkout HEAD -- .claude 2>/dev/null || true; git clean -fdq -- .claude 2>/dev/null || true
           REVIEW_UNTAMPERED=false
-          if [ -f .heal/fingerprint ] && { git diff; git ls-files -o --exclude-standard -z | xargs -0r sha256sum; } | sha256sum | diff -q - .heal/fingerprint > /dev/null; then
+          if [ "$POLICY_CLEAN" = true ] && [ -f "$FINGERPRINT" ] && { git diff; git ls-files -o --exclude-standard -z | xargs -0r sha256sum; } | sha256sum | diff -q - "$FINGERPRINT" > /dev/null; then
             REVIEW_UNTAMPERED=true
           fi
           export REVIEW_UNTAMPERED
@@ -286,7 +336,7 @@ jobs:
           git commit -q -F .heal/commit-msg
           git push "https://x-access-token:${PUSH_TOKEN}@github.com/${{ github.repository }}.git" "HEAD:$HEAD_REF"
           {
-            echo "🩹 **Self-heal pushed a fix** for \`$ROUTE\` (fix $((PUSHES + 1))/$MAX) — auto-applied because every auto-apply rule matched. Please review the commit."
+            echo "🩹 **Self-heal pushed a fix** for \`$ROUTE\` (fix $((PUSHES + 1))/$MAX) — auto-applied: $(jq -r '.reasons | join("; ")' .heal/decision.json). Please review the commit; \`/heal revert\` undoes it."
             echo; sed 's/<!--/\&lt;!--/g' .heal/summary.md 2>/dev/null || true
             if [ -f .heal/verdict.json ]; then
               echo; echo "**Independent review:** $(jq -r '"\(.verdict) (\(.confidence))"' .heal/verdict.json)"
@@ -319,7 +369,7 @@ jobs:
             [ "$lines" -gt 300 ] && echo "… truncated — download the artifact for the full patch"
             echo '~~~'; echo; echo '</details>'
             echo
-            echo "**Apply:** comment \`/heal apply\` (needs write access), or locally:"
+            echo "**Apply:** comment \`/heal apply\` · **Reject:** \`/heal reject <why>\` (both need write access) · or locally:"
             echo '```sh'
             echo "gh run download ${{ github.run_id }} -R ${{ github.repository }} -n self-heal-patch -D .heal/proposal && git apply .heal/proposal/fix.patch"
             echo '```'
@@ -340,3 +390,29 @@ jobs:
             echo; echo "**Diagnosis:**"; sed 's/<!--/\&lt;!--/g' .heal/summary.md 2>/dev/null || echo "_none produced_"
             echo; echo "$MARKER"
           } | gh pr comment "$PR" --body-file -
+
+      - name: Summary
+        if: always() && steps.route.outputs.route != ''
+        env:
+          ROUTE: ${{ steps.route.outputs.route }}
+          DEFERRED: ${{ steps.route.outputs.deferred }}
+          UNMAPPED: ${{ steps.route.outputs.unmapped }}
+        run: |
+          j() { [ -f "$1" ] && jq -c . "$1" | sed 's/|/\\|/g' || echo "—"; }
+          {
+            echo "## 🩹 self-heal: \`$ROUTE\`"
+            echo
+            echo "| Stage | Result |"
+            echo "|---|---|"
+            echo "| Route | \`$ROUTE\` · deferred: ${DEFERRED:-—} · unmapped: ${UNMAPPED:-—} |"
+            echo "| PR policy | \`$(j .heal/policy.json)\` |"
+            echo "| Budget | \`$(j .heal/budget.json)\` |"
+            echo "| Autofix | ${{ steps.autofix.outputs.fixed == 'true' && 'made it green' || (steps.route.outputs.autofix != '0' && 'did not help' || 'not configured') }} |"
+            echo "| Fixer | \`$(jq -c '{classification, fixed, confidence}' .heal/result.json 2>/dev/null || echo —)\` |"
+            echo "| Guard + verify | ${{ steps.guard.outcome || 'not run' }} |"
+            echo "| Review | \`$(jq -c '{verdict, confidence}' .heal/verdict.json 2>/dev/null || echo —)\` |"
+            echo "| **Decision** | \`$(j .heal/decision.json)\` |"
+            echo
+            echo "<details><summary>Effective route config</summary>"
+            echo; echo '```json'; jq --arg r "$ROUTE" '.routes[$r]' .heal/config.json; echo '```'; echo '</details>'
+          } >> "$GITHUB_STEP_SUMMARY"

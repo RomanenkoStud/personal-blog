@@ -12,6 +12,10 @@ runtime:
   setup:
     - npm ci
 
+heal:
+  # drafts: heal                 # heal | diagnose | skip
+  diagnose_only_paths: []        # PRs touching these never get a patch, e.g. ['^migrations/']
+
 guard:
   protected_paths: []   # extra regexes on top of the kit's safety floor (every route)
 
@@ -23,6 +27,11 @@ routes:                 # one per CI job to heal; `jobs` are the job ids passed 
     allowed_tools:      # Bash patterns for those runners
       - Bash(npm test:*)
     # apply: propose    # propose (default) | auto (commit if auto_apply rules match) | diagnose
+  # lint:               # autofix-only route: no agent, deterministic fixers
+  #   jobs: [lint]
+  #   skill: ""
+  #   commands: [npm run lint]
+  #   autofix: ["npx eslint . --fix"]
   build:
     jobs: [build]
     commands:

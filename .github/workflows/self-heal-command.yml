@@ -1,0 +1,212 @@
+# Reusable: `/heal <command>` PR comment commands. Called from an issue_comment workflow,
+# which GitHub always runs from the default branch, so a PR cannot change what they do.
+#
+#   /heal apply [run-id]     commit the latest (or given) open proposal to the PR branch
+#   /heal reject <reason>    reject the latest open proposal (recorded as feedback)
+#   /heal revert             revert the latest self-heal fix commit on the branch (recorded)
+#
+# This is a privileged entry point, so it never runs PR code and never asks an agent:
+#   - the commenter must have write access; the PR must be open and from this repo
+#   - only markers in the bot's own comments are trusted (bin/heal.mjs proposal)
+#   - apply: the patch is the exact artifact the proposing run uploaded; that run must be a
+#     pull_request run for the current head; the head must not have moved; the guard
+#     re-checks the patch with the default branch's policy before commit
+#   - revert: a plain `git revert` of a commit carrying the Self-Heal trailer
+# Every outcome is posted with a marker, so applied/rejected/reverted counts are a ledger.
+name: self-heal-command
+
+on:
+  workflow_call:
+    inputs:
+      policy_dir:
+        type: string
+        default: .github/self-heal
+      kit_path:
+        type: string
+        default: tools/self-heal
+
+jobs:
+  command:
+    if: github.event.issue.pull_request && startsWith(github.event.comment.body, '/heal ')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}   # gh needs it before any checkout
+      REPO: ${{ github.repository }}
+      PR: ${{ github.event.issue.number }}
+      ACTOR: ${{ github.event.comment.user.login }}
+      COMMENT_ID: ${{ github.event.comment.id }}
+      COMMENT_BODY: ${{ github.event.comment.body }}
+      KIT: ${{ github.workspace }}/.self-heal-policy/${{ inputs.kit_path }}
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Checkout policy (default branch)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: .self-heal-policy
+          sparse-checkout: |
+            ${{ inputs.kit_path }}
+            ${{ inputs.policy_dir }}
+          persist-credentials: false
+
+      - name: Parse, authorize, locate
+        id: find
+        run: |
+          mkdir -p .cmd
+          fail() { gh pr comment "$PR" --body "🩹 \`/heal $cmd\` refused: $1"; echo "::error::$1"; exit 1; }
+          first=$(printf '%s\n' "$COMMENT_BODY" | head -1 | tr -d '\r')   # web comments use CRLF
+          read -r _ cmd arg <<< "$first"
+          rest=$(printf '%s' "$first" | cut -s -d' ' -f3- | head -c 500 | sed 's/<!--/\&lt;!--/g')
+          perm=$(gh api "repos/$REPO/collaborators/$ACTOR/permission" --jq .permission)
+          case "$perm" in admin|maintain|write) ;; *) echo "::notice::@$ACTOR lacks write access ($perm); ignoring"; exit 0;;
+          esac
+          case "$cmd" in apply|reject|revert) ;; *)
+            gh pr comment "$PR" --body "🩹 Unknown command. Use \`/heal apply [run-id]\`, \`/heal reject <reason>\` or \`/heal revert\`."; exit 0;;
+          esac
+          gh api -X POST "repos/$REPO/issues/comments/$COMMENT_ID/reactions" -f content=eyes > /dev/null || true
+          gh pr view "$PR" --json state,isCrossRepository,headRefName,headRefOid > .cmd/pr.json
+          [ "$(jq -r .state .cmd/pr.json)" = OPEN ] || fail "PR is not open"
+          [ "$(jq -r .isCrossRepository .cmd/pr.json)" = false ] || fail "PRs from forks are not supported"
+          head_sha=$(jq -r .headRefOid .cmd/pr.json)
+          node "$KIT/bin/load-config.mjs" "$KIT/defaults.yml" ".self-heal-policy/${{ inputs.policy_dir }}/config.yml" > .cmd/config.json
+          {
+            echo "cmd=$cmd"; echo "head=$head_sha"; echo "ref=$(jq -r .headRefName .cmd/pr.json)"
+            echo "reason<<EOF"; echo "${rest:-no reason given}"; echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          [ "$cmd" = revert ] && exit 0   # revert locates its commit after checkout
+
+          gh api "repos/$REPO/issues/$PR/comments" --paginate --slurp > .cmd/comments.json
+          want=""; [ "$cmd" = apply ] && want=$(printf '%s' "$arg" | tr -cd '0-9')
+          node "$KIT/bin/heal.mjs" proposal .cmd/config.json .cmd/comments.json "$want" > .cmd/proposal.json
+          [ "$(jq -r 'type' .cmd/proposal.json)" = object ] || fail "no self-heal proposal found on this PR"
+          [ "$(jq -r .valid .cmd/proposal.json)" = true ] || fail "malformed proposal marker"
+          status=$(jq -r .status .cmd/proposal.json); run=$(jq -r .run .cmd/proposal.json)
+          [ "$status" = open ] || fail "proposal from run $run is already $status"
+          route=$(jq -r .route .cmd/proposal.json); head=$(jq -r .head .cmd/proposal.json)
+          { echo "route=$route"; echo "run=$run"; echo "proposed_head=$head"; } >> "$GITHUB_OUTPUT"
+          [ "$cmd" = reject ] && exit 0
+          [ "$head" = "$head_sha" ] || fail "the branch moved since this proposal (proposed on ${head:0:7}, now ${head_sha:0:7}). Push or re-run CI for a fresh one, or apply it locally."
+          gh api "repos/$REPO/actions/runs/$run" > .cmd/run.json
+          [ "$(jq -r .event .cmd/run.json)" = pull_request ] && [ "$(jq -r .head_sha .cmd/run.json)" = "$head_sha" ] \
+            || fail "run $run is not a CI run for this PR head"
+
+      # ── reject ────────────────────────────────────────────────────────────
+      - name: Reject
+        if: steps.find.outputs.cmd == 'reject'
+        env:
+          REASON: ${{ steps.find.outputs.reason }}
+          MARKER: "<!-- self-heal:run route=${{ steps.find.outputs.route }} head=${{ steps.find.outputs.proposed_head }} action=rejected run=${{ steps.find.outputs.run }} -->"
+        run: |
+          gh api -X POST "repos/$REPO/issues/comments/$COMMENT_ID/reactions" -f content=+1 > /dev/null || true
+          printf '🩹 Proposal from run %s (`%s`) rejected by @%s: %s\n\n%s\n' \
+            "${{ steps.find.outputs.run }}" "${{ steps.find.outputs.route }}" "$ACTOR" "$REASON" "$MARKER" \
+            | gh pr comment "$PR" --body-file -
+
+      # ── apply / revert: need the PR branch ───────────────────────────────
+      - name: Checkout PR head
+        if: steps.find.outputs.cmd == 'apply' || steps.find.outputs.cmd == 'revert'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.find.outputs.head }}
+          fetch-depth: 0
+          path: pr
+          persist-credentials: false
+
+      - name: Download proposed patch
+        if: steps.find.outputs.cmd == 'apply'
+        working-directory: pr
+        env:
+          RUN: ${{ steps.find.outputs.run }}
+        run: |
+          printf '.heal/\n' >> .git/info/exclude
+          mkdir -p .heal
+          gh run download "$RUN" -n self-heal-patch -D .heal/proposal
+          [ "$(jq -r .head .heal/proposal/meta.json)" = "${{ steps.find.outputs.head }}" ] \
+            && [ "$(jq -r .route .heal/proposal/meta.json)" = "${{ steps.find.outputs.route }}" ] \
+            && [ "$(jq -r .pr .heal/proposal/meta.json)" = "$PR" ] \
+            || { gh pr comment "$PR" --body "🩹 \`/heal apply\` refused: patch metadata does not match the proposal"; exit 1; }
+
+      - name: Apply and guard
+        if: steps.find.outputs.cmd == 'apply'
+        working-directory: pr
+        env:
+          ROUTE: ${{ steps.find.outputs.route }}
+        run: |
+          refuse() { gh pr comment "$PR" --body "🩹 \`/heal apply\` refused: $1"; echo "::error::$1"; exit 1; }
+          cp ../.cmd/config.json .heal/config.json
+          git log --format=%B "origin/$DEFAULT_BRANCH..HEAD" > .heal/commits.txt
+          used=$(grep -E '^Self-Heal: ' .heal/commits.txt | grep -cv '^Self-Heal: migrations' || true)
+          max=$(jq -r .heal.max_attempts .heal/config.json)
+          [ "$used" -lt "$max" ] || refuse "$used fix commit(s) already on this branch (max_attempts)."
+          git apply --index .heal/proposal/fix.patch || refuse "the patch no longer applies"
+          git reset -q   # guard inspects the working tree, as in the healing run
+          node "$KIT/bin/guard.mjs" "$ROUTE" .heal/config.json > .heal/changed.txt || refuse "the guard rejected the patch"
+          tr '\n' '\0' < .heal/changed.txt | xargs -0 git add -A --
+          { cat .heal/proposal/commit-msg; echo "Applied-By: @$ACTOR"; } > .heal/commit-msg
+
+      - name: Locate fix to revert
+        id: revert
+        if: steps.find.outputs.cmd == 'revert'
+        working-directory: pr
+        run: |
+          refuse() { gh pr comment "$PR" --body "🩹 \`/heal revert\` refused: $1"; echo "::error::$1"; exit 1; }
+          printf '.heal/\n' >> .git/info/exclude; mkdir -p .heal
+          reverted=$(git log --format=%B "origin/$DEFAULT_BRANCH..HEAD" | sed -n 's/^This reverts commit \([0-9a-f]\{40\}\).*/\1/p')
+          sha=""
+          for c in $(git log --format=%H "origin/$DEFAULT_BRANCH..HEAD"); do
+            route=$(git log -1 --format=%B "$c" | sed -n 's/^Self-Heal: \([a-z0-9_-]*\)$/\1/p' | head -1)
+            [ -n "$route" ] && [ "$route" != migrations ] && ! grep -qx "$c" <<< "$reverted" && { sha=$c; break; }
+          done
+          [ -n "$sha" ] || refuse "no un-reverted self-heal fix commit on this branch"
+          run=$(git log -1 --format=%B "$sha" | sed -n 's|^Run: .*/runs/\([0-9]*\).*|\1|p' | head -1)
+          git config user.name "self-heal[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git revert --no-edit "$sha" || refuse "$(git rev-parse --short "$sha") does not revert cleanly — revert it by hand"
+          git commit -q --amend -m "$(git log -1 --format=%B)" -m "Self-Heal-Revert: $route
+          Reverted-By: @$ACTOR"
+          { echo "sha=$sha"; echo "route=$route"; echo "run=${run:-0}"; } >> "$GITHUB_OUTPUT"
+
+      # ── publish ───────────────────────────────────────────────────────────
+      - name: Push token
+        id: app
+        if: (steps.find.outputs.cmd == 'apply' || steps.find.outputs.cmd == 'revert') && vars.SELF_HEAL_APP_ID != ''
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.SELF_HEAL_APP_ID }}
+          private-key: ${{ secrets.SELF_HEAL_APP_PRIVATE_KEY }}
+
+      - name: Commit and push
+        if: steps.find.outputs.cmd == 'apply' || steps.find.outputs.cmd == 'revert'
+        working-directory: pr
+        env:
+          PUSH_TOKEN: ${{ steps.app.outputs.token || secrets.SELF_HEAL_TOKEN || github.token }}
+          CMD: ${{ steps.find.outputs.cmd }}
+          REF: ${{ steps.find.outputs.ref }}
+          ROUTE: ${{ steps.find.outputs.route || steps.revert.outputs.route }}
+          SRC_RUN: ${{ steps.find.outputs.run || steps.revert.outputs.run }}
+          RETRIGGERS: ${{ steps.app.outputs.token != '' || secrets.SELF_HEAL_TOKEN != '' }}
+        run: |
+          git config user.name "self-heal[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ "$CMD" = apply ]; then git commit -q -F .heal/commit-msg; fi
+          git push "https://x-access-token:${PUSH_TOKEN}@github.com/$REPO.git" "HEAD:$REF"
+          gh api -X POST "repos/$REPO/issues/comments/$COMMENT_ID/reactions" -f content=rocket > /dev/null || true
+          new=$(git rev-parse HEAD)
+          {
+            if [ "$CMD" = apply ]; then
+              echo "🩹 Applied the \`$ROUTE\` fix from run $SRC_RUN as ${new:0:7}, requested by @$ACTOR. ([run]($RUN_URL)) \`/heal revert\` undoes it."
+              action=applied
+            else
+              echo "🩹 Reverted self-heal fix ${{ steps.revert.outputs.sha }} (\`$ROUTE\`) as ${new:0:7}, requested by @$ACTOR. ([run]($RUN_URL))"
+              action=reverted
+            fi
+            [ "$RETRIGGERS" = true ] || echo "_CI will not re-run on this push (pushed with GITHUB_TOKEN). Configure a self-heal GitHub App or \`SELF_HEAL_TOKEN\`._"
+            echo; echo "<!-- self-heal:run route=$ROUTE head=$new action=$action run=$SRC_RUN -->"
+          } | gh pr comment "$PR" --body-file -
