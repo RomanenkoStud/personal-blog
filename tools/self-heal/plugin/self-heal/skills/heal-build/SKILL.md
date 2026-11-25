@@ -13,7 +13,7 @@ You are running headless in CI. **Nobody can answer questions.** Wherever a meth
 
 ## Procedure
 
-1. **Load context.** Read every file in `context_files`. Invoke every skill in `method_skills` with the Skill tool and follow it, subject to the overrides below.
+1. **Load context.** Read every file in `context_files`. Their sections bind you: **Off-Limits** (never change), **Confidence Rules** (caps on the confidence you may report), **Fix Preferences**, and **Predefined Fixes** — if the failure matches a predefined signature, follow that entry first and say so in the summary. Then invoke every skill in `method_skills` with the Skill tool and follow it, subject to the overrides below.
 2. **Find the first real error.** Build logs cascade: one bad import produces dozens of follow-on errors. Locate the earliest error, then check `diff_command` — is the failing file, or something it imports, changed by this PR?
 3. **Classify** before touching code. Exactly one of:
    - `code-regression` — the PR's source changes break the build (bad import/export, type or syntax error, wrong API use, a page/route the bundler rejects) → fix the code.

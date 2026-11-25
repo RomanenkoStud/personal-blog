@@ -16,9 +16,9 @@ One job covers every CI job that has a route in config (`routes.<name>.jobs`):
     secrets: inherit
 ```
 
-## `/heal apply` (comment command)
+## `/heal apply | reject | revert` (comment commands)
 Copy `.github/workflows/self-heal-commands.yml` as is: it runs on `issue_comment` (always from
-the default branch) and calls `self-heal-apply.yml`.
+the default branch) and calls `self-heal-command.yml`.
 
 ## Migrations (in the deploy workflow)
 The deploy job must expose the migrate step's outcome and upload its log:
