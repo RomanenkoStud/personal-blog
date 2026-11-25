@@ -3,7 +3,9 @@
 ## Context
 - Astro 6 SSR blog deployed as a Cloudflare Worker. Bindings: D1 `DB` (blog-db), KV `SESSION`, R2 `MEDIA` (see `wrangler.toml`).
 - Source in `src/`: `lib/` pure helpers, `server/` server-side services and repositories, `config/` constants, `pages/` routes. Prefer the existing conventions: config constants in `src/config`, data access through repositories, small single-purpose files.
-- There is no unit-test or typecheck suite yet (no `test`/`typecheck` npm scripts). The CI signal is `npm run build` (Astro + Vite via `@astrojs/cloudflare`). If tests are added later, keep them next to the code as `src/**/*.test.ts`.
+- Unit tests: Vitest, `src/**/*.test.ts` next to the code (`npm run test`). `vitest.config.ts` is plain Vite with the `@` alias — it does not boot Astro or Cloudflare, so tests cover pure modules; fake D1 by stubbing `prepare().bind().run()/all()` (drizzle's D1 driver returns D1's own result shape: `meta.changes`, not `rowsAffected`).
+- Typecheck: `npm run typecheck` = `tsc` over `tsconfig.typecheck.json`, deliberately scoped to `src/lib` and `src/config` (the rest still has pre-existing `astro check` errors). Never widen or narrow that scope to make a check pass.
+- Build: `npm run build` (Astro + Vite via `@astrojs/cloudflare`).
 
 ## Off-Limits
 - D1 schema is defined only by `migrations/NNNN_*.sql` (SQLite dialect). Never edit an existing migration to make code work.
