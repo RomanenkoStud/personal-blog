@@ -23,7 +23,7 @@ agent:
 ## Pipeline
 
 ```
-PR:  any routed job fails → route → gate → reproduce (passes? stop) → fix [route skill + method]
+PR:  any routed job fails → route → gate (budget + PR policy) → reproduce (passes? stop) → autofix (green? skip agent) → fix [route skill + method]
        → guard → re-verify → review [review-fix] → decide → auto: commit | propose: comment + /heal apply | diagnose
 migrations: gate → snapshot (creds) → reproduce → fix [heal-migrations + adapter] → guard → verify → review → PR
 ```
@@ -45,7 +45,23 @@ migrations: gate → snapshot (creds) → reproduce → fix [heal-migrations + a
 | `auto` | Committed to the PR branch **only if** the classification is in `auto_apply.classifications`, both fixer and judge confidence reach `auto_apply.min_confidence`, and review is enabled. Otherwise it is proposed, and the comment says which rule failed. |
 | `diagnose` | No patch is offered, only the diagnosis. |
 
-**`/heal apply [run-id]`** (`self-heal-commands.yml` → `self-heal-apply.yml`) commits a proposal. It runs from the default branch and never runs PR code or an agent: the commenter needs write access, the PR must be open and same-repo, the marker must come from the bot's own comment, the run must be a `pull_request` run for the current head, the PR head must not have moved since the proposal, and the guard re-checks the exact stored patch before commit.
+**Deterministic autofix first.** `routes.<r>.autofix` (e.g. `eslint --fix`, `prettier --write`) runs before any agent. If the route's commands then pass, no agent runs: the fix goes through the guard and gets `autofix_apply` (default `auto`). If they still fail, the agent starts from the autofixed tree. A route with `skill: ""` is autofix-only.
+
+**PR policy** (`heal.*`) can lower the ceiling for a whole PR: `drafts: heal | diagnose | skip`, `protected_branches` (append-only; `main`, `release/*` … are never healed), and `diagnose_only_paths` (a PR that itself touches e.g. `^migrations/` gets a diagnosis, never a patch).
+
+### Comment commands
+
+`self-heal-commands.yml` (issue_comment) → `self-heal-command.yml`. They run from the default branch, never run PR code or an agent, and require write access on an open same-repo PR.
+
+| Command | Does | Checks |
+|---|---|---|
+| `/heal apply [run-id]` | Commits the latest (or given) open proposal | Marker from the bot's own comment; run is a `pull_request` run for the current head; head unchanged since the proposal; proposal not rejected or already applied; guard re-checks the stored patch; `max_attempts` |
+| `/heal reject <reason>` | Marks the latest open proposal rejected | Reason is recorded (escaped) |
+| `/heal revert` | `git revert`s the latest un-reverted `Self-Heal:` commit on the branch | Clean revert only; adds `Self-Heal-Revert:` + `Reverted-By:` trailers |
+
+**Feedback ledger.** Every outcome is a hidden marker in a bot comment: `propose`, `auto`, `diagnose`, `no-repro` from healing runs, and `applied`, `rejected`, `reverted` from commands. `heal.mjs ledger` counts them per route. That record is what future auto-apply promotion will be based on. Only healing-run markers count toward `max_runs`.
+
+**Run summary.** Each healing run writes its route, PR policy, budget, autofix, fixer, guard, review, decision and the effective route config to the job summary (Nx's "Configurations" tab).
 
 **Pushes that re-trigger CI.** Pushes made with `GITHUB_TOKEN` do not start new workflow runs. Give self-heal a GitHub App (`vars.SELF_HEAL_APP_ID`, `secrets.SELF_HEAL_APP_PRIVATE_KEY`; contents + pull-requests write) or a `SELF_HEAL_TOKEN` PAT; otherwise the fix lands but CI must be re-run by hand.
 
@@ -55,6 +71,10 @@ migrations: gate → snapshot (creds) → reproduce → fix [heal-migrations + a
 - **Agent text is never trusted as structure.** `<!--` in agent-written summaries is escaped before posting, and only the last marker in a bot comment counts.
 - **No push token while the agent runs.** Checkouts use `persist-credentials: false`, Bash is limited to allowlisted patterns, and the token appears only in the publish step.
 - **Migrations:** adapter credentials exist only in the snapshot step, which captures the schema without data. The agent never reaches the remote database, and the fix ships as a PR.
+
+## Instructions file
+
+`agent.context_files` (here `.github/self-heal/context.md`) uses five sections the skills look for: **Context**, **Off-Limits**, **Confidence Rules** (caps the confidence fixer and judge may report, which gates auto-apply), **Fix Preferences**, **Predefined Fixes** (known error signature → classification and recipe, checked first). Template: `templates/context.md`. Paths that must be *enforced* belong in `guard.protected_paths`, not prose.
 
 ## Config
 
@@ -78,7 +98,7 @@ Then fill in the config (one `routes.<name>` per CI job to heal) and context, an
 
 The kit has no repo-specific values. To extract it:
 
-1. Move `tools/self-heal/` and the reusable workflows (`self-heal.yml`, `self-heal-apply.yml`, `self-heal-migrations.yml`) into a new repo.
+1. Move `tools/self-heal/` and the reusable workflows (`self-heal.yml`, `self-heal-command.yml`, `self-heal-migrations.yml`) into a new repo.
 2. Callers switch to `uses: <owner>/self-heal-kit/.github/workflows/self-heal.yml@v1`.
 3. The policy checkout points at the kit repo and ref instead of `tools/self-heal`. That's a small change to the "Checkout policy" step.
 4. `plugin/` becomes a public marketplace (`/plugin marketplace add <owner>/self-heal-kit`).

@@ -13,7 +13,7 @@ You are running headless in CI. **Nobody can answer questions.** Wherever a meth
 
 ## Procedure
 
-1. **Load context.** Read every file in `context_files` (repo conventions). Invoke every skill in `method_skills` with the Skill tool — that is your debugging method; follow it, subject to the overrides below.
+1. **Load context.** Read every file in `context_files`. Their sections bind you: **Off-Limits** (never change), **Confidence Rules** (caps on the confidence you may report), **Fix Preferences**, and **Predefined Fixes** — if the failure matches a predefined signature, follow that entry first and say so in the summary. Then invoke every skill in `method_skills` with the Skill tool and follow it, subject to the overrides below.
 2. **Classify** the failure before touching code. Exactly one of:
    - `code-regression` — the PR broke behaviour a still-valid test describes → fix the code.
    - `stale-test` — the PR *intentionally* changed behaviour (evidence in PR title, diff, commit messages) and the test asserts the old behaviour → update the test's expectations, never its intent.

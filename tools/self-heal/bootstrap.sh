@@ -14,7 +14,7 @@ copy() { # copy <from> <to> without clobbering
 
 copy "$src_kit"                                             "$dst/tools/self-heal"
 copy "$src_root/.github/workflows/self-heal.yml"            "$dst/.github/workflows/self-heal.yml"
-copy "$src_root/.github/workflows/self-heal-apply.yml"      "$dst/.github/workflows/self-heal-apply.yml"
+copy "$src_root/.github/workflows/self-heal-command.yml"    "$dst/.github/workflows/self-heal-command.yml"
 copy "$src_root/.github/workflows/self-heal-commands.yml"   "$dst/.github/workflows/self-heal-commands.yml"
 copy "$src_root/.github/workflows/self-heal-migrations.yml" "$dst/.github/workflows/self-heal-migrations.yml"
 copy "$src_kit/templates/config.yml"                        "$dst/.github/self-heal/config.yml"
