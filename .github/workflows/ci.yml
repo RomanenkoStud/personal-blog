@@ -14,10 +14,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
-      - run: npm run test --if-present
-      - run: npm run typecheck --if-present
-      - name: Self-heal kit tests
-        run: node --test tools/self-heal/test/*.test.mjs
+      - run: npm run test
+      - run: npm run typecheck
+
+  # Not routed to a healer: the kit's guardrails are fixed by humans only.
+  kit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: node --test tools/self-heal/test/*.test.mjs
 
   build:
     runs-on: ubuntu-latest

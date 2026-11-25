@@ -14,7 +14,9 @@
     "db:migrate:remote": "wrangler d1 migrations apply blog-db --remote",
     "db:seed:local": "wrangler d1 execute blog-db --local --file=seed.sql",
     "db:seed:remote": "wrangler d1 execute blog-db --remote --file=seed.sql",
-    "astro": "astro"
+    "astro": "astro",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.typecheck.json"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.7.0",
@@ -27,10 +29,13 @@
     "satori": "^0.26.0"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.12",
     "@fontsource/space-grotesk": "^5.2.10",
     "@tailwindcss/vite": "^4.3.1",
     "drizzle-kit": "^1.0.0-rc.3",
     "tailwindcss": "^4.3.1",
+    "typescript": "^6.0.3",
+    "vitest": "^5.1.2",
     "wrangler": "^4.103.0"
   }
 }

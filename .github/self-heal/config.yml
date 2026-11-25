@@ -19,13 +19,14 @@ guard:
     - '^migrations/'
     - '(^|/)wrangler\.toml$'
     - '^scripts/ci/'
+    - '(^|/)tsconfig[^/]*\.json$'      # typecheck scope is a human decision
+    - '(^|/)vitest\.config\.[cm]?[jt]s$'
 
 routes:
   tests:
-    # Inert until the repo has test/typecheck scripts (--if-present makes them no-ops).
-    commands:
-      - npm run test --if-present
-      - npm run typecheck --if-present
+    commands:               # exactly what the unit-tests CI job runs
+      - npm run test
+      - npm run typecheck
     allowed_tools:
       - Bash(npm run test:*)
       - Bash(npm test:*)
@@ -43,7 +44,6 @@ routes:
       - Bash(npx astro build:*)
     protected_paths:        # build config is a human decision (heal-build classifies it `environment`)
       - '(^|/)astro\.config\.[cm]?[jt]s$'
-      - '(^|/)tsconfig[^/]*\.json$'
     apply: propose
 
 migrations:
