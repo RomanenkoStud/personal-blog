@@ -145,7 +145,7 @@ export async function updatePost(
 export async function deletePost(d1: D1Database, id: number): Promise<boolean> {
   const db = getDb(d1);
   const result = await db.delete(schema.posts).where(eq(schema.posts.id, id));
-  return result.meta.changes > 0;
+  return result.rowsAffected > 0;
 }
 
 export async function updatePostStatus(d1: D1Database, id: number, status: string): Promise<BlogPost | null> {

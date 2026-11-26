@@ -11,7 +11,7 @@ export async function getAllSubscribers(d1: D1Database): Promise<NewsletterSubsc
 export async function deleteSubscriber(d1: D1Database, id: number): Promise<boolean> {
   const db = getDb(d1);
   const result = await db.delete(schema.newsletterSubscribers).where(eq(schema.newsletterSubscribers.id, id));
-  return result.meta.changes > 0;
+  return result.rowsAffected > 0;
 }
 
 export async function getConfirmedSubscribers(d1: D1Database): Promise<NewsletterSubscriber[]> {
