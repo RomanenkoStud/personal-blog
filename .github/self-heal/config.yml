@@ -4,6 +4,7 @@
 agent:
   context_files:
     - .github/self-heal/context.md
+  allowed_bots: "romanenko-ci-doctor[bot]"   # the self-heal GitHub App (its pushes re-trigger CI)
   # Strategy swap example (no workflow edits):
   #   plugins: [superpowers@claude-plugins-official]
   #   method_skills: [superpowers:systematic-debugging, superpowers:verification-before-completion]

@@ -117,7 +117,7 @@ export function policy(cfg, { draft = false, headRef = '', files = [] } = {}) {
  * Config and PR policy set the ceiling; the agents' outputs can only lower it.
  * `autofix: true` means the route's deterministic autofix commands made it green, no agent.
  */
-export function decide(cfg, routeName, { result, verdict, guardOk, reviewUntampered, ceiling = 'auto', autofix = false }) {
+export function decide(cfg, routeName, { result, verdict, guardOk, reviewUntampered, ceiling = 'auto', autofix = false, fixerFailed = false }) {
   const r = cfg.routes[routeName];
   // ceiling may be a list ("auto,propose"): PR policy and budget each set one; the lowest wins.
   ceiling = String(ceiling).split(',').filter((c) => ACTIONS.includes(c)).reduce(lower, 'auto');
@@ -131,7 +131,12 @@ export function decide(cfg, routeName, { result, verdict, guardOk, reviewUntampe
     return cap({ action: r.autofix_apply, reasons: [`deterministic autofix (autofix_apply: ${r.autofix_apply})`] });
   }
   const reasons = [];
-  if (!result) return { action: 'diagnose', reasons: [r.skill ? 'fixer produced no result.json' : 'route has no agent and autofix did not help'] };
+  if (!result) {
+    const why = !r.skill ? 'route has no agent and autofix did not help'
+      : fixerFailed ? 'the fixer agent failed to start or crashed — see the run log'
+      : 'fixer produced no result.json';
+    return { action: 'diagnose', reasons: [why] };
+  }
   if (result.fixed !== true || !FIXABLE.includes(result.classification))
     return { action: 'diagnose', reasons: [`classified ${result.classification ?? 'unknown'}, no fix offered`] };
   if (!guardOk) return { action: 'diagnose', reasons: ['guardrail or re-verification failed'] };
@@ -202,6 +207,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       reviewUntampered: process.env.REVIEW_UNTAMPERED === 'true',
       ceiling: process.env.CEILING || 'auto',
       autofix: process.env.AUTOFIXED === 'true',
+      fixerFailed: process.env.FIXER_FAILED === 'true',
     });
     writeFileSync(`${dir}/decision.json`, JSON.stringify(d, null, 2));
     out({ action: d.action });

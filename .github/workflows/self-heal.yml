@@ -187,6 +187,7 @@ jobs:
           fi
 
       - name: Fix (${{ steps.route.outputs.skill }})
+        id: fix
         if: steps.repro.outputs.go && steps.autofix.outputs.fixed != 'true' && steps.route.outputs.skill != ''
         continue-on-error: true
         uses: anthropics/claude-code-action@v1
@@ -194,6 +195,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ github.token }}
+          allowed_bots: ${{ fromJSON(steps.cfg.outputs.json).agent.allowed_bots }}
           plugin_marketplaces: ${{ fromJSON(steps.cfg.outputs.json).computed.marketplaces }}
           plugins: ${{ fromJSON(steps.cfg.outputs.json).computed.plugins }}
           prompt: |
@@ -240,6 +242,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ github.token }}
+          allowed_bots: ${{ fromJSON(steps.cfg.outputs.json).agent.allowed_bots }}
           prompt: |
             Invoke the `self-heal:review-fix` skill. Route: ${{ steps.route.outputs.route }}. PR base: origin/${{ github.base_ref }}.
             Judge the uncommitted working-tree changes. Write only .heal/verdict.json.
@@ -261,6 +264,7 @@ jobs:
           REVIEW_OK: ${{ steps.review.outcome == 'success' }}
           CEILING: ${{ steps.gate.outputs.ceiling }}
           AUTOFIXED: ${{ steps.autofix.outputs.fixed == 'true' }}
+          FIXER_FAILED: ${{ steps.fix.outcome == 'failure' }}
           CONFIG_JSON: ${{ steps.cfg.outputs.json }}
         run: |
           printf '%s' "$CONFIG_JSON" > .heal/config.json
@@ -346,6 +350,14 @@ jobs:
               || { echo; echo "_CI will not re-run on this push (pushed with GITHUB_TOKEN). Configure a self-heal GitHub App or \`SELF_HEAL_TOKEN\`._"; }
             echo; echo "$MARKER"
           } | gh pr comment "$PR" --body-file -
+
+      - name: Report publish failure
+        if: failure() && steps.decide.outputs.action == 'auto'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ROUTE: ${{ steps.route.outputs.route }}
+        run: |
+          gh pr comment "$PR" --body "🩹 Self-heal had an approved \`$ROUTE\` fix to auto-apply but could not push it (see the [run]($RUN_URL); a misconfigured self-heal App is the usual cause). The patch is in the run's \`self-heal-patch\` artifact."
 
       - name: Propose fix
         if: steps.decide.outputs.action == 'propose'

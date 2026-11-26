@@ -23,6 +23,10 @@ agent:
   # Repo-specific knowledge files the agents read first. Repo-relative paths that must live
   # under the policy dir (.github/self-heal/) — they are read from the trusted default branch.
   context_files: []
+  # Bot actors allowed to start the agents (claude-code-action refuses bot-triggered runs by
+  # default). Set to your self-heal GitHub App's bot login so CI runs re-triggered by its own
+  # pushes (fixes, reverts) can heal again; budget limits still apply. Comma-separated.
+  allowed_bots: ""
   # Tools every self-heal agent gets. Bash is allowlisted per pattern only.
   base_tools:
     - Read
