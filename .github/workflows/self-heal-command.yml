@@ -60,7 +60,7 @@ jobs:
         id: find
         run: |
           mkdir -p .cmd
-          fail() { gh pr comment "$PR" --body "🩹 \`/heal $cmd\` refused: $1"; echo "::error::$1"; exit 1; }
+          fail() { touch "$GITHUB_WORKSPACE/.cmd/refused"; gh pr comment "$PR" --body "🩹 \`/heal $cmd\` refused: $1"; echo "::error::$1"; exit 1; }
           first=$(printf '%s\n' "$COMMENT_BODY" | head -1 | tr -d '\r')   # web comments use CRLF
           read -r _ cmd arg <<< "$first"
           rest=$(printf '%s' "$first" | cut -s -d' ' -f3- | head -c 500 | sed 's/<!--/\&lt;!--/g')
@@ -131,7 +131,7 @@ jobs:
           [ "$(jq -r .head .heal/proposal/meta.json)" = "${{ steps.find.outputs.head }}" ] \
             && [ "$(jq -r .route .heal/proposal/meta.json)" = "${{ steps.find.outputs.route }}" ] \
             && [ "$(jq -r .pr .heal/proposal/meta.json)" = "$PR" ] \
-            || { gh pr comment "$PR" --body "🩹 \`/heal apply\` refused: patch metadata does not match the proposal"; exit 1; }
+            || { touch "$GITHUB_WORKSPACE/.cmd/refused"; gh pr comment "$PR" --body "🩹 \`/heal apply\` refused: patch metadata does not match the proposal"; exit 1; }
 
       - name: Apply and guard
         if: steps.find.outputs.cmd == 'apply'
@@ -139,7 +139,7 @@ jobs:
         env:
           ROUTE: ${{ steps.find.outputs.route }}
         run: |
-          refuse() { gh pr comment "$PR" --body "🩹 \`/heal apply\` refused: $1"; echo "::error::$1"; exit 1; }
+          refuse() { touch "$GITHUB_WORKSPACE/.cmd/refused"; gh pr comment "$PR" --body "🩹 \`/heal apply\` refused: $1"; echo "::error::$1"; exit 1; }
           cp ../.cmd/config.json .heal/config.json
           git log --format=%B "origin/$DEFAULT_BRANCH..HEAD" > .heal/commits.txt
           used=$(grep -E '^Self-Heal: ' .heal/commits.txt | grep -cv '^Self-Heal: migrations' || true)
@@ -156,7 +156,7 @@ jobs:
         if: steps.find.outputs.cmd == 'revert'
         working-directory: pr
         run: |
-          refuse() { gh pr comment "$PR" --body "🩹 \`/heal revert\` refused: $1"; echo "::error::$1"; exit 1; }
+          refuse() { touch "$GITHUB_WORKSPACE/.cmd/refused"; gh pr comment "$PR" --body "🩹 \`/heal revert\` refused: $1"; echo "::error::$1"; exit 1; }
           printf '.heal/\n' >> .git/info/exclude; mkdir -p .heal
           reverted=$(git log --format=%B "origin/$DEFAULT_BRANCH..HEAD" | sed -n 's/^This reverts commit \([0-9a-f]\{40\}\).*/\1/p')
           sha=""
@@ -210,3 +210,9 @@ jobs:
             [ "$RETRIGGERS" = true ] || echo "_CI will not re-run on this push (pushed with GITHUB_TOKEN). Configure a self-heal GitHub App or \`SELF_HEAL_TOKEN\`._"
             echo; echo "<!-- self-heal:run route=$ROUTE head=$new action=$action run=$SRC_RUN -->"
           } | gh pr comment "$PR" --body-file -
+
+      - name: Report unexpected failure
+        if: failure() && hashFiles('.cmd/refused') == ''
+        run: |
+          gh api -X POST "repos/$REPO/issues/comments/$COMMENT_ID/reactions" -f content=confused > /dev/null || true
+          gh pr comment "$PR" --body "🩹 \`/heal ${{ steps.find.outputs.cmd || 'command' }}\` failed unexpectedly — nothing was changed on the branch. See the [run]($RUN_URL) (a misconfigured self-heal App is the usual cause)."

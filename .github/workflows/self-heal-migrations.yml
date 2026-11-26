@@ -123,6 +123,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ github.token }}
+          allowed_bots: ${{ fromJSON(steps.cfg.outputs.json).agent.allowed_bots }}
           plugin_marketplaces: ${{ fromJSON(steps.cfg.outputs.json).computed.marketplaces }}
           plugins: ${{ fromJSON(steps.cfg.outputs.json).computed.plugins }}
           prompt: |
@@ -153,6 +154,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ github.token }}
+          allowed_bots: ${{ fromJSON(steps.cfg.outputs.json).agent.allowed_bots }}
           prompt: |
             Invoke the `self-heal:review-fix` skill. Mode: migrations.
             Judge the uncommitted working-tree changes. Write only .heal/verdict.json.

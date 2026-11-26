@@ -201,6 +201,15 @@ test('decide: autofix on a diagnose-only route never commits', () => {
   assert.equal(decide(d, 'lint', { result: null, verdict: null, guardOk: true, autofix: true }).action, 'diagnose');
 });
 
+test('decide: a fixer that never ran says so instead of blaming result.json', () => {
+  const d = decide(cfg(), 'tests', { result: null, verdict: null, guardOk: false, reviewUntampered: false, fixerFailed: true });
+  assert.deepEqual([d.action, d.reasons], ['diagnose', ['the fixer agent failed to start or crashed — see the run log']]);
+});
+
+test('allowed_bots defaults to none and is set by the repo overlay', () => {
+  assert.equal(cfg().agent.allowed_bots, '');
+});
+
 // ── commands: proposal state + feedback ledger ────────────────────────────
 
 test('proposal: latest open proposal, its fate, and strict validation', () => {
@@ -234,6 +243,7 @@ test('repo overlay parses and resolves', () => {
   assert.equal(c.migrations.adapter, 'd1');
   assert.ok(c.routes.build.commands.length > 0);
   assert.equal(c.routes.tests.apply, 'auto');
+  assert.match(c.agent.allowed_bots, /\[bot\]$/);
   assert.ok(c.guard.protected_paths.includes('^migrations/'));
   assert.ok(readFileSync(fileURLToPath(new URL('../../../.github/self-heal/context.md', import.meta.url)), 'utf8'));
 });
