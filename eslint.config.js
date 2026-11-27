@@ -14,6 +14,8 @@ export default tseslint.config(
     languageOptions: { globals: { ...globals.browser, ...globals.node } },
     rules: {
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      'prefer-const': 'error', // autofixable: the lint route's `eslint --fix` resolves it without an agent
+      eqeqeq: ['error', 'always', { null: 'ignore' }],
     },
   },
   {
