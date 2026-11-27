@@ -11,7 +11,7 @@ export function parseCookie(cookieHeader: string, name: string): string | null {
   return match ? match[1] : null;
 }
 
-function base64UrlDecode(str: string): Uint8Array {
+function base64UrlDecode(str: string): Uint8Array<ArrayBuffer> {
   const padded = str.replace(/-/g, '+').replace(/_/g, '/');
   const binary = atob(padded);
   const bytes = new Uint8Array(binary.length);
@@ -53,7 +53,7 @@ export async function verifyAccessJWT(token: string, teamName: string): Promise<
     if (!kid) return false;
 
     const keys = await fetchJWKS(teamName);
-    const jwk = keys.find((k: JsonWebKey) => k.kid === kid);
+    const jwk = keys.find((k: JsonWebKey & { kid?: string }) => k.kid === kid);
     if (!jwk) return false;
 
     const key = await crypto.subtle.importKey(

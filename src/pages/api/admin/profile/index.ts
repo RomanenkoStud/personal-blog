@@ -4,11 +4,11 @@ import { getPage, updatePage } from '@/server/repositories/pages';
 import { clearProfileCache } from '@/server/services/profile';
 import { getDb } from '@/server/db/client';
 import * as schema from '@/server/db/schema';
-import { jsonResponse } from '@/server/http';
+import { jsonResponse, readJsonObject } from '@/server/http';
 import { HTTP_STATUS, PAGE_SLUG } from '@/config';
 
 export const PUT: APIRoute = async ({ request }) => {
-  const { body } = await request.json();
+  const { body } = await readJsonObject(request);
 
   if (!body || typeof body !== 'string') {
     return jsonResponse({ error: 'Missing body' }, HTTP_STATUS.BAD_REQUEST);

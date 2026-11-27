@@ -2,9 +2,9 @@ import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 import { getPostById, updatePost, deletePost, updatePostStatus } from '@/server/repositories/posts';
 import { notifySubscribersOfPost } from '@/server/services/newsletter';
-import { validatePost } from '@/lib/validation';
+import { validatePost, isPostStatus, type PostInput } from '@/lib/validation';
 import { calcReadTime } from '@/lib/read-time';
-import { jsonResponse } from '@/server/http';
+import { jsonResponse, readJsonObject } from '@/server/http';
 import { HTTP_STATUS, POST_STATUS, DB_ERROR_UNIQUE_CONSTRAINT } from '@/config';
 
 const VALID_PUT_TRANSITIONS: Record<string, string[]> = {
@@ -24,14 +24,12 @@ export const PUT: APIRoute = async ({ params, request }) => {
     return jsonResponse({ error: 'Invalid ID' }, HTTP_STATUS.BAD_REQUEST);
   }
 
-  const data = await request.json();
-  data.readTime = calcReadTime(data.body);
-  data.featured = Boolean(data.featured);
-
-  const validation = validatePost(data);
+  const raw = await readJsonObject(request);
+  const validation = validatePost(raw);
   if (!validation.valid) {
     return jsonResponse({ errors: validation.errors }, HTTP_STATUS.BAD_REQUEST);
   }
+  const data = raw as unknown as PostInput; // shape checked by validatePost
 
   const current = await getPostById(env.DB, id);
   if (!current) {
@@ -50,8 +48,8 @@ export const PUT: APIRoute = async ({ params, request }) => {
       body: data.body,
       area: data.area,
       publishedAt: data.publishedAt,
-      featured: data.featured,
-      readTime: data.readTime,
+      featured: Boolean(data.featured),
+      readTime: calcReadTime(data.body),
       focusKeyword: data.focusKeyword ?? '',
       excerpt: data.excerpt,
       status: data.status,
@@ -83,7 +81,7 @@ export const PATCH: APIRoute = async ({ params, request }) => {
     return jsonResponse({ error: 'Invalid ID' }, HTTP_STATUS.BAD_REQUEST);
   }
 
-  const body = await request.json();
+  const body = await readJsonObject(request);
 
   const current = await getPostById(env.DB, id);
   if (!current) {
@@ -92,10 +90,11 @@ export const PATCH: APIRoute = async ({ params, request }) => {
 
   if ('status' in body) {
     const allowed = VALID_PATCH_TRANSITIONS[current.status];
-    if (!allowed || !allowed.includes(body.status)) {
+    const status = body.status;
+    if (!isPostStatus(status) || !allowed || !allowed.includes(status)) {
       return jsonResponse({ error: 'Invalid status transition' }, HTTP_STATUS.BAD_REQUEST);
     }
-    const post = await updatePostStatus(env.DB, id, body.status);
+    const post = await updatePostStatus(env.DB, id, status);
     return jsonResponse({ ok: true, post });
   }
 

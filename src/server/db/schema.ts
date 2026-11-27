@@ -12,7 +12,8 @@ export const posts = sqliteTable('posts', {
   readTime: integer('read_time').notNull(),
   focusKeyword: text('focus_keyword').notNull().default(''),
   excerpt: text('excerpt').notNull(),
-  status: text('status').notNull().default(POST_STATUS.PUBLISHED),
+  // enum is TypeScript-only for SQLite (no CHECK constraint, no migration): rows read back as PostStatus.
+  status: text('status', { enum: [POST_STATUS.PUBLISHED, POST_STATUS.DRAFT, POST_STATUS.ARCHIVED] }).notNull().default(POST_STATUS.PUBLISHED),
 });
 
 export const pages = sqliteTable('pages', {

@@ -9,16 +9,14 @@ let lastTended = { date: new Date().toISOString().slice(0, 10), hash: '' };
 try {
   const [hash, date] = execSync('git log -1 --format=%h%x09%as', { encoding: 'utf8' }).trim().split('\t');
   lastTended = { date, hash };
-} catch {}
+} catch {
+  // Not a git checkout (e.g. a tarball build): keep today's date and no hash.
+}
 
 export default defineConfig({
   site: 'https://pavloromanenko.com',
   output: 'server',
-  adapter: cloudflare({
-    platformProxy: {
-      enabled: true,
-    },
-  }),
+  adapter: cloudflare(),
   vite: {
     plugins: [tailwindcss()],
     define: {

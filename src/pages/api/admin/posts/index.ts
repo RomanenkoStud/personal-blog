@@ -2,21 +2,18 @@ import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 import { createPost } from '@/server/repositories/posts';
 import { notifySubscribersOfPost } from '@/server/services/newsletter';
-import { validatePost } from '@/lib/validation';
+import { validatePost, type PostInput } from '@/lib/validation';
 import { calcReadTime } from '@/lib/read-time';
-import { jsonResponse } from '@/server/http';
+import { jsonResponse, readJsonObject } from '@/server/http';
 import { HTTP_STATUS, POST_STATUS, DB_ERROR_UNIQUE_CONSTRAINT } from '@/config';
 
 export const POST: APIRoute = async ({ request }) => {
-  const data = await request.json();
-
-  data.readTime = calcReadTime(data.body);
-  data.featured = Boolean(data.featured);
-
-  const validation = validatePost(data);
+  const raw = await readJsonObject(request);
+  const validation = validatePost(raw);
   if (!validation.valid) {
     return jsonResponse({ errors: validation.errors }, HTTP_STATUS.BAD_REQUEST);
   }
+  const data = raw as unknown as PostInput; // shape checked by validatePost
 
   try {
     const post = await createPost(env.DB, {
@@ -25,8 +22,8 @@ export const POST: APIRoute = async ({ request }) => {
       body: data.body,
       area: data.area,
       publishedAt: data.publishedAt,
-      featured: data.featured,
-      readTime: data.readTime,
+      featured: Boolean(data.featured),
+      readTime: calcReadTime(data.body),
       focusKeyword: data.focusKeyword ?? '',
       excerpt: data.excerpt,
       status: data.status,

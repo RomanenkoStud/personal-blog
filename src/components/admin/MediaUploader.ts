@@ -32,7 +32,7 @@ export class MediaUploader extends LitElement {
         });
 
         if (!res.ok) {
-          const result = await res.json();
+          const result = (await res.json()) as { errors?: { file?: string }; error?: string };
           this._error = result.errors?.file ?? result.error ?? `Failed: ${file.name}`;
           break;
         }

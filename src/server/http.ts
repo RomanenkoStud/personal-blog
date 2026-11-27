@@ -2,7 +2,13 @@ import { CONTENT_TYPE_JSON } from '@/config';
 
 export const CONTENT_TYPE_HTML = 'text/html; charset=utf-8';
 
-export function jsonResponse(body: unknown, status = 200): Response {
+/** Parse a JSON request body as an object; anything else (array, string, null) becomes {}. */
+export async function readJsonObject(request: Request): Promise<Record<string, unknown>> {
+  const data: unknown = await request.json();
+  return data !== null && typeof data === 'object' && !Array.isArray(data) ? (data as Record<string, unknown>) : {};
+}
+
+export function jsonResponse(body: unknown, status: number = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: { 'Content-Type': CONTENT_TYPE_JSON },

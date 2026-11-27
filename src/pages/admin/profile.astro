@@ -1,12 +1,9 @@
 ---
 import AdminLayout from '../../layouts/Admin.astro';
-import { getPage } from '@/server/repositories/pages';
 import { getProfile } from '@/server/services/profile';
 import { env } from 'cloudflare:workers';
-import { PAGE_SLUG } from '@/config';
 import type { ProfileData } from '@/types/content';
 
-const page = await getPage(env.DB, PAGE_SLUG.ABOUT);
 const profile = await getProfile(env.DB);
 
 const EMPTY: ProfileData = {
@@ -15,7 +12,6 @@ const EMPTY: ProfileData = {
   socials: [], whatIDo: [], experience: [], education: [], tech: [], cta: '',
 };
 const data = profile ?? EMPTY;
-const pageId = page?.id ?? null;
 ---
 
 <AdminLayout title="Profile" activeNav="profile">
@@ -205,7 +201,7 @@ const pageId = page?.id ?? null;
 
 </AdminLayout>
 
-<script define:vars={{ pageId }}>
+<script is:inline>
   const form = document.getElementById('profile-form');
   const submitBtn = document.getElementById('submit-btn');
   const formStatus = document.getElementById('form-status');
