@@ -23,7 +23,19 @@ guard:
     - '(^|/)tsconfig[^/]*\.json$'      # typecheck scope is a human decision
     - '(^|/)vitest\.config\.[cm]?[jt]s$'
 
+heal:
+  priority: [lint, tests, build]   # cheap deterministic lint fixes land first; CI re-runs for the rest
+
 routes:
+  lint:
+    # Deterministic only: eslint --fix runs, no agent. Whatever autofix can't fix is diagnosed.
+    jobs: [lint]
+    skill: ""
+    commands:
+      - npm run lint
+    autofix:
+      - npm run lint:fix
+    autofix_apply: auto
   tests:
     commands:               # exactly what the unit-tests CI job runs
       - npm run test
@@ -34,7 +46,8 @@ routes:
       - Bash(npx vitest:*)
       - Bash(node --test:*)
       - Bash(npm run typecheck:*)
-      - Bash(npx tsc:*)
+      - Bash(npx astro check:*)
+      - Bash(npx wrangler types:*)
     # A real regression with a confident fixer AND judge is committed; anything else is proposed.
     apply: auto
   build:

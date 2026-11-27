@@ -3,7 +3,7 @@ import { env } from 'cloudflare:workers';
 import { eq } from 'drizzle-orm';
 import { getDb } from '@/server/db/client';
 import { newsletterSubscribers } from '@/server/db/schema';
-import { jsonResponse } from '@/server/http';
+import { jsonResponse, readJsonObject } from '@/server/http';
 import { EMAIL_REGEX } from '@/lib/validation';
 import { sendEmail } from '@/server/email/client';
 import { confirmationEmail } from '@/server/email/templates';
@@ -14,8 +14,8 @@ export const POST: APIRoute = async ({ request }) => {
 
   const contentType = request.headers.get('content-type') ?? '';
   if (contentType.includes('application/json')) {
-    const body = await request.json();
-    email = body.email;
+    const body = await readJsonObject(request);
+    email = typeof body.email === 'string' ? body.email : undefined;
   } else {
     const formData = await request.formData();
     email = formData.get('email')?.toString();

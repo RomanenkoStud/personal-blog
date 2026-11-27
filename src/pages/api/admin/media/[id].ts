@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 import { updateMediaAlt, deleteMediaRecord } from '@/server/repositories/media';
-import { jsonResponse } from '@/server/http';
+import { jsonResponse, readJsonObject } from '@/server/http';
 import { HTTP_STATUS } from '@/config';
 
 export const PATCH: APIRoute = async ({ params, request }) => {
@@ -10,7 +10,7 @@ export const PATCH: APIRoute = async ({ params, request }) => {
     return jsonResponse({ error: 'Invalid ID' }, HTTP_STATUS.BAD_REQUEST);
   }
 
-  const data = await request.json();
+  const data = await readJsonObject(request);
   if (typeof data.alt !== 'string') {
     return jsonResponse({ error: 'Alt text must be a string' }, HTTP_STATUS.BAD_REQUEST);
   }
@@ -34,7 +34,7 @@ export const DELETE: APIRoute = async ({ params }) => {
     return jsonResponse({ error: 'File not found' }, HTTP_STATUS.NOT_FOUND);
   }
 
-  await (env as unknown as { MEDIA: R2Bucket }).MEDIA.delete(file.key);
+  await env.MEDIA.delete(file.key);
 
   return jsonResponse({ ok: true });
 };

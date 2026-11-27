@@ -17,6 +17,13 @@ jobs:
       - run: npm run test
       - run: npm run typecheck
 
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: npm run lint
+
   # Not routed to a healer: the kit's guardrails are fixed by humans only.
   kit-tests:
     runs-on: ubuntu-latest
@@ -34,7 +41,7 @@ jobs:
   # Self-healing (tools/self-heal): one entry point for every job above; config in
   # .github/self-heal/config.yml routes each failed job to its healer.
   heal:
-    needs: [unit-tests, build]
+    needs: [unit-tests, build, lint]
     if: failure() && github.event.pull_request.head.repo.full_name == github.repository
     permissions:
       contents: write

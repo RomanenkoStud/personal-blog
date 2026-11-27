@@ -261,7 +261,7 @@ export class SeoPanel extends LitElement {
   }
 
   private renderSection(title: string, checks: Check[]) {
-    const { color, label, good, active } = this.score(checks);
+    const { color, good, active } = this.score(checks);
     return html`
       <div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">

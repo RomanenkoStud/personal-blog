@@ -8,7 +8,7 @@ const STATIC_PAGES = ['', '/writing', '/topics', '/about', '/now'];
 export const GET: APIRoute = async () => {
   const posts = await getPosts(env.DB);
 
-  const urls = [
+  const urls: { loc: string; lastmod?: string; changefreq: string; priority: string }[] = [
     ...STATIC_PAGES.map(path => ({
       loc: `${SITE_URL}${path}`,
       changefreq: 'weekly',

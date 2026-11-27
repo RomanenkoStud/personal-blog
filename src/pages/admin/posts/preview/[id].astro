@@ -2,7 +2,7 @@
 import BaseLayout from '../../../../layouts/Base.astro';
 import { getPostById } from '@/server/repositories/posts';
 import { env } from 'cloudflare:workers';
-import { RELATED_POSTS_COUNT, RELATED_TITLE_MAX_LENGTH, POST_STATUS } from '@/config';
+import { POST_STATUS } from '@/config';
 import { formatMonthYear } from '@/lib/format';
 import PostBody from '@/components/ui/PostBody.astro';
 

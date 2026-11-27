@@ -1,8 +1,0 @@
-{
-  // CI typecheck scope. Starts with the modules that already type-check cleanly; widen
-  // `include` as the remaining `astro check` errors (src/pages, src/server, components) are fixed.
-  "extends": "./tsconfig.json",
-  "compilerOptions": { "noEmit": true, "ignoreDeprecations": "6.0" },
-  "include": ["src/lib/**/*.ts", "src/config/**/*.ts"],
-  "exclude": ["dist"]
-}

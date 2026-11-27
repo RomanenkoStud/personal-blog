@@ -3,7 +3,7 @@ import { getDb } from '@/server/db/client';
 import * as schema from '@/server/db/schema';
 import type { BlogPost } from '@/types/content';
 import { type ListParams, type PaginatedResult, paginate } from '@/lib/pagination';
-import { POST_STATUS } from '@/config';
+import { POST_STATUS, type PostStatus } from '@/config';
 
 const isPublished = eq(schema.posts.status, POST_STATUS.PUBLISHED);
 const isNotDraft = ne(schema.posts.status, POST_STATUS.DRAFT);
@@ -99,7 +99,7 @@ export async function getAllPosts(d1: D1Database): Promise<BlogPost[]> {
   return db.select().from(schema.posts).orderBy(desc(schema.posts.publishedAt));
 }
 
-export async function getPostsByStatus(d1: D1Database, status: string): Promise<BlogPost[]> {
+export async function getPostsByStatus(d1: D1Database, status: PostStatus): Promise<BlogPost[]> {
   const db = getDb(d1);
   return db.select().from(schema.posts).where(eq(schema.posts.status, status)).orderBy(desc(schema.posts.publishedAt));
 }
@@ -145,10 +145,10 @@ export async function updatePost(
 export async function deletePost(d1: D1Database, id: number): Promise<boolean> {
   const db = getDb(d1);
   const result = await db.delete(schema.posts).where(eq(schema.posts.id, id));
-  return result.rowsAffected > 0;
+  return result.meta.changes > 0; // D1 result: rowsAffected does not exist
 }
 
-export async function updatePostStatus(d1: D1Database, id: number, status: string): Promise<BlogPost | null> {
+export async function updatePostStatus(d1: D1Database, id: number, status: PostStatus): Promise<BlogPost | null> {
   const db = getDb(d1);
   const result = await db.update(schema.posts).set({ status }).where(eq(schema.posts.id, id)).returning();
   return result[0] ?? null;

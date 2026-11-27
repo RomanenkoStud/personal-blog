@@ -1,8 +1,8 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 import { updatePage } from '@/server/repositories/pages';
-import { validatePage } from '@/lib/validation';
-import { jsonResponse } from '@/server/http';
+import { validatePage, type PageInput } from '@/lib/validation';
+import { jsonResponse, readJsonObject } from '@/server/http';
 import { HTTP_STATUS } from '@/config';
 
 export const PUT: APIRoute = async ({ params, request }) => {
@@ -11,12 +11,12 @@ export const PUT: APIRoute = async ({ params, request }) => {
     return jsonResponse({ error: 'Invalid ID' }, HTTP_STATUS.BAD_REQUEST);
   }
 
-  const data = await request.json();
-
-  const validation = validatePage(data);
+  const raw = await readJsonObject(request);
+  const validation = validatePage(raw);
   if (!validation.valid) {
     return jsonResponse({ errors: validation.errors }, HTTP_STATUS.BAD_REQUEST);
   }
+  const data = raw as unknown as PageInput; // shape checked by validatePage
 
   const page = await updatePage(env.DB, id, {
     title: data.title,

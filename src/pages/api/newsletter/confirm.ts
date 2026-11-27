@@ -9,7 +9,7 @@ import { HTTP_STATUS } from '@/config';
 export const GET: APIRoute = async ({ url }) => {
   const token = url.searchParams.get('token');
 
-  const fail = (message: string, sub: string, status = HTTP_STATUS.OK) =>
+  const fail = (message: string, sub: string, status: number = HTTP_STATUS.OK) =>
     new Response(statusPage({ title: 'Confirm subscription', message, sub, success: false }), {
       status,
       headers: { 'Content-Type': CONTENT_TYPE_HTML },

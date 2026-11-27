@@ -10,7 +10,7 @@ export const GET: APIRoute = async ({ url }) => {
   const token = url.searchParams.get('token');
   const email = url.searchParams.get('email');
 
-  const page = (message: string, sub: string, success: boolean, status = HTTP_STATUS.OK) =>
+  const page = (message: string, sub: string, success: boolean, status: number = HTTP_STATUS.OK) =>
     new Response(statusPage({ title: 'Unsubscribe', message, sub, success }), {
       status,
       headers: { 'Content-Type': CONTENT_TYPE_HTML },
@@ -27,7 +27,8 @@ export const GET: APIRoute = async ({ url }) => {
 
   const result = await db.delete(newsletterSubscribers).where(where);
 
-  if (result.rowsAffected === 0) {
+  // drizzle's D1 driver returns D1's result object: the row count is meta.changes.
+  if (result.meta.changes === 0) {
     return page('This subscription was not found.', 'You may have already unsubscribed.', false);
   }
 

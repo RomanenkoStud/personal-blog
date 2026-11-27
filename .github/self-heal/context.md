@@ -3,8 +3,9 @@
 ## Context
 - Astro 6 SSR blog deployed as a Cloudflare Worker. Bindings: D1 `DB` (blog-db), KV `SESSION`, R2 `MEDIA` (see `wrangler.toml`).
 - Source in `src/`: `lib/` pure helpers, `server/` server-side services and repositories, `config/` constants, `pages/` routes. Prefer the existing conventions: config constants in `src/config`, data access through repositories, small single-purpose files.
-- Unit tests: Vitest, `src/**/*.test.ts` next to the code (`npm run test`). `vitest.config.ts` is plain Vite with the `@` alias — it does not boot Astro or Cloudflare, so tests cover pure modules; fake D1 by stubbing `prepare().bind().run()/all()` (drizzle's D1 driver returns D1's own result shape: `meta.changes`, not `rowsAffected`).
-- Typecheck: `npm run typecheck` = `tsc` over `tsconfig.typecheck.json`, deliberately scoped to `src/lib` and `src/config` (the rest still has pre-existing `astro check` errors). Never widen or narrow that scope to make a check pass.
+- Unit tests: Vitest, `src/**/*.test.ts` next to the code (`npm run test`). `vitest.config.ts` is plain Vite with the `@` alias — it does not boot Astro or Cloudflare; fake D1 by stubbing `prepare().bind().run()/all()` (drizzle's D1 driver returns D1's own result shape: `meta.changes`, not `rowsAffected`).
+- Typecheck: `npm run typecheck` = `wrangler types && astro check` over the whole project (strict). Bindings/vars come from the generated `worker-configuration.d.ts` (gitignored); secrets are declared in `src/env.d.ts`. Parse request bodies with `readJsonObject()` and narrow after validation (`PostInput`, `PageInput`, `isPostStatus`) — never `any`.
+- Lint: `npm run lint` (ESLint flat config: js + typescript-eslint + astro). `npm run lint:fix` is the deterministic autofix.
 - Build: `npm run build` (Astro + Vite via `@astrojs/cloudflare`).
 
 ## Off-Limits

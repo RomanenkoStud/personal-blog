@@ -1,10 +1,35 @@
-import { POST_STATUSES } from '@/config';
+import { POST_STATUSES, type PostStatus } from '@/config';
 
 export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export interface ValidationResult {
   valid: boolean;
   errors: Record<string, string>;
+}
+
+export function isPostStatus(value: unknown): value is PostStatus {
+  return typeof value === 'string' && (POST_STATUSES as readonly string[]).includes(value);
+}
+
+/** Shape of a post body once validatePost() has accepted it. */
+export interface PostInput {
+  title: string;
+  slug: string;
+  body: string;
+  area: string;
+  publishedAt: string;
+  excerpt: string;
+  status: PostStatus;
+  featured?: unknown;
+  focusKeyword?: string;
+  notify?: unknown;
+}
+
+/** Shape of a page body once validatePage() has accepted it. */
+export interface PageInput {
+  title: string;
+  body: string;
+  slug?: string;
 }
 
 export function validatePost(data: Record<string, unknown>): ValidationResult {
@@ -28,7 +53,7 @@ export function validatePost(data: Record<string, unknown>): ValidationResult {
   if (!data.excerpt || typeof data.excerpt !== 'string' || data.excerpt.trim().length === 0) {
     errors.excerpt = 'Excerpt is required';
   }
-  if (!data.status || typeof data.status !== 'string' || !POST_STATUSES.includes(data.status as any)) {
+  if (!isPostStatus(data.status)) {
     errors.status = `Status must be ${POST_STATUSES.join(', ')}`;
   }
 
